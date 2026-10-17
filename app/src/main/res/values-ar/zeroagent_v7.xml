@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="za7_reasoning_minimal">الحد الأدنى</string>
+    <string name="za7_reasoning_detected">تُعرض إعدادات التفكير التي يدعمها النموذج أو بيئة التشغيل المحلية.</string>
+    <string name="za7_reasoning_unknown">لم يعلن الخادم مستويات التفكير المدعومة. الخيارات يدوية ويعتمد دعمها على النموذج.</string>
+    <string name="za7_speech_streaming_hint">يظهر النص أثناء التسجيل، ويُستكمل المقطع الأخير عند الإيقاف.</string>
+    <string name="za7_speech_recorded_hint">تُحوّل هذه الواجهة التسجيل إلى نص بعد إيقافه. الحد الأقصى لكل تسجيل 55 ثانية.</string>
+    <string name="za7_speech_capability_hint">هذه إعدادات الإدخال الصوتي، ولا تضيف صوتًا ثنائي الاتجاه إلى نموذج نصي. للمكالمات المباشرة اختر بروتوكولًا متوافقًا في إعدادات النموذج.</string>
+    <string name="za7_speech_language_hint">اتركه فارغًا لاستخدام لغة التطبيق. دعم اللغة يعتمد على المزوّد والنموذج.</string>
+    <string name="za7_export_summary">تم تصدير %1$d من أصل %2$d ملفًا.</string>
+</resources>

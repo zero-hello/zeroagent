@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="za7_error_title">Не удалось завершить</string>
+    <string name="za7_error_unknown">Произошла ошибка. Повторите попытку; если ошибка останется, скопируйте диагностику.</string>
+    <string name="za7_error_network">Нет соединения. Проверьте сеть и адрес сервиса.</string>
+    <string name="za7_error_timeout">Время ожидания истекло. Проверьте соединение и повторите попытку.</string>
+    <string name="za7_error_auth">Доступ отклонён. Проверьте API-ключ и права на модель.</string>
+    <string name="za7_error_rate">Слишком много запросов. Подождите и повторите попытку.</string>
+    <string name="za7_error_quota">Достигнут лимит использования или баланса. Проверьте аккаунт.</string>
+    <string name="za7_error_service">Сервис временно недоступен. Повторите попытку позже.</string>
+    <string name="za7_error_model">Модель или адрес недоступны. Проверьте имя и адрес.</string>
+    <string name="za7_error_context">Диалог превышает лимит модели. Начните новый чат или сократите контекст.</string>
+    <string name="za7_error_permission">Нет нужного разрешения. Проверьте разрешения Android и доступ к инструментам.</string>
+    <string name="za7_error_cancelled">Операция отменена.</string>
+    <string name="za7_error_storage">Недостаточно места. Освободите место и повторите попытку.</string>
+    <string name="za7_error_memory">Недостаточно памяти. Закройте другие приложения или выберите меньшую модель.</string>
+    <string name="za7_error_audio">Звук недоступен. Проверьте разрешение микрофона и использование звука другими приложениями.</string>
+    <string name="za7_error_corrupt">Файл модели неполон или несовместим. Загрузите его заново или выберите совместимый файл.</string>
+    <string name="za7_error_unsupported">Модель, сервис или устройство не поддерживают эту операцию.</string>
+    <string name="za7_error_request">Запрос отклонён. Проверьте настройки модели и запроса.</string>
+    <string name="za7_error_reasoning">Модель не поддерживает выбранную настройку рассуждения. Выберите другой уровень.</string>
+    <string name="za7_error_format">Неверный формат данных. Проверьте ввод или содержимое файла.</string>
+    <string name="za7_error_config">Функция не настроена. Сначала выберите сервис или модель в настройках.</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="za7_reasoning_minimal">最低</string>
+    <string name="za7_reasoning_detected">根据模型或本地运行环境提供的能力，显示可用的推理设置。</string>
+    <string name="za7_reasoning_unknown">后端尚未提供推理程度列表，目前显示手动选项，实际支持情况取决于模型。</string>
+    <string name="za7_speech_streaming_hint">录音时会陆续显示识别文字，停止后完成最后一段。</string>
+    <string name="za7_speech_recorded_hint">此接口在停止录音后识别，单次录音最长 55 秒。</string>
+    <string name="za7_speech_capability_hint">这里设置的是语音输入，不会为文字模型增加原生双向音频。实时通话请在模型设置中选择兼容协议。</string>
+    <string name="za7_speech_language_hint">留空时跟随应用语言；语言是否可用取决于服务商与模型。</string>
+    <string name="za7_export_summary">已导出 %1$d／%2$d 个文件。</string>
+</resources>

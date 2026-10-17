@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="za8_gradient">Анимированный градиент</string>
+    <string name="za8_gradient_hint">Мягкие переливы цветов в чате. По умолчанию выключено.</string>
+    <string name="za8_access_ask">Запрашивать подтверждение</string>
+    <string name="za8_access_assisted">Помощь с подтверждением</string>
+    <string name="za8_access_full">Полный доступ</string>
+    <string name="za8_access_hint">Запрос: подтверждать каждый инструмент. Помощь: безопасные действия автоматически, рискованные — с запросом. Полный: без обычных запросов. Только для этого чата до закрытия приложения. Разрешения Android выдаются отдельно.</string>
+    <string name="za8_access_risk_title">Разрешить полный доступ?</string>
+    <string name="za8_access_risk">Агент сможет читать и менять файлы, управлять приложениями и отправлять запросы без обычных подтверждений. Ошибки могут привести к утечке или потере данных. Включайте только для доверенных задач и моделей. Команды Root и разрешения Android по-прежнему требуют подтверждения. Режим можно сменить в любой момент.</string>
+    <string name="za8_access_accept">Я понимаю и принимаю этот риск</string>
+    <string name="za8_cmd_compact">Сжать текущую беседу</string>
+    <string name="za8_cmd_plan">Сначала план; /plan off — выключить</string>
+    <string name="za8_cmd_goal">Задать цель: /goal задача; /goal off — очистить</string>
+    <string name="za8_cmd_image">Открыть генерацию изображений</string>
+    <string name="za8_cmd_voice">Открыть голосовой разговор</string>
+    <string name="za8_cmd_access">Изменить доступ для этой беседы</string>
+    <string name="za8_cmd_help">Показать все команды</string>
+    <string name="za8_commands">Команды чата</string>
+    <string name="za8_directive_off">Режим беседы сброшен</string>
+    <string name="za8_directive_saved">Применено к этой беседе</string>
+    <string name="za8_goal_usage">Введите задачу после /goal</string>
+    <string name="za8_plan_active">Режим планирования · /plan off — выход</string>
+    <string name="za8_goal_active">Цель задана · /goal off — очистить</string>
+    <string name="za8_download_models">Скачать модели</string>
+    <string name="za8_voice_model">Модель голосового разговора</string>
+    <string name="za8_voice_models_hint">Список получен у вашего провайдера. Выберите модель нативного аудио; поддержка проверяется при соединении. Для своего шлюза может понадобиться ручной ввод ID.</string>
+    <string name="za8_voice_models_empty">Нативные голосовые модели не найдены. Проверьте провайдера, API-ключ и доступ аккаунта. Распознавание речи и TTS не являются моделями живого разговора.</string>
+    <string name="za8_voice_provider">Провайдер голосовой связи</string>
+    <string name="za8_voice_refresh">Обновить голосовые модели</string>
+    <string name="za8_voice_setup_hint">Выберите провайдера с API-ключом и нативную голосовую модель. Воспроизводится звук модели, без TTS телефона.</string>
+    <string name="za8_voice_start">Начать голосовой разговор</string>
+    <string name="za8_voice_configure_provider">Настроить провайдера и API-ключ</string>
+    <string name="za8_voice_speaker">Динамик</string>
+    <string name="za8_voice_earpiece">Разговорный динамик</string>
+    <string name="za8_voice_headset">Наушники / USB-аудио</string>
+    <string name="za8_voice_bluetooth">Bluetooth-аудио</string>
+    <string name="za8_voice_other">Другое аудиоустройство</string>
+    <string name="za8_voice_mute">Выключить звук</string>
+    <string name="za8_voice_unmute">Включить звук</string>
+    <string name="za8_voice_route_error">Это аудиоустройство недоступно. Выберите другой выход.</string>
+    <string name="za8_access_title">Доступ в беседе</string>
+    <string name="za8_tool_rules_hint">Дополнительные запросы в режиме помощи. Безопасные инструменты могут работать автоматически, рискованные требуют подтверждения или явного разрешения для чата. Полный доступ меняется в беседе.</string>
+</resources>
