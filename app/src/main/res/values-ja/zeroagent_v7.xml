@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="za7_reasoning_minimal">最小</string>
+    <string name="za7_reasoning_detected">モデルまたはローカル実行環境が対応する推論設定を表示しています。</string>
+    <string name="za7_reasoning_unknown">バックエンドから推論レベルの一覧が提供されていません。選択肢は手動設定で、対応状況はモデルによります。</string>
+    <string name="za7_speech_streaming_hint">録音中に認識結果を表示し、停止すると最後の区間を確定します。</string>
+    <string name="za7_speech_recorded_hint">録音停止後に文字起こしします。1回の録音は最大55秒です。</string>
+    <string name="za7_speech_capability_hint">ここでは音声入力を設定します。テキストモデルに双方向音声機能を追加するものではありません。通話にはモデル設定で対応する方式を選んでください。</string>
+    <string name="za7_speech_language_hint">空欄の場合はアプリの言語を使用します。対応言語はサービスとモデルによります。</string>
+    <string name="za7_export_summary">%2$d件中%1$d件をエクスポートしました。</string>
+</resources>

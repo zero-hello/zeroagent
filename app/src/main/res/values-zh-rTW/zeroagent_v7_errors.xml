@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="za7_error_title">未能完成操作</string>
+    <string name="za7_error_unknown">發生錯誤，請再試一次；若持續發生，可複製診斷資訊。</string>
+    <string name="za7_error_network">無法連線，請檢查網路與服務網址。</string>
+    <string name="za7_error_timeout">操作逾時，請檢查連線後再試一次。</string>
+    <string name="za7_error_auth">存取遭到拒絕，請確認 API 金鑰與模型權限。</string>
+    <string name="za7_error_rate">請求太頻繁，請稍候再試。</string>
+    <string name="za7_error_quota">已達供應商的用量或餘額上限，請檢查帳戶。</string>
+    <string name="za7_error_service">服務暫時無法使用，請稍後再試。</string>
+    <string name="za7_error_model">找不到模型或端點，請確認名稱與網址。</string>
+    <string name="za7_error_context">對話超過模型可處理的長度，請開新對話或減少上下文。</string>
+    <string name="za7_error_permission">缺少必要權限，請檢查 Android 權限與工具授權。</string>
+    <string name="za7_error_cancelled">操作已取消。</string>
+    <string name="za7_error_storage">儲存空間不足，請清出空間後再試。</string>
+    <string name="za7_error_memory">記憶體不足，請關閉其他 App 或改用較小的模型。</string>
+    <string name="za7_error_audio">暫時無法使用音訊，請檢查麥克風權限與其他 App 是否占用音訊。</string>
+    <string name="za7_error_corrupt">模型檔案不完整或不相容，請重新下載或選擇相容檔案。</string>
+    <string name="za7_error_unsupported">這個模型、服務或裝置不支援此操作。</string>
+    <string name="za7_error_request">服務拒絕了請求，請檢查模型與請求設定。</string>
+    <string name="za7_error_reasoning">模型不支援目前的推理設定，請改選其他程度。</string>
+    <string name="za7_error_format">資料格式不正確，請檢查輸入或檔案內容。</string>
+    <string name="za7_error_config">此功能尚未設定完成，請先到設定中選擇服務或模型。</string>
+</resources>

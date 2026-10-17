@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="za7_reasoning_minimal">Minimal</string>
+    <string name="za7_reasoning_detected">Showing the supported reasoning controls advertised by this model or its local runtime.</string>
+    <string name="za7_reasoning_unknown">This backend has not advertised its supported effort levels. Choices are manual; availability depends on the model.</string>
+    <string name="za7_speech_streaming_hint">Live transcripts appear while recording; stopping finalizes the last segment.</string>
+    <string name="za7_speech_recorded_hint">This adapter transcribes after you stop recording. Each recording supports up to 55 seconds.</string>
+    <string name="za7_speech_capability_hint">These settings are for speech input. They do not add native duplex audio to a text model. For live calls, use a compatible protocol in model settings.</string>
+    <string name="za7_speech_language_hint">Leave empty to follow the app language. Language availability depends on the provider and model.</string>
+    <string name="za7_export_summary">Exported %1$d of %2$d files.</string>
+</resources>

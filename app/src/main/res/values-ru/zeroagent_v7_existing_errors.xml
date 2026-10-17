@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_copy_error_message">Копировать сообщение об ошибке</string>
+    <string name="doctor_detail_db_integrity_timeout">Проверка целостности не выполнена или время ожидания истекло.</string>
+    <string name="doctor_detail_probe_failed">Ошибка диагностики: %1$s: %2$s</string>
+    <string name="doctor_fix_browser_mkdirs_failed">mkdirs() вернул false. Возможно, хранилище доступно только для чтения.</string>
+    <string name="doctor_fix_browser_mkdirs_failed_2">mkdirs() вернул false. Возможно, хранилище доступно только для чтения.</string>
+    <string name="doctor_fix_db_repair_failed">Ошибка восстановления: %1$s: %2$s</string>
+    <string name="doctor_pill_failures">Ошибки</string>
+    <string name="gemini_refresh_failed">Не удалось обновить данные аккаунта</string>
+    <string name="grok_refresh_failed">Не удалось обновить данные аккаунта</string>
+    <string name="local_llm_hf_files_error_format">Не удалось получить список файлов: %1$s</string>
+    <string name="local_llm_hf_search_failed_format">Ошибка поиска: %1$s</string>
+    <string name="setting_browser_per_tool_timeout_desc">Предельное время одного вызова инструмента браузера. От 10 секунд до 10 минут.</string>
+    <string name="setting_browser_per_tool_timeout_unit">секунд</string>
+    <string name="setting_browser_single_task_timeout_desc">Ограничивает время одной задачи ИИ в браузере, чтобы избежать бесконечных циклов. От 1 до 60 минут.</string>
+    <string name="setting_browser_single_task_timeout_unit">минут</string>
+    <string name="setting_page_accessibility_repair_shizuku_permission_denied">Требуется Shizuku: ZeroAgent ещё не получил разрешение Shizuku.</string>
+    <string name="setting_page_preferences_network_first_output_timeout">Ожидание первого ответа</string>
+    <string name="setting_page_preferences_network_first_output_timeout_desc">Если за это время не приходит ни одного фрагмента ответа, соединение считается потерянным, и запрос повторяется через новое. 0 отключает проверку. Укажите время больше максимальной подготовки модели: длинный контекст может обрабатываться дольше.</string>
+    <string name="setting_page_preferences_network_first_output_timeout_input">Секунд</string>
+    <string name="setting_page_preferences_network_stall_timeout">Пауза во время ответа</string>
+    <string name="setting_page_preferences_network_stall_timeout_desc">Если после начала ответа данные не поступают в течение этого времени, ответ считается зависшим: частичный ответ продолжается, иначе запрос повторяется. Каждый фрагмент сбрасывает таймер, поэтому медленная работающая модель не прерывается. 0 отключает проверку.</string>
+    <string name="setting_page_tool_approvals_load_failed">Не удалось загрузить список инструментов.</string>
+    <string name="setting_shizuku_toast_permission_denied">Доступ запрещён</string>
+    <string name="setting_ssh_page_error_credential_missing">Укажите пароль или закрытый ключ</string>
+    <string name="setting_ssh_page_error_host_blank">Введите адрес сервера</string>
+    <string name="setting_ssh_page_error_name_blank">Введите имя</string>
+    <string name="setting_ssh_page_error_name_taken">Сервер с таким именем уже существует</string>
+    <string name="setting_ssh_page_error_port_invalid">Порт должен быть от 1 до 65535</string>
+    <string name="setting_ssh_page_error_user_blank">Введите имя пользователя</string>
+    <string name="setting_ssh_page_test_failed">Ошибка: %1$s</string>
+    <string name="setting_sub_agents_page_surface_namespace_error_duplicate">Другой эксперт уже использует пространство имён «%1$s». При совместном использовании их файлы памяти смешаются.</string>
+    <string name="setting_sub_agents_page_surface_namespace_error_empty">Не удалось автоматически создать пространство имён из этого имени. Введите его строчными латинскими буквами, цифрами и дефисами.</string>
+    <string name="setting_termux_command_timeout">Время ожидания команд</string>
+    <string name="setting_termux_command_timeout_desc">Сколько ждать вывод фоновой команды оболочки. От 5 до 600 секунд.</string>
+    <string name="setting_termux_section_timeouts">Время ожидания</string>
+    <string name="setting_termux_verify_other_error">Ошибка проверки: %s</string>
+    <string name="setting_termux_verify_timeout">Время простой проверки</string>
+    <string name="setting_termux_verify_timeout_desc">Время ожидания простой echo-проверки allow-external-apps. От 3 до 30 секунд.</string>
+    <string name="videogen_page_delete_videos_failed">Удалено: %1$d. Ошибок: %2$d. Повторите попытку.</string>
+    <string name="videogen_page_save_failed">Ошибка сохранения: %1$s</string>
+    <string name="workspace_cwd_new_folder_invalid">Введите одно имя папки без косых черт.</string>
+    <string name="za6s_root_denied">Разрешение не выдано. Проверьте менеджер суперпользователя и повторите попытку.</string>
+    <string name="za6s_root_error">Не удалось проверить Root-доступ. Повторите попытку.</string>
+</resources>

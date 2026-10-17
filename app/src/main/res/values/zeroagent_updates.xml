@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_language">App language</string>
+    <string name="zeroagent_language_system">Follow system</string>
+    <string name="zeroagent_language_hint">Follow your device language, or choose a language for ZeroAgent.</string>
+    <string name="zeroagent_glass">Liquid glass</string>
+    <string name="zeroagent_glass_hint">Live glass on small surfaces. Android 12 uses blur; Android 13+ adds refraction. Battery saver uses transparency without blur.</string>
+    <string name="zeroagent_glass_preview">Live preview</string>
+    <string name="zeroagent_glass_opacity">Glass opacity · %1$d%%</string>
+    <string name="zeroagent_glass_off">Solid appearance · glass is off</string>
+    <string name="zeroagent_phone_control">Phone control · current assistant</string>
+    <string name="zeroagent_phone_tools_on">Screen control and app-launch tools are enabled. Accessibility must also be running below.</string>
+    <string name="zeroagent_phone_tools_off">Agent Core instructions alone cannot operate your phone. Enable the screen-control and app-launch tools for this assistant.</string>
+    <string name="zeroagent_phone_enable">Enable tools</string>
+    <string name="zeroagent_phone_model">Model tool calling</string>
+    <string name="zeroagent_phone_model_missing">Choose a chat model with tool-calling support.</string>
+    <string name="zeroagent_phone_model_ready">Tool calling is enabled for the selected model. Actual support depends on your provider.</string>
+    <string name="zeroagent_phone_model_no_tools">Tool calling is off for this model. Choose a supported model and enable its tool capability in model settings.</string>
+    <string name="zeroagent_phone_manage">Manage assistant tools</string>
+    <string name="zeroagent_phone_manage_hint">%1$d tools are individually disabled. Existing disabled tools and approval rules are preserved.</string>
+    <string name="zeroagent_settings_workspace">Chat &amp; workspace</string>
+    <string name="zeroagent_settings_projects">Projects</string>
+    <string name="zeroagent_settings_memory">Memory</string>
+    <string name="zeroagent_settings_translate">Translate</string>
+    <string name="zeroagent_settings_images">Create images</string>
+    <string name="zeroagent_settings_videos">Create videos</string>
+    <string name="zeroagent_settings_saved">Saved messages</string>
+    <string name="zeroagent_settings_usage">Usage statistics</string>
+    <string name="zeroagent_settings_root">Root access</string>
+    <string name="zeroagent_settings_root_hint">Optional superuser access. Every command asks first.</string>
+</resources>
