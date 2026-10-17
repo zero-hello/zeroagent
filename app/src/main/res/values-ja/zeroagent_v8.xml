@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent8_gradient">動くグラデーション背景</string>
+    <string name="zeroagent8_gradient_hint">チャットに柔らかく流れる色を表示します。初期設定はオフです。</string>
+    <string name="zeroagent8_access_ask">承認を求める</string>
+    <string name="zeroagent8_access_assisted">承認を補助</string>
+    <string name="zeroagent8_access_full">フルアクセス</string>
+    <string name="zeroagent8_access_hint">要求：ツールごとに確認。補助：低リスクは自動、危険な操作は確認。フル：通常の確認を省略。このチャットでアプリを閉じるまで有効です。OSの権限は別途必要です。</string>
+    <string name="zeroagent8_access_risk_title">フルアクセスを許可しますか？</string>
+    <string name="zeroagent8_access_risk">通常の確認なしでファイルの読み書き、アプリ操作、通信が可能になります。誤操作で情報漏えいや損失が起きる場合があります。信頼できるタスクとモデルでのみ有効にしてください。Root操作とAndroid権限は引き続き確認が必要です。いつでも戻せます。</string>
+    <string name="zeroagent8_access_accept">リスクを理解し、この権限を許可します</string>
+    <string name="zeroagent8_cmd_compact">この会話を圧縮</string>
+    <string name="zeroagent8_cmd_plan">計画を優先。/plan off で終了</string>
+    <string name="zeroagent8_cmd_goal">目標を設定：/goal 内容。/goal off で解除</string>
+    <string name="zeroagent8_cmd_image">画像生成を開く</string>
+    <string name="zeroagent8_cmd_voice">ネイティブ音声通話を開く</string>
+    <string name="zeroagent8_cmd_access">この会話のアクセス権を変更</string>
+    <string name="zeroagent8_cmd_help">すべてのコマンドを表示</string>
+    <string name="zeroagent8_commands">チャットコマンド</string>
+    <string name="zeroagent8_directive_off">会話モードを解除しました</string>
+    <string name="zeroagent8_directive_saved">この会話に適用しました</string>
+    <string name="zeroagent8_goal_usage">/goal の後にタスクを入力してください</string>
+    <string name="zeroagent8_plan_active">計画モード · /plan off で終了</string>
+    <string name="zeroagent8_goal_active">目標設定済み · /goal off で解除</string>
+    <string name="zeroagent8_download_models">モデルを入手</string>
+    <string name="zeroagent8_voice_model">音声通話モデル</string>
+    <string name="zeroagent8_voice_models_hint">一覧はプロバイダのアカウントから取得します。ネイティブ音声モデルを選択し、接続時に対応を確認します。独自ゲートウェイではIDの手入力が必要な場合があります。</string>
+    <string name="zeroagent8_voice_models_empty">ネイティブ音声モデルが見つかりません。プロバイダ、APIキー、利用権限を確認してください。音声認識やTTSは音声通話モデルではありません。</string>
+    <string name="zeroagent8_voice_provider">音声通話プロバイダ</string>
+    <string name="zeroagent8_voice_refresh">音声モデルを更新</string>
+    <string name="zeroagent8_voice_setup_hint">APIキーを設定したプロバイダとネイティブ音声モデルを選択してください。モデルの音声を直接再生し、端末TTSは使いません。</string>
+    <string name="zeroagent8_voice_start">音声通話を開始</string>
+    <string name="zeroagent8_voice_configure_provider">プロバイダとAPIキーを設定</string>
+    <string name="zeroagent8_voice_speaker">スピーカー</string>
+    <string name="zeroagent8_voice_earpiece">受話口</string>
+    <string name="zeroagent8_voice_headset">ヘッドホン／USB音声</string>
+    <string name="zeroagent8_voice_bluetooth">Bluetooth音声</string>
+    <string name="zeroagent8_voice_other">その他の音声機器</string>
+    <string name="zeroagent8_voice_mute">音声出力をミュート</string>
+    <string name="zeroagent8_voice_unmute">音声出力を有効化</string>
+    <string name="zeroagent8_voice_route_error">この音声機器に切り替えられません。別の出力を選んでください。</string>
+    <string name="zeroagent8_access_title">会話のアクセス権</string>
+    <string name="zeroagent8_tool_rules_hint">補助モードで追加確認が必要なツールを設定します。低リスクは自動実行し、危険な操作は会話で明示的に許可しない限り確認します。フルアクセスは会話内で切り替えます。</string>
+</resources>

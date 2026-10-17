@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent7_reasoning_minimal">Минимальный</string>
+    <string name="zeroagent7_reasoning_detected">Показаны настройки рассуждения, поддерживаемые моделью или локальной средой.</string>
+    <string name="zeroagent7_reasoning_unknown">Сервер не сообщил поддерживаемые уровни. Параметры задаются вручную; поддержка зависит от модели.</string>
+    <string name="zeroagent7_speech_streaming_hint">Текст появляется во время записи. После остановки завершается последний фрагмент.</string>
+    <string name="zeroagent7_speech_recorded_hint">Этот интерфейс распознаёт звук после остановки записи. Максимум 55 секунд на запись.</string>
+    <string name="zeroagent7_speech_capability_hint">Это настройки голосового ввода. Они не добавляют текстовой модели двусторонний звук. Для звонков выберите совместимый протокол в настройках модели.</string>
+    <string name="zeroagent7_speech_language_hint">Пустое поле означает язык приложения. Поддержка языка зависит от сервиса и модели.</string>
+    <string name="zeroagent7_export_summary">Экспортировано файлов: %1$d из %2$d.</string>
+</resources>

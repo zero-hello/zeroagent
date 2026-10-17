@@ -1,0 +1,451 @@
+package me.rerere.zeroagent.ui.pages.chat
+
+import android.app.Application
+import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.net.toUri
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import me.rerere.ai.core.MessageRole
+import me.rerere.ai.provider.Model
+import me.rerere.ai.ui.UIMessage
+import me.rerere.ai.ui.UIMessagePart
+import me.rerere.ai.ui.isEmptyInputMessage
+import me.rerere.zeroagent.R
+import me.rerere.zeroagent.data.datastore.Settings
+import me.rerere.zeroagent.data.datastore.SettingsStore
+import me.rerere.zeroagent.data.datastore.getCurrentAssistant
+import me.rerere.zeroagent.data.datastore.getCurrentChatModel
+import me.rerere.zeroagent.data.usage.TurnFooter
+import me.rerere.zeroagent.data.usage.TurnNode
+import me.rerere.zeroagent.data.usage.UsageLedger
+import me.rerere.zeroagent.data.usage.UsageTurnViewFactory
+import me.rerere.zeroagent.data.files.FilesManager
+import me.rerere.zeroagent.data.model.Assistant
+import me.rerere.zeroagent.data.model.Avatar
+import me.rerere.zeroagent.data.model.Conversation
+import me.rerere.zeroagent.data.model.MessageNode
+import me.rerere.zeroagent.data.model.NodeFavoriteTarget
+import me.rerere.zeroagent.data.repository.ConversationRepository
+import me.rerere.zeroagent.data.repository.FavoriteRepository
+import me.rerere.zeroagent.service.ChatError
+import me.rerere.zeroagent.service.ChatService
+import me.rerere.zeroagent.ui.hooks.writeStringPreference
+import me.rerere.zeroagent.ui.hooks.ChatInputState
+import me.rerere.zeroagent.utils.UiState
+import me.rerere.zeroagent.utils.UpdateChecker
+import java.util.Locale
+import kotlin.uuid.Uuid
+
+private const val TAG = "ChatVM"
+
+/** D6 — how often the footer re-reads the ledger while a turn is running. */
+private const val TURN_FOOTER_LIVE_REFRESH_MS = 1_000L
+
+class ChatVM(
+    id: String,
+    private val context: Application,
+    private val settingsStore: SettingsStore,
+    private val conversationRepo: ConversationRepository,
+    private val chatService: ChatService,
+    val updateChecker: UpdateChecker,
+    private val filesManager: FilesManager,
+    private val favoriteRepository: FavoriteRepository,
+    private val usageLedger: UsageLedger,
+) : ViewModel() {
+    private val _conversationId: Uuid = Uuid.parse(id)
+    val conversation: StateFlow<Conversation> = chatService.getConversationFlow(_conversationId)
+    var chatListInitialized by mutableStateOf(false) // 聊天列表是否已经滚动到底部
+
+    // 聊天输入状态 - 保存在 ViewModel 中避免 TransactionTooLargeException
+    val inputState = ChatInputState()
+
+
+
+    // 异步任务 (从ChatService获取，响应式)
+    val conversationJob: StateFlow<Job?> =
+        chatService
+            .getGenerationJobStateFlow(_conversationId)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /**
+     * P2-12b / D6 - the ledger rows folded into a per-turn footer, keyed by assistant message id.
+     *
+     * Attribution is by time window: a node owns `[its createdAt, the next node's createdAt)`.
+     * The window ends at the next node, not at `message.finishedAt`, because a streamed call
+     * writes its ledger row just after the `Finish` chunk stamped `finishedAt` - a window
+     * closed there would miss the whole default streaming path. Windows are recomputed only
+     * when the node timestamps change, not on every streamed token, and a read failure simply
+     * yields an empty map so the footer renders nothing rather than stale numbers.
+     *
+     * Two things make the footer real-time (D6):
+     *  - while a turn is running the ledger is re-read on a short tick, so a call that just
+     *    completed shows up without waiting for the whole turn (tool loop and all) to end;
+     *  - the just-finished turn is re-read once `conversationJob` goes idle, because its last row
+     *    lands after the message's `finishedAt` was persisted.
+     *
+     * `TurnFooter.startedAtMs` is the wall clock of the round the user started, so the UI can
+     * count the turn's elapsed time up from there and freeze it when the reply ends.
+     */
+    val turnFooters: StateFlow<Map<String, TurnFooter>> =
+        combine(
+            conversation.map { conv ->
+                val zone = TimeZone.currentSystemDefault()
+                conv.messageNodes.mapNotNull { node ->
+                    val message = runCatching { node.currentMessage }.getOrNull()
+                        ?: return@mapNotNull null
+                    TurnNode(
+                        messageId = message.id.toString(),
+                        role = message.role,
+                        createdAtMs = message.createdAt.toInstant(zone).toEpochMilliseconds(),
+                        finishedAtMs = message.finishedAt?.let { finished ->
+                            runCatching { finished.toInstant(zone).toEpochMilliseconds() }.getOrNull()
+                        },
+                    )
+                }
+            },
+            conversationJob.map { it != null },
+        ) { nodes, busy -> nodes to busy }
+            .distinctUntilChanged()
+            .flatMapLatest { (nodes, busy) ->
+                flow {
+                    // Only an assistant node can be the turn being generated right now.
+                    val liveMessageId = if (busy) {
+                        nodes.lastOrNull()?.takeIf { it.role == MessageRole.ASSISTANT }?.messageId
+                    } else {
+                        null
+                    }
+                    suspend fun snapshot(): Map<String, TurnFooter> {
+                        val records = runCatching {
+                            usageLedger.recordsForConversation(_conversationId.toString())
+                        }.getOrDefault(emptyList())
+                        return UsageTurnViewFactory.footersFor(nodes, records, liveMessageId)
+                    }
+                    emit(snapshot())
+                    while (busy) {
+                        delay(TURN_FOOTER_LIVE_REFRESH_MS)
+                        emit(snapshot())
+                    }
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyMap())
+
+    val processingStatus: StateFlow<String?> =
+        chatService
+            .getProcessingStatusFlow(_conversationId)
+
+    val conversationJobs = chatService
+        .getConversationJobs()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
+    init {
+        // 添加对话引用
+        chatService.addConversationReference(_conversationId)
+
+        // 初始化对话
+        viewModelScope.launch {
+            chatService.initializeConversation(_conversationId)
+        }
+
+        // 记住对话ID, 方便下次启动恢复
+        context.writeStringPreference("lastConversationId", _conversationId.toString())
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        // 移除对话引用
+        chatService.removeConversationReference(_conversationId)
+    }
+
+    // 用户设置
+    val settings: StateFlow<Settings> =
+        settingsStore.settingsFlow.stateIn(viewModelScope, SharingStarted.Eagerly, Settings.dummy())
+
+    // 网络搜索(每个助手独立)
+    val enableWebSearch = settings.map {
+        it.getCurrentAssistant().enableWebSearch
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    // 当前模型
+    val currentChatModel = settings.map { settings ->
+        settings.getCurrentChatModel()
+    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    // 错误状态
+    val errors: StateFlow<List<ChatError>> = chatService.errors
+
+    fun dismissError(id: Uuid) = chatService.dismissError(id)
+
+    fun clearAllErrors() = chatService.clearAllErrors()
+
+    val messageQueue = chatService.getMessageQueueFlow(_conversationId)
+
+    fun removeQueuedMessage(id: Uuid) = chatService.removeQueuedMessage(_conversationId, id)
+
+    fun beginEditQueuedMessage(id: Uuid) = chatService.beginEditQueuedMessage(_conversationId, id)
+
+    fun finishEditQueuedMessage(id: Uuid, parts: List<UIMessagePart>?) =
+        chatService.finishEditQueuedMessage(_conversationId, id, parts)
+
+    fun resumeMessageQueue() = chatService.resumeMessageQueue(_conversationId)
+
+    // 生成完成
+    val generationDoneFlow: SharedFlow<Uuid> = chatService.generationDoneFlow
+
+    // MCP管理器
+    val mcpManager = chatService.mcpManager
+
+    // 更新设置
+    fun updateSettings(newSettings: Settings): Job {
+        return viewModelScope.launch {
+            val oldSettings = settings.value
+            // 检查用户头像是否有变化，如果有则删除旧头像
+            checkUserAvatarDelete(oldSettings, newSettings)
+            settingsStore.update(newSettings)
+        }
+    }
+
+    // 检查用户头像删除
+    private fun checkUserAvatarDelete(oldSettings: Settings, newSettings: Settings) {
+        val oldAvatar = oldSettings.displaySetting.userAvatar
+        val newAvatar = newSettings.displaySetting.userAvatar
+
+        if (oldAvatar is Avatar.Image && oldAvatar != newAvatar) {
+            filesManager.deleteChatFiles(listOf(oldAvatar.url.toUri()))
+        }
+    }
+
+    // 设置聊天模型
+    fun setChatModel(assistant: Assistant, model: Model) {
+        viewModelScope.launch {
+            settingsStore.update { it.copy(chatModelId = model.id) }
+            chatService.updateConversationState(_conversationId) { it.copy(chatModelId = model.id) }
+            conversationRepo.updateChatModel(_conversationId, model.id)
+        }
+    }
+
+    // Update checker
+    val updateState = settingsStore.settingsFlow
+        .map { settings ->
+            !settings.init &&
+                settings.displaySetting.updateCheckDisabledUntilEpochMillis <= System.currentTimeMillis()
+        }
+        .distinctUntilChanged()
+        .flatMapLatest { enabled ->
+            if (enabled) updateChecker.updateState else flowOf(UiState.Loading)
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
+            UiState.Loading,
+        )
+
+    /**
+     * 处理消息发送
+     *
+     * @param content 消息内容
+     * @param answer 是否触发消息生成，如果为false，则仅添加消息到消息列表中
+     */
+    fun handleMessageSend(content: List<UIMessagePart>,answer: Boolean = true) {
+        if (content.isEmptyInputMessage()) return
+
+        chatService.sendMessage(_conversationId, content, answer)
+    }
+
+    fun handleMessageEdit(parts: List<UIMessagePart>, messageId: Uuid) {
+        if (parts.isEmptyInputMessage()) return
+
+        viewModelScope.launch {
+            chatService.editMessage(_conversationId, messageId, parts)
+        }
+    }
+
+    fun handleCompressContext(additionalPrompt: String, targetTokens: Int, keepRecentMessages: Int): Deferred<Result<Unit>> {
+        return chatService.compressConversationAsync(
+            conversationId = _conversationId,
+            conversation = conversation.value,
+            additionalPrompt = additionalPrompt,
+            targetTokens = targetTokens,
+            keepRecentMessages = keepRecentMessages,
+        )
+    }
+
+    suspend fun forkMessage(message: UIMessage): Conversation {
+        return chatService.forkConversationAtMessage(_conversationId, message.id)
+    }
+
+    fun deleteMessage(message: UIMessage) {
+        viewModelScope.launch {
+            chatService.deleteMessage(_conversationId, message)
+        }
+    }
+
+    fun showDeleteBlockedWhileGeneratingError() {
+        chatService.addError(
+            error = IllegalStateException(context.getString(R.string.chat_stop_generation_before_delete)),
+            conversationId = _conversationId,
+            title = context.getString(R.string.error_title_operation)
+        )
+    }
+
+    fun regenerateAtMessage(
+        message: UIMessage,
+        regenerateAssistantMsg: Boolean = true
+    ) {
+        chatService.regenerateAtMessage(_conversationId, message, regenerateAssistantMsg)
+    }
+
+    fun handleToolApproval(
+        toolCallId: String,
+        approved: Boolean,
+        reason: String = "",
+        scope: me.rerere.zeroagent.service.ChatService.ApprovalScope =
+            me.rerere.zeroagent.service.ChatService.ApprovalScope.Once,
+        toolName: String? = null,
+    ) {
+        chatService.handleToolApproval(
+            conversationId = _conversationId,
+            toolCallId = toolCallId,
+            approved = approved,
+            reason = reason,
+            scope = scope,
+            toolName = toolName,
+        )
+    }
+
+    fun handleToolAnswer(
+        toolCallId: String,
+        answer: String,
+    ) {
+        chatService.handleToolApproval(_conversationId, toolCallId, approved = true, answer = answer)
+    }
+
+    suspend fun rerunTool(toolCallId: String): me.rerere.zeroagent.service.ChatService.RerunToolResult =
+        chatService.rerunTool(_conversationId, toolCallId)
+
+    fun stopGeneration() {
+        viewModelScope.launch {
+            chatService.stopGeneration(_conversationId)
+        }
+    }
+
+    fun saveConversationAsync() {
+        viewModelScope.launch {
+            chatService.saveConversation(_conversationId, conversation.value)
+        }
+    }
+
+    fun deleteConversation(conversation: Conversation): Job =
+        viewModelScope.launch {
+            conversationRepo.deleteConversation(conversation)
+        }
+
+    fun updatePinnedStatus(conversation: Conversation) {
+        viewModelScope.launch {
+            conversationRepo.togglePinStatus(conversation.id)
+        }
+    }
+
+    fun moveConversationToAssistant(conversation: Conversation, targetAssistantId: Uuid) {
+        viewModelScope.launch {
+            val conversationFull = conversationRepo.getConversationById(conversation.id) ?: return@launch
+            // Folders are per-assistant groupings; after switching assistant the old folder is
+            // not visible under the new one, so clear the assignment to avoid losing the chat.
+            val updatedConversation = conversationFull.copy(
+                assistantId = targetAssistantId,
+                folderId = null,
+            )
+            // Drop any "Allow for this chat" grants the user gave the previous assistant.
+            // The grants apply to a tool surface the new assistant may use very differently
+            // (different prompt, different tool list), and the user authorised them under
+            // the old persona's behaviour, not this one's. Persistent "Always Allow" grants
+            // stay (they were granted globally) but ChatScope is reset.
+            me.rerere.zeroagent.data.ai.tools.ToolApprovalAllowList.clearChat(conversation.id)
+            if (conversation.id == _conversationId) {
+                chatService.saveConversation(_conversationId, updatedConversation)
+                settingsStore.updateAssistant(targetAssistantId)
+            } else {
+                conversationRepo.updateConversation(updatedConversation)
+            }
+        }
+    }
+
+    fun translateMessage(message: UIMessage, targetLanguage: Locale) {
+        chatService.translateMessage(_conversationId, message, targetLanguage)
+    }
+
+    fun generateTitle(conversation: Conversation, force: Boolean = false) {
+        viewModelScope.launch {
+            val conversationFull = conversationRepo.getConversationById(conversation.id) ?: return@launch
+            chatService.generateTitle(_conversationId, conversationFull, force)
+        }
+    }
+
+    fun generateSuggestion(conversation: Conversation) {
+        viewModelScope.launch {
+            chatService.generateSuggestion(_conversationId, conversation)
+        }
+    }
+
+    fun clearTranslationField(messageId: Uuid) {
+        chatService.clearTranslationField(_conversationId, messageId)
+    }
+
+    fun updateConversation(newConversation: Conversation) {
+        chatService.updateConversationState(_conversationId) {
+            newConversation
+        }
+    }
+
+    fun toggleMessageFavorite(node: MessageNode) {
+        viewModelScope.launch {
+            val currentlyFavorited = favoriteRepository.isNodeFavorited(_conversationId, node.id)
+            if (currentlyFavorited) {
+                favoriteRepository.removeNodeFavorite(_conversationId, node.id)
+            } else {
+                favoriteRepository.addNodeFavorite(
+                    NodeFavoriteTarget(
+                        conversationId = _conversationId,
+                        conversationTitle = conversation.value.title,
+                        nodeId = node.id,
+                        node = node
+                    )
+                )
+            }
+
+            chatService.updateConversationState(_conversationId) { currentConversation ->
+                currentConversation.copy(
+                    messageNodes = currentConversation.messageNodes.map { existingNode ->
+                        if (existingNode.id == node.id) {
+                            existingNode.copy(isFavorite = !currentlyFavorited)
+                        } else {
+                            existingNode
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+}

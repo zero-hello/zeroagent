@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent11_model_parameters">Model settings</string>
+    <string name="zeroagent11_model_parameters_hint">Prompts and generation parameters belong to this model. Leave fields empty for service defaults.</string>
+    <string name="zeroagent11_system_prompt">System prompt</string>
+    <string name="zeroagent11_temperature">Temperature</string>
+    <string name="zeroagent11_max_tokens">Maximum output tokens</string>
+    <string name="zeroagent11_server_default">Service default</string>
+    <string name="zeroagent11_parameter_unavailable">This model or runtime does not expose this control.</string>
+    <string name="zeroagent11_parameter_invalid">Enter a number within the supported range.</string>
+    <string name="zeroagent11_stream_output">Stream the response</string>
+    <string name="zeroagent11_safety_title">Gemini safety settings</string>
+    <string name="zeroagent11_safety_harassment">Harassment</string>
+    <string name="zeroagent11_safety_hate">Hate speech</string>
+    <string name="zeroagent11_safety_sexual">Sexually explicit content</string>
+    <string name="zeroagent11_safety_dangerous">Dangerous content</string>
+    <string name="zeroagent11_safety_civic">Civic integrity</string>
+    <string name="zeroagent11_safety_strict">Strict: block low risk and above</string>
+    <string name="zeroagent11_safety_balanced">Balanced: block medium risk and above</string>
+    <string name="zeroagent11_safety_high">Block high risk only</string>
+    <string name="zeroagent11_safety_none">Do not block by category rating</string>
+    <string name="zeroagent11_safety_off">Turn off this category check</string>
+    <string name="zeroagent11_speech_services">Speech services</string>
+    <string name="zeroagent11_voice_conversation">Voice conversation</string>
+    <string name="zeroagent11_voice_service_hint">Enter the endpoint and API key to discover and select compatible realtime models automatically. Calls use native model audio.</string>
+    <string name="zeroagent11_voice_add_provider">Add a voice service</string>
+    <string name="zeroagent11_base_url">API base URL</string>
+    <string name="zeroagent11_detect_models">Discover models again</string>
+    <string name="zeroagent11_read_aloud">Read aloud</string>
+    <string name="zeroagent11_model_tools">Model tools and permissions</string>
+    <string name="zeroagent11_model_memory">Model memory</string>
+    <string name="zeroagent11_model_mcp">Model MCP services</string>
+    <string name="zeroagent11_save">Save</string>
+    <string name="zeroagent11_notification_no_title">No title</string>
+    <string name="zeroagent11_notification_no_text">No text</string>
+</resources>
