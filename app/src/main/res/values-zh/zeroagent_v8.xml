@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="za8_gradient">动态渐变背景</string>
+    <string name="za8_gradient_hint">在聊天页显示柔和流动的色彩，默认关闭。</string>
+    <string name="za8_access_ask">要求批准</string>
+    <string name="za8_access_assisted">代我批准</string>
+    <string name="za8_access_full">完整访问权限</string>
+    <string name="za8_access_hint">要求批准：每次工具调用都先询问。代我批准：低风险工具直接执行，风险操作仍询问。完整访问：跳过一般提示。仅对当前对话、本次打开期间有效，系统权限仍须另外授予。</string>
+    <string name="za8_access_risk_title">开启完整访问权限？</string>
+    <string name="za8_access_risk">Agent 可以跳过一般工具提示，读取或修改文件、操作 App、发送网络请求。错误操作可能泄露数据或造成损失，仅在信任任务与模型时开启。Root 指令及 Android 系统授权仍须确认，你可以随时切回要求批准。</string>
+    <string name="za8_access_accept">我已了解并接受上述高风险授权</string>
+    <string name="za8_cmd_compact">压缩当前对话</string>
+    <string name="za8_cmd_plan">先规划再行动；/plan off 可关闭</string>
+    <string name="za8_cmd_goal">设置目标：/goal 你的任务；/goal off 可清除</string>
+    <string name="za8_cmd_image">打开绘图页面</string>
+    <string name="za8_cmd_voice">打开原生实时语音</string>
+    <string name="za8_cmd_access">调整当前对话的访问权限</string>
+    <string name="za8_cmd_help">显示所有指令</string>
+    <string name="za8_commands">对话指令</string>
+    <string name="za8_directive_off">已清除此对话模式</string>
+    <string name="za8_directive_saved">已应用到当前对话</string>
+    <string name="za8_goal_usage">请在 /goal 后输入想完成的任务</string>
+    <string name="za8_plan_active">规划模式 · /plan off 可关闭</string>
+    <string name="za8_goal_active">已设置目标 · /goal off 可清除</string>
+    <string name="za8_download_models">下载模型</string>
+    <string name="za8_voice_model">实时语音模型</string>
+    <string name="za8_voice_models_hint">列表来自你的供应商账户，请选择原生实时音频模型，连接时会确认支持。自定义网关可能需要手动输入模型 ID。</string>
+    <string name="za8_voice_models_empty">此账户未列出原生实时音频模型。请确认供应商、API Key 与账户权限；语音识别和文字转语音服务不能直接作为实时通话模型。</string>
+    <string name="za8_voice_provider">语音通话供应商</string>
+    <string name="za8_voice_refresh">重新获取语音模型</string>
+    <string name="za8_voice_setup_hint">选择已填写 API Key 的供应商与原生实时语音模型。通话直接播放模型音频，不使用手机文字转语音。</string>
+    <string name="za8_voice_start">开始语音对话</string>
+    <string name="za8_voice_configure_provider">设置供应商与 API Key</string>
+    <string name="za8_voice_speaker">扬声器</string>
+    <string name="za8_voice_earpiece">听筒</string>
+    <string name="za8_voice_headset">耳机／USB 音频</string>
+    <string name="za8_voice_bluetooth">蓝牙音频</string>
+    <string name="za8_voice_other">其他音频设备</string>
+    <string name="za8_voice_mute">关闭语音输出</string>
+    <string name="za8_voice_unmute">开启语音输出</string>
+    <string name="za8_voice_route_error">目前无法切换到此音频设备，请选择其他输出。</string>
+    <string name="za8_access_title">对话访问权限</string>
+    <string name="za8_tool_rules_hint">这里设置「代我批准」时额外要求批准的工具。低风险工具可自动执行，风险操作仍会询问，除非你明确授予此次对话使用。完整访问请从对话内切换。</string>
+</resources>
