@@ -1,0 +1,81 @@
+package me.rerere.zeroagent.ui.components.ui
+
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import android.os.Build
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import dev.chrisbanes.haze.blur.HazeColorEffect
+import dev.chrisbanes.haze.HazePerformanceMode
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.blur.hazeBlur
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.glass.GlassDefaults
+import dev.chrisbanes.haze.glass.GlassStyle
+import dev.chrisbanes.haze.glass.OpticalSizeValue
+import dev.chrisbanes.haze.glass.hazeGlass
+import dev.chrisbanes.haze.glass.material3.Material3
+import me.rerere.zeroagent.ui.context.LocalSettings
+import me.rerere.zeroagent.data.datastore.DisplaySetting
+
+fun DisplaySetting.safeGlassOpacity(): Float =
+    if (liquidGlassOpacity.isFinite()) liquidGlassOpacity.coerceIn(0.15f, 0.95f) else 0.65f
+
+/** The source is live UI content; no screenshot polling or CPU bitmap blur. */
+@Composable
+fun Modifier.zeroAgentGlass(
+    state: HazeState, radius: Int = 24,
+    display: DisplaySetting = LocalSettings.current.displaySetting,
+    backgroundColor: Color? = null,
+    shape: Shape = RoundedCornerShape(radius.dp),
+): Modifier {
+    if (!display.liquidGlassEnabled) return this
+    val base = backgroundColor?.takeUnless { it == Color.Unspecified } ?: MaterialTheme.colorScheme.surfaceContainer
+    val tint = base.copy(alpha = base.alpha * display.safeGlassOpacity())
+    val edge = Brush.verticalGradient(listOf(Color.White.copy(alpha = .4f), Color.White.copy(alpha = .045f), Color.White.copy(alpha = .2f)))
+    // Bound the sampled layer before and after the effect. Never glass the whole drawer
+    // or capture a parent containing its own glass children.
+    val bounded = this.graphicsLayer {
+        this.shape = shape
+        clip = true
+        // An offscreen layer masks the complete RenderEffect result on Android 12 too.
+        compositingStrategy = CompositingStrategy.Offscreen
+    }
+    if (Build.VERSION.SDK_INT < 33) {
+        val blur = HazeBlurStyle {
+            blurEnabled(true)
+            backgroundColor(Color.Transparent)
+            blurRadius(20.dp)
+            noiseFactor(0f)
+            colorEffects(emptyList())
+            fallbackColorEffect(HazeColorEffect.tint(tint))
+        }
+        return bounded.hazeBlur(input = HazeInput.Sources(state), style = blur,
+            performanceMode = HazePerformanceMode.Performance, expandLayerBounds = false)
+            .clip(shape).background(tint).border(0.8.dp, edge, shape)
+    }
+    val style = GlassStyle.Material3(containerColor = Color.Transparent, tint = tint) {
+        optics(GlassDefaults.optics.copy(
+            blurRadius = OpticalSizeValue.Fixed(18.dp),
+            depth = OpticalSizeValue.Fixed(0.65f),
+            refractionStrength = 0.7f,
+            refractionHeightFraction = 0.25f,
+            refractionDisplacement = 18.dp,
+            refractionFoldStrength = 0.25f,
+            refractionDetailIntensity = 0.5f,
+        ))
+        shape(shape as? RoundedCornerShape ?: RoundedCornerShape(radius.dp))
+    }
+    return bounded.hazeGlass(input = HazeInput.Sources(state), style = style,
+        performanceMode = HazePerformanceMode.Performance, expandLayerBounds = false).clip(shape).border(0.8.dp, edge, shape)
+}

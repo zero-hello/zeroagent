@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wake_v11_fixed_phrase">Wake phrase is fixed to Hey Zero.</string>
+    <string name="wake_v11_continuous_hint">Keep quiet briefly for calibration, then say Hey Zero repeatedly with about half a second between phrases. Valid samples are saved automatically until the target is reached.</string>
+    <string name="wake_v11_calibrating">Measuring ambient noise — keep quiet for about 0.4 seconds.</string>
+    <string name="wake_v11_listening">Ready — say Hey Zero, then pause briefly.</string>
+    <string name="wake_v11_speaking">Capturing speech — finish the phrase naturally.</string>
+    <string name="wake_v11_saving">Checking and saving this sample. The count changes only after saving succeeds.</string>
+    <string name="wake_v11_accepted_quality">Last saved sample: %1$.2f s · signal/noise %2$.1f dB</string>
+    <string name="wake_v11_rejected">Not counted: %1$s Say it again, or stop and re-record.</string>
+    <string name="wake_v11_save_failed">The sample could not be saved. It was not counted; existing saved samples remain unchanged.</string>
+    <string name="wake_v11_speech_title">Voice conversation</string>
+    <string name="wake_v11_speech_settings">Open unified voice conversation settings</string>
+    <string name="wake_v11_voice_missing">No native voice conversation model is configured.</string>
+    <string name="wake_v11_shared_voice_model">The assistant uses the provider and model selected in voice conversation settings. STT/TTS and chat models are not selected separately here.</string>
+    <string name="wake_v11_language_preserves">Changing the app or wake language keeps saved Hey Zero samples. Acoustic samples stay on this device.</string>
+    <string name="wake_v11_quality_quiet">Speech is too quiet above the microphone floor. Move closer and speak naturally.</string>
+    <string name="wake_v11_quality_short">The speech segment is too short. Say the complete Hey Zero phrase.</string>
+    <string name="wake_v11_quality_long">The segment is too long or has no clear pause. Say one phrase, then pause for half a second.</string>
+    <string name="wake_v11_quality_noisy">Background sound masks speech or lacks clear voice structure. Move somewhere quieter.</string>
+    <string name="wake_v11_quality_clipped">The microphone signal is distorted. Speak softer or move slightly farther away.</string>
+    <string name="wake_v11_quality_inconsistent">This recording differs too much from the saved phrases. Use a similar speaking pace and distance.</string>
+    <string name="wake_v11_quality_timeout">No complete phrase was captured before the waiting limit. Check microphone access and speak after calibration.</string>
+    <string name="wake_v11_quality_tonal">The recording resembles a steady tone rather than a spoken phrase. Turn off test tones or music and try again.</string>
+    <string name="wake_v11_new_recordings_hint">Starting a new collection clears the saved samples and acoustic profile and pauses background wake listening. They are replaced only after this storage change succeeds.</string>
+    <string name="wake_v11_start_collection">Start continuous recording</string>
+    <string name="wake_v11_consent_body">The assistant uses microphone access and the native model selected in voice conversation settings. Conversation audio is sent to that service. Hey Zero listening is enabled separately, uses a foreground notification and device resources, and keeps its personal acoustic samples on this device. It does not transcribe or verify the spoken words during enrollment.</string>
+</resources>

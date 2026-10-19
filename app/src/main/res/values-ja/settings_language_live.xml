@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doctor_error_internal">診断を完了できませんでした</string>
+    <string name="doctor_report_title">ZeroAgent — 診断レポート</string>
+    <string name="doctor_report_generated">生成日時</string>
+    <string name="doctor_report_summary">概要</string>
+    <string name="accessibility_action_ok">成功</string>
+    <string name="accessibility_action_failed">失敗</string>
+    <string name="accessibility_service_inactive">ユーザー補助サービスが実行されていません。</string>
+    <string name="accessibility_action_tap">タップ</string>
+    <string name="accessibility_action_long_press">長押し</string>
+    <string name="accessibility_action_swipe">スワイプ</string>
+    <string name="accessibility_action_scroll">スクロール</string>
+    <string name="accessibility_action_find_node">要素を検索</string>
+    <string name="accessibility_action_click_node">要素を操作</string>
+    <string name="accessibility_action_set_text">テキストを入力</string>
+    <string name="accessibility_action_screenshot">スクリーンショットを撮影</string>
+    <string name="accessibility_action_read_window">画面構造を取得</string>
+    <string name="accessibility_action_system">システム操作</string>
+    <string name="accessibility_action_other">操作</string>
+    <string name="wake_capture_countdown">%1$d 秒後に開始します。静かにしてください。</string>
+    <string name="wake_capture_initializing">マイクを準備しています…</string>
+    <string name="wake_capture_resting">録音を保存しました。次の録音案内をお待ちください。</string>
+    <string name="wake_capture_snr">推定信号対雑音比：%1$.1f dB</string>
+    <string name="wake_capture_threshold">点線のノイズしきい値を超えるようにはっきり話してください。</string>
+    <string name="wake_capture_saved">%2$d 件中 %1$d 件の録音を保存</string>
+    <string name="wake_capture_waveform">マイク音量の波形</string>
+    <string name="tool_approval_review">確認して承認</string>
+    <string name="tool_approval_hint">ツールの詳細と承認範囲を確認してください。既存の安全規則と Android の権限は引き続き適用されます。</string>
+    <string name="tool_approval_details">ツールの詳細を表示</string>
+    <string name="glass_preview_prompt">今日の予定を立ててください。</string>
+    <string name="glass_preview_reply">まず重要なタスクを整理し、休憩や予定外の変更にも時間を残しましょう。</string>
+</resources>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent12_voice_add_provider">%1$s 추가</string>
+    <string name="zeroagent12_voice_shared_accounts">모델 설정과 동일한 제공업체 계정 및 API 키를 사용합니다.</string>
+</resources>

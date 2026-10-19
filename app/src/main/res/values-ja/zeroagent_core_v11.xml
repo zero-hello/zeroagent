@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent11_model_parameters">モデル設定</string>
+    <string name="zeroagent11_model_parameters_hint">プロンプトと生成設定はこのモデルに保存されます。空欄はサービスの既定値です。</string>
+    <string name="zeroagent11_system_prompt">システムプロンプト</string>
+    <string name="zeroagent11_temperature">温度</string>
+    <string name="zeroagent11_max_tokens">最大出力トークン数</string>
+    <string name="zeroagent11_server_default">サービスの既定値</string>
+    <string name="zeroagent11_parameter_unavailable">このモデルまたは実行エンジンはこの設定に対応していません。</string>
+    <string name="zeroagent11_parameter_invalid">対応範囲内の数値を入力してください。</string>
+    <string name="zeroagent11_stream_output">回答を逐次表示</string>
+    <string name="zeroagent11_safety_title">Gemini の安全設定</string>
+    <string name="zeroagent11_safety_harassment">ハラスメント</string>
+    <string name="zeroagent11_safety_hate">ヘイトスピーチ</string>
+    <string name="zeroagent11_safety_sexual">性的に露骨な内容</string>
+    <string name="zeroagent11_safety_dangerous">危険な内容</string>
+    <string name="zeroagent11_safety_civic">市民・選挙に関する内容</string>
+    <string name="zeroagent11_safety_strict">厳格：低リスク以上をブロック</string>
+    <string name="zeroagent11_safety_balanced">標準：中リスク以上をブロック</string>
+    <string name="zeroagent11_safety_high">高リスクのみブロック</string>
+    <string name="zeroagent11_safety_none">カテゴリ評価ではブロックしない</string>
+    <string name="zeroagent11_safety_off">このカテゴリの検査を無効化</string>
+    <string name="zeroagent11_speech_services">音声サービス</string>
+    <string name="zeroagent11_voice_conversation">音声会話</string>
+    <string name="zeroagent11_voice_service_hint">エンドポイントと API キーを入力すると、対応するリアルタイム音声モデルを自動検出・選択します。通話にはモデルの音声を直接使用します。</string>
+    <string name="zeroagent11_voice_add_provider">音声サービスを追加</string>
+    <string name="zeroagent11_base_url">API ベース URL</string>
+    <string name="zeroagent11_detect_models">モデルを再検出</string>
+    <string name="zeroagent11_read_aloud">テキスト読み上げ</string>
+    <string name="zeroagent11_model_tools">モデルのツールと権限</string>
+    <string name="zeroagent11_model_memory">モデルのメモリ</string>
+    <string name="zeroagent11_model_mcp">モデルの MCP サービス</string>
+    <string name="zeroagent11_save">保存</string>
+    <string name="zeroagent11_notification_no_title">タイトルなし</string>
+    <string name="zeroagent11_notification_no_text">テキストなし</string>
+</resources>

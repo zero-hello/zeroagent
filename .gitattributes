@@ -1,0 +1,2 @@
+# Keep Kotlin path-guard changes reviewable across the historical NUL literal.
+app/src/main/java/me/rerere/zeroagent/data/ai/tools/local/FileManagerTool.kt text diff

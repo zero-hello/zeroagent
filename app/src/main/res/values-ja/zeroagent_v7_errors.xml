@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent7_error_title">操作を完了できません</string>
+    <string name="zeroagent7_error_unknown">エラーが発生しました。再試行し、続く場合は診断情報をコピーしてください。</string>
+    <string name="zeroagent7_error_network">接続できません。ネットワークとサービスのアドレスを確認してください。</string>
+    <string name="zeroagent7_error_timeout">操作がタイムアウトしました。接続を確認して再試行してください。</string>
+    <string name="zeroagent7_error_auth">アクセスが拒否されました。APIキーとモデルの権限を確認してください。</string>
+    <string name="zeroagent7_error_rate">リクエストが多すぎます。少し待って再試行してください。</string>
+    <string name="zeroagent7_error_quota">利用量または残高の上限に達しました。アカウントを確認してください。</string>
+    <string name="zeroagent7_error_service">サービスは一時的に利用できません。後で再試行してください。</string>
+    <string name="zeroagent7_error_model">モデルまたは接続先が見つかりません。名前とアドレスを確認してください。</string>
+    <string name="zeroagent7_error_context">会話がモデルの上限を超えています。新しいチャットを始めるか履歴を減らしてください。</string>
+    <string name="zeroagent7_error_permission">必要な権限がありません。Androidの権限とツールの許可を確認してください。</string>
+    <string name="zeroagent7_error_cancelled">操作をキャンセルしました。</string>
+    <string name="zeroagent7_error_storage">保存領域が不足しています。空き容量を増やして再試行してください。</string>
+    <string name="zeroagent7_error_memory">メモリが不足しています。他のアプリを閉じるか小さなモデルを使ってください。</string>
+    <string name="zeroagent7_error_audio">音声を利用できません。マイクの権限と他のアプリの使用状況を確認してください。</string>
+    <string name="zeroagent7_error_corrupt">モデルファイルが不完全か非対応です。再ダウンロードするか対応ファイルを選んでください。</string>
+    <string name="zeroagent7_error_unsupported">このモデル、サービス、端末は操作に対応していません。</string>
+    <string name="zeroagent7_error_request">リクエストが拒否されました。モデルとリクエストの設定を確認してください。</string>
+    <string name="zeroagent7_error_reasoning">このモデルは選択した推論設定に対応していません。別のレベルを選んでください。</string>
+    <string name="zeroagent7_error_format">データ形式が正しくありません。入力内容やファイルを確認してください。</string>
+    <string name="zeroagent7_error_config">この機能は未設定です。設定でサービスまたはモデルを選んでください。</string>
+</resources>

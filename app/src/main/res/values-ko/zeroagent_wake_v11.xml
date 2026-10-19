@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wake_v11_fixed_phrase">호출어는 Hey Zero로 고정되어 있습니다.</string>
+    <string name="wake_v11_continuous_hint">먼저 잠시 조용히 기다려 주변 소음을 측정한 뒤 Hey Zero를 반복해서 말해 주세요. 말할 때마다 약 0.5초씩 쉬어 주세요. 기준을 통과한 샘플은 목표 개수에 도달할 때까지 자동으로 저장됩니다.</string>
+    <string name="wake_v11_calibrating">주변 소음을 측정하고 있습니다. 약 0.4초 동안 조용히 기다려 주세요.</string>
+    <string name="wake_v11_listening">준비되었습니다. Hey Zero라고 말한 뒤 잠시 쉬어 주세요.</string>
+    <string name="wake_v11_speaking">음성을 녹음하고 있습니다. 호출어를 자연스럽게 끝까지 말해 주세요.</string>
+    <string name="wake_v11_saving">이 샘플을 확인하고 저장하는 중입니다. 저장에 성공한 뒤에만 개수가 바뀝니다.</string>
+    <string name="wake_v11_accepted_quality">마지막 저장 샘플: %1$.2f초 · 신호 대 잡음비 %2$.1f dB</string>
+    <string name="wake_v11_rejected">개수에 포함되지 않았습니다: %1$s 다시 말하거나 녹음을 중지한 뒤 다시 녹음해 주세요.</string>
+    <string name="wake_v11_save_failed">샘플을 저장하지 못해 개수에 포함되지 않았습니다. 기존에 저장된 샘플은 그대로 유지됩니다.</string>
+    <string name="wake_v11_speech_title">음성 대화</string>
+    <string name="wake_v11_speech_settings">음성 대화 통합 설정 열기</string>
+    <string name="wake_v11_voice_missing">음성 대화를 직접 지원하는 모델이 설정되어 있지 않습니다.</string>
+    <string name="wake_v11_shared_voice_model">어시스턴트는 음성 대화 설정에서 선택한 서비스와 모델을 사용합니다. 여기서는 음성 인식(STT), 음성 합성(TTS), 채팅 모델을 따로 선택하지 않습니다.</string>
+    <string name="wake_v11_language_preserves">앱 언어나 호출어 언어를 바꿔도 저장된 Hey Zero 샘플은 유지됩니다. 음향 샘플은 이 기기에만 저장됩니다.</string>
+    <string name="wake_v11_quality_quiet">목소리가 작아 마이크 자체 잡음과 구분하기 어렵습니다. 마이크 가까이에서 자연스럽게 말해 주세요.</string>
+    <string name="wake_v11_quality_short">음성 구간이 너무 짧습니다. Hey Zero를 끝까지 말해 주세요.</string>
+    <string name="wake_v11_quality_long">녹음 구간이 너무 길거나 구간 사이에 분명한 쉼이 없습니다. 한 번 말한 뒤 약 0.5초 동안 쉬어 주세요.</string>
+    <string name="wake_v11_quality_noisy">배경 소음이 목소리를 가리거나 뚜렷한 음성 특징이 없습니다. 더 조용한 곳에서 다시 시도해 주세요.</string>
+    <string name="wake_v11_quality_clipped">마이크 신호가 찌그러졌습니다. 목소리를 조금 낮추거나 마이크에서 약간 떨어져 주세요.</string>
+    <string name="wake_v11_quality_inconsistent">이번 녹음이 기존에 저장된 호출어와 너무 다릅니다. 말하는 속도와 마이크까지의 거리를 비슷하게 유지해 주세요.</string>
+    <string name="wake_v11_quality_timeout">대기 시간 안에 호출어 전체를 녹음하지 못했습니다. 마이크 접근 권한을 확인하고 주변 소음 측정이 끝난 뒤 말해 주세요.</string>
+    <string name="wake_v11_quality_tonal">녹음이 말소리보다 일정한 음에 가깝습니다. 테스트 음이나 음악을 끄고 다시 시도해 주세요.</string>
+    <string name="wake_v11_new_recordings_hint">새로 수집을 시작하면 저장된 샘플과 음향 프로필이 지워지고 백그라운드 호출어 감지가 일시 중지됩니다. 저장 처리가 성공한 뒤에만 새 상태로 전환됩니다.</string>
+    <string name="wake_v11_start_collection">연속 녹음 시작</string>
+    <string name="wake_v11_consent_body">어시스턴트는 마이크와 음성 대화 설정에서 선택한 음성 지원 모델을 사용합니다. 대화 음성은 해당 서비스로 전송됩니다. Hey Zero 감지는 별도로 켜야 하며, 상시 알림과 기기 리소스를 사용합니다. 개인 음향 샘플은 이 기기에만 저장됩니다. 샘플을 수집할 때 음성을 문자로 변환하거나 말한 내용을 확인하지는 않습니다.</string>
+</resources>

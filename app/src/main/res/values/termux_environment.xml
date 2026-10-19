@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="termux_setup_environment">Full terminal environment</string>
+    <string name="termux_setup_source_size">Termux %1$s · %2$s · F-Droid stable</string>
+    <string name="termux_setup_download">Download Termux</string>
+    <string name="termux_setup_install">Install verified Termux</string>
+    <string name="termux_setup_downloading">Downloading Termux</string>
+    <string name="termux_setup_download_ready">Termux installer is ready</string>
+    <string name="termux_setup_install_hint">Tap to review and install the official package.</string>
+    <string name="termux_setup_download_channel">Terminal environment downloads</string>
+    <string name="termux_setup_install_permission">Allow ZeroAgent to install apps from this source, then return to continue.</string>
+    <string name="termux_setup_configure">Copy connection setup command</string>
+    <string name="termux_setup_configure_hint">Paste this command into Termux and run it. It allows authorized apps to execute commands and installs tmux for interactive sessions.</string>
+    <string name="termux_setup_copied">Setup command copied</string>
+    <string name="termux_setup_model_tools">Configure model terminal tools</string>
+    <string name="termux_setup_model_tools_hint">Enable Termux in the current model’s local tools. Conversation approvals and safety rules still apply.</string>
+    <string name="termux_setup_open_failed">Unable to open Termux. Check that it is enabled in Android app settings.</string>
+    <string name="termux_setup_permission_usage">Allow ZeroAgent to execute the terminal commands you approve through Termux. This does not bypass conversation approvals or Android permissions.</string>
+</resources>
