@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="memory12_title">情境记忆</string>
+    <string name="memory12_enable">记住相关对话</string>
+    <string name="memory12_privacy">数据保存在本机。聊天时会将相关片段发送给选定的模型；原有手动记忆单独保留。</string>
+    <string name="memory12_tone">调整回复语气</string>
+    <string name="memory12_tone_hint">参考不确定的情绪语义线索，轻微调整语气及支持的温度；可随时关闭。</string>
+    <string name="memory12_building">正在构建语义大脑…</string>
+    <string name="memory12_initialize">下载并初始化</string>
+    <string name="memory12_error">记忆初始化或检索失败。请检查可用内存、存储空间与网络后重试；普通聊天仍可使用。</string>
+    <string name="memory12_retry">重新初始化</string>
+    <string name="memory12_graph">记忆节点图</string>
+    <string name="memory12_graph_hint">点击节点可查看或删除内容。连线表示余弦相似度高于 0.8。</string>
+    <string name="memory12_recent_count">显示最近 %1$d 个片段</string>
+    <string name="memory12_empty">尚无情境记忆</string>
+    <string name="memory12_erase">清除情境记忆</string>
+    <string name="memory12_consent">下载并验证约 132 MB 的多语言模型，并在本机保存今后的对话片段？相关历史会发送给选定的模型；这不会增加工具访问权限。</string>
+    <string name="memory12_accept">启用并下载</string>
+    <string name="memory12_cancel">取消</string>
+    <string name="memory12_erase_hint">将清除情境记忆与情绪状态，并停止收集。原有手动记忆及对话记录会保留。</string>
+    <string name="memory12_record">记忆片段</string>
+    <string name="memory12_close">关闭</string>
+    <string name="memory12_delete">删除片段</string>
+    <string name="memory12_wake_steps">启用 Hey Zero：设置语音模型 → 启用语音助理 → 选为系统默认助理 → 在下方录制 5 或 10 次并建立唤醒模板 → 开启监听。</string>
+</resources>

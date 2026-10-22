@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_language_workflow_create">创建工作流“%1$s”</string>
+    <string name="zeroagent_language_workflow_update">更新工作流“%1$s”</string>
+    <string name="zeroagent_language_workflow_when">触发时机：%1$s</string>
+    <string name="zeroagent_language_workflow_only_if">执行条件：%1$s</string>
+    <string name="zeroagent_language_workflow_do">执行操作：</string>
+    <string name="zeroagent_language_workflow_cooldown">冷却时间：%1$s</string>
+    <string name="zeroagent_language_workflow_daily_cap">每日上限：%1$s</string>
+    <string name="zeroagent_language_workflow_always">始终符合</string>
+    <string name="zeroagent_language_workflow_none">无</string>
+    <string name="zeroagent_language_workflow_unlimited">不限</string>
+    <string name="zeroagent_language_workflow_seconds">%1$d 秒</string>
+    <string name="zeroagent_language_workflow_runs">%1$d 次</string>
+    <string name="zeroagent_language_workflow_daily">每天</string>
+    <string name="zeroagent_language_workflow_days">每周（星期 %1$s）</string>
+    <string name="zeroagent_language_workflow_at_time">%2$s %1$s</string>
+    <string name="zeroagent_language_workflow_schedule_cron">计划（%1$s）</string>
+    <string name="zeroagent_language_workflow_schedule">计划</string>
+    <string name="zeroagent_language_workflow_wifi_connects">连接 Wi-Fi</string>
+    <string name="zeroagent_language_workflow_wifi_connects_to">连接 Wi-Fi：%1$s</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects">Wi-Fi 断开连接</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects_from">Wi-Fi 断开连接：%1$s</string>
+    <string name="zeroagent_language_workflow_bluetooth_connects">蓝牙设备连接</string>
+    <string name="zeroagent_language_workflow_bluetooth_disconnects">蓝牙设备断开连接</string>
+    <string name="zeroagent_language_workflow_headphones_in">插入耳机</string>
+    <string name="zeroagent_language_workflow_headphones_out">拔出耳机</string>
+    <string name="zeroagent_language_workflow_power_in">接通电源</string>
+    <string name="zeroagent_language_workflow_power_out">断开电源</string>
+    <string name="zeroagent_language_workflow_battery_drops">电量降至 %1$d%% 以下</string>
+    <string name="zeroagent_language_workflow_battery_rises">电量升至 %1$d%% 以上</string>
+    <string name="zeroagent_language_workflow_enter">进入 %1$s</string>
+    <string name="zeroagent_language_workflow_leave">离开 %1$s</string>
+    <string name="zeroagent_language_workflow_place">地点（%1$s,%2$s，半径 %3$s 米）</string>
+    <string name="zeroagent_language_workflow_app_launched">打开 %1$s</string>
+    <string name="zeroagent_language_workflow_app_closed">关闭 %1$s</string>
+    <string name="zeroagent_language_workflow_notification">收到通知</string>
+    <string name="zeroagent_language_workflow_notification_filters">%1$s（%2$s）</string>
+    <string name="zeroagent_language_workflow_from">来自 %1$s</string>
+    <string name="zeroagent_language_workflow_title_contains">标题包含“%1$s”</string>
+    <string name="zeroagent_language_workflow_text_contains">内容包含“%1$s”</string>
+    <string name="zeroagent_language_workflow_title_matches">标题匹配 /%1$s/</string>
+    <string name="zeroagent_language_workflow_text_matches">内容匹配 /%1$s/</string>
+    <string name="zeroagent_language_workflow_boot">设备开机</string>
+    <string name="zeroagent_language_workflow_screen_on">屏幕开启</string>
+    <string name="zeroagent_language_workflow_screen_off">屏幕关闭</string>
+    <string name="zeroagent_language_workflow_manual">手动触发（立即运行）</string>
+    <string name="zeroagent_language_workflow_time_between">%1$s 至 %2$s 之间</string>
+    <string name="zeroagent_language_workflow_after_sunset">日落后</string>
+    <string name="zeroagent_language_workflow_before_sunrise">日出前</string>
+    <string name="zeroagent_language_workflow_offset">（偏移 %1$d 分钟）</string>
+    <string name="zeroagent_language_workflow_wifi_is">Wi-Fi 为 %1$s</string>
+    <string name="zeroagent_language_workflow_wifi_in">Wi-Fi 为以下之一：%1$s</string>
+    <string name="zeroagent_language_workflow_battery_above">电量高于 %1$d%%</string>
+    <string name="zeroagent_language_workflow_battery_below">电量低于 %1$d%%</string>
+    <string name="zeroagent_language_workflow_charging">正在充电</string>
+    <string name="zeroagent_language_workflow_not_charging">未充电</string>
+    <string name="zeroagent_language_workflow_foreground">%1$s 在前台运行</string>
+    <string name="zeroagent_language_workflow_foreground_match">匹配 %1$d 个前台应用之一</string>
+    <string name="zeroagent_language_workflow_cond_screen_on">屏幕开启</string>
+    <string name="zeroagent_language_workflow_cond_screen_off">屏幕关闭</string>
+    <string name="zeroagent_language_workflow_not">不符合（%1$s）</string>
+    <string name="zeroagent_language_workflow_action">%1$s(%2$s)</string>
+    <string name="zeroagent_language_workflow_delete">删除工作流 ID=%1$s</string>
+    <string name="zeroagent_language_workflow_enable">启用工作流 ID=%1$s</string>
+    <string name="zeroagent_language_workflow_disable">停用工作流 ID=%1$s</string>
+    <string name="zeroagent_language_workflow_run_now">立即运行工作流 ID=%1$s</string>
+    <string name="zeroagent_language_mcp_tools">工具 %1$d/%2$d</string>
+    <string name="zeroagent_language_mcp_idle">空闲</string>
+    <string name="zeroagent_language_mcp_connecting">连接中</string>
+    <string name="zeroagent_language_mcp_connected">已连接</string>
+    <string name="zeroagent_language_mcp_reconnecting">重新连接中（%1$d/%2$d）</string>
+    <string name="zeroagent_language_mcp_error">错误：%1$s</string>
+    <string name="zeroagent_language_mcp_needs_authorization">需要授权</string>
+    <string name="zeroagent_language_mcp_authorizing">授权中</string>
+    <string name="zeroagent_language_usage_tokens">%1$s 词元</string>
+    <string name="zeroagent_language_usage_cache">（命中 %1$s／未命中 %2$s／%3$d%%）</string>
+    <string name="zeroagent_language_usage_cached">（缓存命中 %1$s）</string>
+    <string name="zeroagent_language_google_import_success">已导入服务账号</string>
+    <string name="zeroagent_language_google_import_failed">导入失败：%1$s</string>
+</resources>

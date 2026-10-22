@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_choose_title">كيف تريد الموافقة على الإجراءات؟</string>
+    <string name="access_choose_subtitle">اختر مستوى التحكم في هذه المحادثة.</string>
+    <string name="access_ask_description">تراجع إجراءات الأدوات قبل تنفيذها. تظل الموافقات الصريحة لهذه المحادثة سارية.</string>
+    <string name="access_assisted_description">يراجع Review Agent مستقل كل إجراء ومعاملاته. ويطلب موافقتك عند وجود مخاطر أو غموض.</string>
+    <string name="access_full_description">تجاوز مطالبات الأدوات المعتادة للملفات والتحكم بالتطبيقات والشبكة. تبقى موافقات Root وأذونات Android مطلوبة.</string>
+    <string name="access_review_model">نموذج المراجعة: %1$s</string>
+    <string name="access_review_detail">يُستخدم النموذج الحالي في جلسة مستقلة بلا أدوات أو صلاحيات تنفيذ. تستهلك المراجعة رموزًا. تظل قائمة الحظر وMCP والتأكيدات البشرية الإلزامية سارية.</string>
+    <string name="access_session_detail">لهذه المحادثة فقط حتى إغلاق التطبيق. تغيير المستوى يمحو موافقات المحادثة السابقة. تُدار أذونات Android بشكل منفصل.</string>
+    <string name="access_reviewing">يراجع Review Agent الأداة %1$s…</string>
+    <string name="access_review_allowed">Review Agent · تمت الموافقة على هذا الإجراء</string>
+    <string name="access_review_ask">Review Agent · موافقتك مطلوبة</string>
+    <string name="access_review_unavailable">لم يتمكن Review Agent من إكمال المراجعة. يرجى مراجعة الإجراء بنفسك.</string>
+    <string name="access_review_changed">تغير مستوى الصلاحيات. يرجى مراجعة الإجراء مجددًا.</string>
+    <string name="access_close">إغلاق خيارات الصلاحيات</string>
+    <string name="access_chat_grant">السماح لهذه المحادثة</string>
+    <string name="access_manual_required">تتطلب قواعد الأمان الحالية تأكيدك لهذا الإجراء.</string>
+</resources>
