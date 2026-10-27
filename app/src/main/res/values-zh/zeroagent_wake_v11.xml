@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wake_v11_fixed_phrase">唤醒词固定为 Hey Zero，不提供改词入口。</string>
+    <string name="wake_v11_continuous_hint">开始时先安静片刻，接着连续说几次 Hey Zero，每次之间停约半秒。通过检查的样本会自动保存，直到达到目标。</string>
+    <string name="wake_v11_calibrating">正在测量环境噪音，请先安静约 0.4 秒。</string>
+    <string name="wake_v11_listening">已准备好，请说 Hey Zero，然后稍停。</string>
+    <string name="wake_v11_speaking">正在收音，请自然说完整句。</string>
+    <string name="wake_v11_saving">正在检查并保存这段样本，保存成功后才会更新计数。</string>
+    <string name="wake_v11_accepted_quality">上次保存样本：%1$.2f 秒 · 信噪比 %2$.1f dB</string>
+    <string name="wake_v11_rejected">未计入：%1$s 可以再说一次，或停止后重录。</string>
+    <string name="wake_v11_save_failed">样本保存失败，这段没有计入；原本已保存的样本仍保留。</string>
+    <string name="wake_v11_speech_title">语音对话</string>
+    <string name="wake_v11_speech_settings">前往“语音对话”统一设置</string>
+    <string name="wake_v11_voice_missing">尚未设置原生语音对话模型。</string>
+    <string name="wake_v11_shared_voice_model">助理直接使用“语音对话”选择的服务与模型；此处不另外选择 STT、TTS 或聊天模型。</string>
+    <string name="wake_v11_language_preserves">切换 App 或唤醒语言不会删除已保存的 Hey Zero 样本；声学样本只保留在本机。</string>
+    <string name="wake_v11_quality_quiet">声音太小，无法与麦克风底噪区分，请靠近一点自然说话。</string>
+    <string name="wake_v11_quality_short">有效说话片段太短，请完整说出 Hey Zero。</string>
+    <string name="wake_v11_quality_long">片段太长或没有清楚停顿；说完一次后请停约半秒。</string>
+    <string name="wake_v11_quality_noisy">背景声盖过人声，或没有清楚的人声特征，请换较安静的地方。</string>
+    <string name="wake_v11_quality_clipped">麦克风信号削波失真，请降低音量或稍微离远一点。</string>
+    <string name="wake_v11_quality_inconsistent">这段与已保存的发音差异太大，请保持相近的语速与距离。</string>
+    <string name="wake_v11_quality_timeout">等待期间没有收到完整语句；请确认麦克风可用，并在环境测量完成后说话。</string>
+    <string name="wake_v11_quality_tonal">录音更像持续单音，缺少语句的能量变化，请关闭测试音或音乐后重录。</string>
+    <string name="wake_v11_new_recordings_hint">重新收集会清除已保存样本与声学模板，并暂停后台唤醒；只有保存变更成功后才会重置计数。</string>
+    <string name="wake_v11_start_collection">开始连续录制</string>
+    <string name="wake_v11_consent_body">助理会使用麦克风与“语音对话”选择的原生模型，通话音频会发送至该服务。Hey Zero 后台待命需另外启用，使用常驻通知与设备资源；个人声学样本只保留在本机。采集时不会转文字核对你说的内容。</string>
+</resources>

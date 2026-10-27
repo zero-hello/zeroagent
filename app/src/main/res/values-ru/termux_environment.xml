@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="termux_setup_environment">Полная среда терминала</string>
+    <string name="termux_setup_source_size">Termux %1$s · %2$s · стабильная версия F-Droid</string>
+    <string name="termux_setup_download">Скачать Termux</string>
+    <string name="termux_setup_install">Установить проверенный Termux</string>
+    <string name="termux_setup_downloading">Загрузка Termux</string>
+    <string name="termux_setup_download_ready">Установщик Termux готов</string>
+    <string name="termux_setup_install_hint">Нажмите, чтобы проверить и установить официальный пакет.</string>
+    <string name="termux_setup_download_channel">Загрузка среды терминала</string>
+    <string name="termux_setup_install_permission">Разрешите ZeroAgent устанавливать приложения из этого источника, затем вернитесь.</string>
+    <string name="termux_setup_configure">Скопировать команду настройки</string>
+    <string name="termux_setup_configure_hint">Вставьте и выполните команду в Termux. Она разрешит авторизованным приложениям выполнять команды и установит tmux для интерактивных сеансов.</string>
+    <string name="termux_setup_copied">Команда настройки скопирована</string>
+    <string name="termux_setup_model_tools">Настроить инструменты терминала модели</string>
+    <string name="termux_setup_model_tools_hint">Включите Termux в локальных инструментах текущей модели. Правила подтверждения и безопасности продолжают действовать.</string>
+    <string name="termux_setup_open_failed">Не удалось открыть Termux. Проверьте, не отключено ли приложение в настройках Android.</string>
+    <string name="termux_setup_permission_usage">Разрешает ZeroAgent выполнять подтверждённые вами команды через Termux. Подтверждения в разговоре и разрешения Android не обходятся.</string>
+</resources>
