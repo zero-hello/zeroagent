@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_connection_choose_provider">음성 제공업체 선택</string>
+    <string name="voice_connection_idle">API 키와 HTTPS 엔드포인트를 입력하면 음성 모델을 검색합니다.</string>
+    <string name="voice_connection_loading">연결하여 사용 가능한 음성 모델을 확인하는 중…</string>
+    <string name="voice_connection_ready">연결됨 · 음성 모델 %1$d개 사용 가능</string>
+    <string name="voice_connection_no_models">연결되었지만 이 계정에는 호환되는 실시간 음성 모델이 없습니다.</string>
+    <string name="voice_connection_failed">연결 확인 실패</string>
+    <string name="voice_connection_endpoint_hint">사용자 이름이나 비밀번호가 없는 유효한 HTTPS URL을 입력하세요.</string>
+</resources>

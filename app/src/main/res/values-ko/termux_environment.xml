@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="termux_setup_environment">완전한 터미널 환경</string>
+    <string name="termux_setup_source_size">Termux %1$s · %2$s · F-Droid 안정 버전</string>
+    <string name="termux_setup_download">Termux 다운로드</string>
+    <string name="termux_setup_install">검증된 Termux 설치</string>
+    <string name="termux_setup_downloading">Termux 다운로드 중</string>
+    <string name="termux_setup_download_ready">Termux 설치 파일 준비 완료</string>
+    <string name="termux_setup_install_hint">탭하여 공식 패키지를 확인하고 설치하세요.</string>
+    <string name="termux_setup_download_channel">터미널 환경 다운로드</string>
+    <string name="termux_setup_install_permission">ZeroAgent가 이 출처의 앱을 설치하도록 허용한 후 돌아오세요.</string>
+    <string name="termux_setup_configure">연결 설정 명령 복사</string>
+    <string name="termux_setup_configure_hint">명령을 Termux에 붙여 넣고 실행하세요. 승인된 앱의 명령 실행을 허용하고 대화형 세션에 필요한 tmux를 설치합니다.</string>
+    <string name="termux_setup_copied">설정 명령 복사됨</string>
+    <string name="termux_setup_model_tools">모델의 터미널 도구 설정</string>
+    <string name="termux_setup_model_tools_hint">현재 모델의 로컬 도구에서 Termux를 활성화하세요. 대화 승인과 안전 규칙은 계속 적용됩니다.</string>
+    <string name="termux_setup_open_failed">Termux를 열 수 없습니다. Android 앱 설정에서 사용 중지되어 있는지 확인하세요.</string>
+    <string name="termux_setup_permission_usage">승인한 터미널 명령을 ZeroAgent가 Termux를 통해 실행하도록 허용합니다. 대화 승인이나 Android 권한을 우회하지 않습니다.</string>
+</resources>

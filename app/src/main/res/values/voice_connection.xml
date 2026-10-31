@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_connection_choose_provider">Choose a voice provider</string>
+    <string name="voice_connection_idle">Enter an API key and HTTPS endpoint to discover voice models.</string>
+    <string name="voice_connection_loading">Connecting and checking available voice models…</string>
+    <string name="voice_connection_ready">Connected · %1$d voice models available</string>
+    <string name="voice_connection_no_models">Connected. This account lists no compatible realtime voice models.</string>
+    <string name="voice_connection_failed">Connection check failed</string>
+    <string name="voice_connection_endpoint_hint">Enter a valid HTTPS URL without a username or password.</string>
+</resources>

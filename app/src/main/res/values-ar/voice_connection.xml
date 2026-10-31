@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_connection_choose_provider">اختيار مزوّد الصوت</string>
+    <string name="voice_connection_idle">أدخل مفتاح API ونقطة اتصال HTTPS لاكتشاف النماذج الصوتية.</string>
+    <string name="voice_connection_loading">جارٍ الاتصال والتحقق من النماذج الصوتية المتاحة…</string>
+    <string name="voice_connection_ready">تم الاتصال · يتوفر %1$d من النماذج الصوتية</string>
+    <string name="voice_connection_no_models">تم الاتصال، لكن هذا الحساب لا يعرض نماذج متوافقة للمحادثة الصوتية الفورية.</string>
+    <string name="voice_connection_failed">تعذّر التحقق من الاتصال</string>
+    <string name="voice_connection_endpoint_hint">أدخل عنوان HTTPS صالحًا لا يتضمن اسم مستخدم أو كلمة مرور.</string>
+</resources>
