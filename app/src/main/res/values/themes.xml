@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+<style name="Theme.ZeroAgent" parent="Theme.Material3.DayNight.NoActionBar" />
+
+<style name="Theme.ZeroAgent.ToolHost" parent="Theme.ZeroAgent">
+    <item name="android:windowBackground">@android:color/transparent</item>
+    <item name="android:windowIsTranslucent">true</item>
+    <item name="android:windowNoTitle">true</item>
+    <item name="android:windowAnimationStyle">@null</item>
+    <item name="android:backgroundDimEnabled">false</item>
+</style>
+
+<!-- Bottom quick-chat panel hosted by the floating ball. Translucent so whatever app the
+     user is in stays visible behind the panel, no dim, no window animation (the panel does
+     its own slide-in in Compose). -->
+<style name="Theme.ZeroAgent.QuickChat" parent="Theme.ZeroAgent">
+    <item name="android:windowBackground">@android:color/transparent</item>
+    <item name="android:windowIsTranslucent">true</item>
+    <item name="android:windowNoTitle">true</item>
+    <item name="android:windowAnimationStyle">@null</item>
+    <item name="android:backgroundDimEnabled">false</item>
+</style>
+</resources>

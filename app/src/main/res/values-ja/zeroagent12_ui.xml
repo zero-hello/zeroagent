@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent12_voice_add_provider">%1$s を追加</string>
+    <string name="zeroagent12_voice_shared_accounts">モデル設定と同じプロバイダーアカウントと API キーを使用します。</string>
+</resources>

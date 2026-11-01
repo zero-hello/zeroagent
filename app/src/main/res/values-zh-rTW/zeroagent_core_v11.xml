@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent11_model_parameters">模型設定</string>
+    <string name="zeroagent11_model_parameters_hint">提示詞與生成參數只屬於此模型；留空使用服務預設值。</string>
+    <string name="zeroagent11_system_prompt">自訂提示詞</string>
+    <string name="zeroagent11_temperature">溫度</string>
+    <string name="zeroagent11_max_tokens">回答長度上限（token）</string>
+    <string name="zeroagent11_server_default">使用服務預設值</string>
+    <string name="zeroagent11_parameter_unavailable">目前的模型或執行引擎不提供這項控制。</string>
+    <string name="zeroagent11_parameter_invalid">請輸入有效範圍內的數值。</string>
+    <string name="zeroagent11_stream_output">逐字顯示回答</string>
+    <string name="zeroagent11_safety_title">Gemini 安全設定</string>
+    <string name="zeroagent11_safety_harassment">騷擾內容</string>
+    <string name="zeroagent11_safety_hate">仇恨內容</string>
+    <string name="zeroagent11_safety_sexual">露骨性內容</string>
+    <string name="zeroagent11_safety_dangerous">危險內容</string>
+    <string name="zeroagent11_safety_civic">公民與選舉內容</string>
+    <string name="zeroagent11_safety_strict">嚴格：低風險以上皆攔截</string>
+    <string name="zeroagent11_safety_balanced">平衡：中風險以上攔截</string>
+    <string name="zeroagent11_safety_high">僅攔截高風險</string>
+    <string name="zeroagent11_safety_none">不依評分類別攔截</string>
+    <string name="zeroagent11_safety_off">關閉此類別檢查</string>
+    <string name="zeroagent11_speech_services">語音服務</string>
+    <string name="zeroagent11_voice_conversation">語音對話</string>
+    <string name="zeroagent11_voice_service_hint">輸入端點與 API Key 後，會自動找出相容的即時語音模型並選取。通話直接使用模型音訊。</string>
+    <string name="zeroagent11_voice_add_provider">新增語音服務</string>
+    <string name="zeroagent11_base_url">API 基礎網址（Base URL）</string>
+    <string name="zeroagent11_detect_models">重新自動偵測模型</string>
+    <string name="zeroagent11_read_aloud">文字朗讀</string>
+    <string name="zeroagent11_model_tools">模型工具與權限</string>
+    <string name="zeroagent11_model_memory">模型記憶</string>
+    <string name="zeroagent11_model_mcp">模型 MCP 服務</string>
+    <string name="zeroagent11_save">儲存</string>
+    <string name="zeroagent11_notification_no_title">無標題</string>
+    <string name="zeroagent11_notification_no_text">無文字內容</string>
+</resources>

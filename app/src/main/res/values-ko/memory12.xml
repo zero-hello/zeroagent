@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="memory12_title">상황 기억</string>
+    <string name="memory12_enable">관련 대화 기억</string>
+    <string name="memory12_privacy">기기에 저장합니다. 대화할 때 관련 내용을 선택한 모델로 보냅니다. 수동 기억은 따로 유지합니다.</string>
+    <string name="memory12_tone">응답 말투 조절</string>
+    <string name="memory12_tone_hint">불확실한 감정 단서를 참고해 말투와 지원되는 온도를 조금 조절합니다. 끌 수 있습니다.</string>
+    <string name="memory12_building">의미 기억을 구성하는 중…</string>
+    <string name="memory12_initialize">다운로드 및 초기화</string>
+    <string name="memory12_error">기억 초기화 또는 검색에 실패했습니다. 사용 가능한 메모리, 저장 공간, 연결을 확인하세요. 일반 채팅은 사용할 수 있습니다.</string>
+    <string name="memory12_retry">초기화 재시도</string>
+    <string name="memory12_graph">기억 그래프</string>
+    <string name="memory12_graph_hint">노드를 눌러 보거나 삭제하세요. 선은 코사인 유사도 0.8 초과를 나타냅니다.</string>
+    <string name="memory12_recent_count">최근 %1$d개 표시</string>
+    <string name="memory12_empty">저장된 상황 기억이 없습니다</string>
+    <string name="memory12_erase">상황 기억 삭제</string>
+    <string name="memory12_consent">검증된 약 132 MB 다국어 모델을 다운로드하고 앞으로의 대화를 기기에 저장할까요? 관련 기록은 선택한 모델에 전달됩니다. 도구 권한은 추가되지 않습니다.</string>
+    <string name="memory12_accept">사용 및 다운로드</string>
+    <string name="memory12_cancel">취소</string>
+    <string name="memory12_erase_hint">상황 기억과 감정 상태를 삭제하고 수집을 중지합니다. 수동 기억과 대화 기록은 유지됩니다.</string>
+    <string name="memory12_record">기억 내용</string>
+    <string name="memory12_close">닫기</string>
+    <string name="memory12_delete">내용 삭제</string>
+    <string name="memory12_wake_steps">Hey Zero 설정: 음성 모델 설정 → 도우미 활성화 → 기본 시스템 도우미 선택 → 아래에서 5회 또는 10회 녹음 후 프로필 생성 → 감지 활성화.</string>
+</resources>

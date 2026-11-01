@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent11_model_parameters">모델 설정</string>
+    <string name="zeroagent11_model_parameters_hint">프롬프트와 생성 설정은 이 모델에 저장됩니다. 비워 두면 서비스 기본값을 사용합니다.</string>
+    <string name="zeroagent11_system_prompt">시스템 프롬프트</string>
+    <string name="zeroagent11_temperature">온도</string>
+    <string name="zeroagent11_max_tokens">최대 출력 토큰</string>
+    <string name="zeroagent11_server_default">서비스 기본값</string>
+    <string name="zeroagent11_parameter_unavailable">이 모델 또는 실행 엔진은 이 설정을 제공하지 않습니다.</string>
+    <string name="zeroagent11_parameter_invalid">지원 범위 안의 숫자를 입력하세요.</string>
+    <string name="zeroagent11_stream_output">응답 실시간 표시</string>
+    <string name="zeroagent11_safety_title">Gemini 안전 설정</string>
+    <string name="zeroagent11_safety_harassment">괴롭힘</string>
+    <string name="zeroagent11_safety_hate">혐오 발언</string>
+    <string name="zeroagent11_safety_sexual">노골적인 성적 내용</string>
+    <string name="zeroagent11_safety_dangerous">위험한 내용</string>
+    <string name="zeroagent11_safety_civic">시민 및 선거 관련 내용</string>
+    <string name="zeroagent11_safety_strict">엄격: 낮은 위험 이상 차단</string>
+    <string name="zeroagent11_safety_balanced">균형: 중간 위험 이상 차단</string>
+    <string name="zeroagent11_safety_high">높은 위험만 차단</string>
+    <string name="zeroagent11_safety_none">카테고리 평가로 차단하지 않음</string>
+    <string name="zeroagent11_safety_off">이 카테고리 검사 끄기</string>
+    <string name="zeroagent11_speech_services">음성 서비스</string>
+    <string name="zeroagent11_voice_conversation">음성 대화</string>
+    <string name="zeroagent11_voice_service_hint">엔드포인트와 API 키를 입력하면 호환되는 실시간 음성 모델을 자동으로 찾아 선택합니다. 통화는 모델의 원본 음성을 사용합니다.</string>
+    <string name="zeroagent11_voice_add_provider">음성 서비스 추가</string>
+    <string name="zeroagent11_base_url">API 기본 URL</string>
+    <string name="zeroagent11_detect_models">모델 다시 검색</string>
+    <string name="zeroagent11_read_aloud">텍스트 읽어주기</string>
+    <string name="zeroagent11_model_tools">모델 도구 및 권한</string>
+    <string name="zeroagent11_model_memory">모델 메모리</string>
+    <string name="zeroagent11_model_mcp">모델 MCP 서비스</string>
+    <string name="zeroagent11_save">저장</string>
+    <string name="zeroagent11_notification_no_title">제목 없음</string>
+    <string name="zeroagent11_notification_no_text">텍스트 없음</string>
+</resources>

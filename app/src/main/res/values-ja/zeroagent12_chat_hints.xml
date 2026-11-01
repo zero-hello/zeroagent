@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_input_hint_1">何を話しますか？</string>
+    <string name="chat_input_hint_2">どこから始めますか？</string>
+    <string name="chat_input_hint_3">続けましょう…</string>
+    <string name="chat_input_hint_4">何を考えていますか？</string>
+    <string name="chat_input_hint_5">次は何をしますか？</string>
+</resources>

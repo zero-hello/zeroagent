@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_copy_error_message">エラーメッセージをコピー</string>
+    <string name="doctor_detail_db_integrity_timeout">整合性チェックがタイムアウトしたか失敗しました。</string>
+    <string name="doctor_detail_probe_failed">診断失敗：%1$s：%2$s</string>
+    <string name="doctor_fix_browser_mkdirs_failed">mkdirs() が false を返しました。保存領域が読み取り専用の可能性があります。</string>
+    <string name="doctor_fix_browser_mkdirs_failed_2">mkdirs() が false を返しました。保存領域が読み取り専用の可能性があります。</string>
+    <string name="doctor_fix_db_repair_failed">修復失敗：%1$s：%2$s</string>
+    <string name="doctor_pill_failures">失敗</string>
+    <string name="gemini_refresh_failed">アカウント情報を更新できませんでした</string>
+    <string name="grok_refresh_failed">アカウント情報を更新できませんでした</string>
+    <string name="local_llm_hf_files_error_format">ファイル一覧を取得できません：%1$s</string>
+    <string name="local_llm_hf_search_failed_format">検索失敗：%1$s</string>
+    <string name="setting_browser_per_tool_timeout_desc">各ブラウザーツール呼び出しの実行時間の上限です。範囲は10秒から10分です。</string>
+    <string name="setting_browser_per_tool_timeout_unit">秒</string>
+    <string name="setting_browser_single_task_timeout_desc">無限に繰り返さないよう、AIブラウザーの1タスクの実行時間を制限します。範囲は1分から60分です。</string>
+    <string name="setting_browser_single_task_timeout_unit">分</string>
+    <string name="setting_page_accessibility_repair_shizuku_permission_denied">Shizukuが必要です。ZeroAgentにはまだShizukuの権限が付与されていません。</string>
+    <string name="setting_page_preferences_network_first_output_timeout">最初の応答の待機時間</string>
+    <string name="setting_page_preferences_network_first_output_timeout_desc">この秒数以内にストリーミング応答が届かない場合は接続が切れたと判断し、新しい接続で再送します。0で監視を無効にします。長い文脈では準備に時間がかかるため、モデルの最長の入力処理時間より長く設定してください。</string>
+    <string name="setting_page_preferences_network_first_output_timeout_input">秒</string>
+    <string name="setting_page_preferences_network_stall_timeout">応答途中の待機時間</string>
+    <string name="setting_page_preferences_network_stall_timeout_desc">応答開始後、この秒数の間データが届かない場合は停止したと判断します。一部の回答があれば続きを生成し、なければやり直します。データが届くたびに時間をリセットするため、遅くても応答中のモデルは切断しません。0で監視を無効にします。</string>
+    <string name="setting_page_tool_approvals_load_failed">ツール一覧を読み込めませんでした。</string>
+    <string name="setting_shizuku_toast_permission_denied">権限が拒否されました</string>
+    <string name="setting_ssh_page_error_credential_missing">パスワードまたは秘密鍵を入力してください</string>
+    <string name="setting_ssh_page_error_host_blank">ホストを入力してください</string>
+    <string name="setting_ssh_page_error_name_blank">名前を入力してください</string>
+    <string name="setting_ssh_page_error_name_taken">同じ名前のホストがすでに存在します</string>
+    <string name="setting_ssh_page_error_port_invalid">ポートは1〜65535で指定してください</string>
+    <string name="setting_ssh_page_error_user_blank">ユーザー名を入力してください</string>
+    <string name="setting_ssh_page_test_failed">失敗：%1$s</string>
+    <string name="setting_sub_agents_page_surface_namespace_error_duplicate">別のエキスパートが名前空間「%1$s」を使用しています。共有すると記憶ファイルが混在します。</string>
+    <string name="setting_sub_agents_page_surface_namespace_error_empty">この名前から名前空間を自動生成できません。英小文字、数字、ハイフンで入力してください。</string>
+    <string name="setting_termux_command_timeout">コマンドの既定の制限時間</string>
+    <string name="setting_termux_command_timeout_desc">バックグラウンドのシェルコマンドの出力を待つ時間です。範囲は5〜600秒です。</string>
+    <string name="setting_termux_section_timeouts">制限時間</string>
+    <string name="setting_termux_verify_other_error">検証失敗：%s</string>
+    <string name="setting_termux_verify_timeout">簡易検証の制限時間</string>
+    <string name="setting_termux_verify_timeout_desc">allow-external-apps の echo 簡易テストの制限時間です。範囲は3〜30秒です。</string>
+    <string name="videogen_page_delete_videos_failed">削除済み：%1$d件。失敗：%2$d件。再試行してください。</string>
+    <string name="videogen_page_save_failed">保存失敗：%1$s</string>
+    <string name="workspace_cwd_new_folder_invalid">スラッシュを含まないフォルダー名を1つ入力してください。</string>
+    <string name="zeroagent6s_root_denied">許可されていません。スーパーユーザー管理アプリを確認して再試行してください。</string>
+    <string name="zeroagent6s_root_error">Root権限を確認できませんでした。再試行してください。</string>
+</resources>

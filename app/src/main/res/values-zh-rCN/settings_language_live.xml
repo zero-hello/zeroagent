@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doctor_error_internal">无法完成诊断</string>
+    <string name="doctor_report_title">ZeroAgent — 诊断报告</string>
+    <string name="doctor_report_generated">生成时间</string>
+    <string name="doctor_report_summary">摘要</string>
+    <string name="accessibility_action_ok">成功</string>
+    <string name="accessibility_action_failed">失败</string>
+    <string name="accessibility_service_inactive">无障碍服务尚未启动。</string>
+    <string name="accessibility_action_tap">点按</string>
+    <string name="accessibility_action_long_press">长按</string>
+    <string name="accessibility_action_swipe">滑动</string>
+    <string name="accessibility_action_scroll">滚动</string>
+    <string name="accessibility_action_find_node">查找屏幕元素</string>
+    <string name="accessibility_action_click_node">激活屏幕元素</string>
+    <string name="accessibility_action_set_text">输入文字</string>
+    <string name="accessibility_action_screenshot">截取屏幕</string>
+    <string name="accessibility_action_read_window">读取屏幕结构</string>
+    <string name="accessibility_action_system">系统操作</string>
+    <string name="accessibility_action_other">操作</string>
+    <string name="wake_capture_countdown">%1$d 秒后开始，请先保持安静。</string>
+    <string name="wake_capture_initializing">正在准备麦克风…</string>
+    <string name="wake_capture_resting">录音已保存，请等待下一次收音提示。</string>
+    <string name="wake_capture_snr">估计信噪比：%1$.1f dB</string>
+    <string name="wake_capture_threshold">请清楚说话，让音量超过虚线标示的噪声阈值。</string>
+    <string name="wake_capture_saved">已保存 %1$d／%2$d 段录音</string>
+    <string name="wake_capture_waveform">麦克风音量波形</string>
+    <string name="tool_approval_review">查看并批准</string>
+    <string name="tool_approval_hint">请确认工具内容与批准范围；现有安全规则和 Android 系统权限仍然有效。</string>
+    <string name="tool_approval_details">查看工具详情</string>
+</resources>
