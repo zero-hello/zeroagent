@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="memory12_title">Contextual memory</string>
+    <string name="memory12_enable">Remember relevant conversations</string>
+    <string name="memory12_privacy">Stored on this device. Relevant excerpts are sent to your chosen model when you chat. Explicit saved memories are kept separately.</string>
+    <string name="memory12_tone">Adapt conversational tone</string>
+    <string name="memory12_tone_hint">Use uncertain semantic mood cues to gently adjust tone and supported temperature. You can turn this off.</string>
+    <string name="memory12_building">Building semantic memory…</string>
+    <string name="memory12_initialize">Download and initialize</string>
+    <string name="memory12_error">Memory initialization or recall failed. Check free memory, storage and connectivity, then retry. Ordinary chat remains available.</string>
+    <string name="memory12_retry">Retry initialization</string>
+    <string name="memory12_graph">Memory graph</string>
+    <string name="memory12_graph_hint">Tap a node to read or delete it. Lines show cosine similarity above 0.8.</string>
+    <string name="memory12_recent_count">Showing the latest %1$d excerpts</string>
+    <string name="memory12_empty">No contextual memories yet</string>
+    <string name="memory12_erase">Delete contextual memories</string>
+    <string name="memory12_consent">Download the verified 132 MB multilingual model and store future conversation excerpts locally? Relevant history will be included in requests to your selected model. This does not enable additional tool permissions.</string>
+    <string name="memory12_accept">Enable and download</string>
+    <string name="memory12_cancel">Cancel</string>
+    <string name="memory12_erase_hint">This deletes contextual history and mood state and turns off collection. Existing explicit memories and conversations are retained.</string>
+    <string name="memory12_record">Remembered excerpt</string>
+    <string name="memory12_close">Close</string>
+    <string name="memory12_delete">Delete excerpt</string>
+    <string name="memory12_wake_steps">To enable Hey Zero: configure a voice model, enable the assistant, select ZeroAgent as the system assistant, record 5 or 10 samples, and build the wake profile below. Then enable listening.</string>
+</resources>

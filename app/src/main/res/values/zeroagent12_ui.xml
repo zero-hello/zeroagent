@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent12_voice_add_provider">Add %1$s</string>
+    <string name="zeroagent12_voice_shared_accounts">Uses the same provider accounts and API keys as model settings.</string>
+</resources>

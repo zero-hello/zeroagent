@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="local_v11_download_channel">ローカルモデルのダウンロード</string>
+    <string name="local_v11_download_title">ローカルモデルをダウンロード中</string>
+    <string name="local_v11_pause">ダウンロードを一時停止</string>
+    <string name="local_v11_resume">ダウンロードを再開</string>
+    <string name="local_v11_background_download">ダウンロードはバックグラウンドでも続きます。一時停止しても検証済みの途中データは保持され、再開すると同じダウンロードを再試行します。</string>
+    <string name="local_v11_weights_portable">GGUFの重みデータはCPUアーキテクチャに依存しません。インストール済みの実行エンジンが、このアプリのプロセスのABIに対応している必要があります。</string>
+    <string name="local_v11_abi">プロセスのABI：%1$s · 端末のABI：%2$s</string>
+    <string name="local_v11_native_missing">利用できません。このアプリのプロセスでは、実行エンジンのネイティブライブラリを読み込めません。</string>
+    <string name="local_v11_cpu_only">GPUは利用できません。このllama.cpp JNIビルドでは、モデルのすべての層をCPUに読み込みます。</string>
+    <string name="local_v11_gpu_driver_missing">GPUは利用できません。同梱のアクセラレータ、またはOpenGL ES 3ドライバの動作確認に失敗しました。</string>
+    <string name="local_v11_gpu_candidate">GPUドライバの動作確認は成功しましたが、選択したモデルを実際に初期化できるかは別途確認が必要です。CPUに切り替わった場合は、読み込み後に表示されます。</string>
+    <string name="local_v11_actual_backend">前回読み込んだバックエンド：%1$s</string>
+    <string name="local_v11_not_loaded">まだ読み込まれていません</string>
+    <string name="local_v11_rootfs_unknown">このカーネルのアーキテクチャに対応する標準のrootfsが見つかりません。対応するアーカイブのURLを手動で入力してください。</string>
+    <string name="local_v11_allow_notifications">ダウンロード通知を許可</string>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_connection_choose_provider">音声プロバイダーを選択</string>
+    <string name="voice_connection_idle">API キーと HTTPS エンドポイントを入力して音声モデルを検出します。</string>
+    <string name="voice_connection_loading">接続して利用可能な音声モデルを確認しています…</string>
+    <string name="voice_connection_ready">接続済み・%1$d 件の音声モデルを利用できます</string>
+    <string name="voice_connection_no_models">接続できましたが、このアカウントには対応するリアルタイム音声モデルがありません。</string>
+    <string name="voice_connection_failed">接続の確認に失敗しました</string>
+    <string name="voice_connection_endpoint_hint">ユーザー名やパスワードを含まない、有効な HTTPS URL を入力してください。</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_choose_title">Как подтверждать действия?</string>
+    <string name="access_choose_subtitle">Выберите уровень контроля в этом разговоре.</string>
+    <string name="access_ask_description">Вы проверяете действия инструментов перед запуском. Явные разрешения для этого чата остаются в силе.</string>
+    <string name="access_assisted_description">Независимый Review Agent проверяет каждое действие и его аргументы. Рискованные и неясные действия требуют вашего подтверждения.</string>
+    <string name="access_full_description">Пропускать обычные запросы для файлов, управления приложениями и сети. Проверки Root и разрешений Android сохраняются.</string>
+    <string name="access_review_model">Модель проверки: %1$s</string>
+    <string name="access_review_detail">Текущая модель работает в отдельном сеансе без инструментов и прав выполнения. Проверка расходует токены. Чёрный список, MCP и обязательные ручные подтверждения сохраняются.</string>
+    <string name="access_session_detail">Только для этого чата до закрытия приложения. Смена уровня сбрасывает прежние разрешения чата. Разрешения Android управляются отдельно.</string>
+    <string name="access_reviewing">Review Agent проверяет %1$s…</string>
+    <string name="access_review_allowed">Review Agent · Действие одобрено</string>
+    <string name="access_review_ask">Review Agent · Нужно ваше подтверждение</string>
+    <string name="access_review_unavailable">Review Agent не смог завершить проверку. Проверьте действие самостоятельно.</string>
+    <string name="access_review_changed">Уровень доступа изменён. Проверьте действие ещё раз.</string>
+    <string name="access_close">Закрыть выбор разрешений</string>
+    <string name="access_chat_grant">Разрешить для чата</string>
+    <string name="access_manual_required">По текущим правилам безопасности это действие требует вашего подтверждения.</string>
+</resources>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_language_workflow_create">إنشاء سير العمل «%1$s»</string>
+    <string name="zeroagent_language_workflow_update">تحديث سير العمل «%1$s»</string>
+    <string name="zeroagent_language_workflow_when">حدث التشغيل: %1$s</string>
+    <string name="zeroagent_language_workflow_only_if">شروط التنفيذ: %1$s</string>
+    <string name="zeroagent_language_workflow_do">الإجراءات:</string>
+    <string name="zeroagent_language_workflow_cooldown">فترة الانتظار: %1$s</string>
+    <string name="zeroagent_language_workflow_daily_cap">الحد اليومي: %1$s</string>
+    <string name="zeroagent_language_workflow_always">دائماً</string>
+    <string name="zeroagent_language_workflow_none">لا شيء</string>
+    <string name="zeroagent_language_workflow_unlimited">بلا حد</string>
+    <string name="zeroagent_language_workflow_seconds">%1$d ث</string>
+    <string name="zeroagent_language_workflow_runs">%1$d مرات</string>
+    <string name="zeroagent_language_workflow_daily">كل يوم</string>
+    <string name="zeroagent_language_workflow_days">في الأيام %1$s</string>
+    <string name="zeroagent_language_workflow_at_time">الساعة %1$s %2$s</string>
+    <string name="zeroagent_language_workflow_schedule_cron">جدول (%1$s)</string>
+    <string name="zeroagent_language_workflow_schedule">جدول</string>
+    <string name="zeroagent_language_workflow_wifi_connects">اتصال Wi-Fi</string>
+    <string name="zeroagent_language_workflow_wifi_connects_to">الاتصال بشبكة Wi-Fi‏ %1$s</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects">انقطاع Wi-Fi</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects_from">الانقطاع عن شبكة Wi-Fi‏ %1$s</string>
+    <string name="zeroagent_language_workflow_bluetooth_connects">اتصال جهاز Bluetooth</string>
+    <string name="zeroagent_language_workflow_bluetooth_disconnects">انقطاع جهاز Bluetooth</string>
+    <string name="zeroagent_language_workflow_headphones_in">توصيل سماعات الرأس</string>
+    <string name="zeroagent_language_workflow_headphones_out">فصل سماعات الرأس</string>
+    <string name="zeroagent_language_workflow_power_in">توصيل الطاقة</string>
+    <string name="zeroagent_language_workflow_power_out">فصل الطاقة</string>
+    <string name="zeroagent_language_workflow_battery_drops">انخفاض البطارية دون %1$d%%</string>
+    <string name="zeroagent_language_workflow_battery_rises">ارتفاع البطارية فوق %1$d%%</string>
+    <string name="zeroagent_language_workflow_enter">الدخول إلى %1$s</string>
+    <string name="zeroagent_language_workflow_leave">مغادرة %1$s</string>
+    <string name="zeroagent_language_workflow_place">مكان (%1$s,%2$s، نصف القطر %3$s م)</string>
+    <string name="zeroagent_language_workflow_app_launched">تشغيل %1$s</string>
+    <string name="zeroagent_language_workflow_app_closed">إغلاق %1$s</string>
+    <string name="zeroagent_language_workflow_notification">وصول إشعار</string>
+    <string name="zeroagent_language_workflow_notification_filters">%1$s (%2$s)</string>
+    <string name="zeroagent_language_workflow_from">من %1$s</string>
+    <string name="zeroagent_language_workflow_title_contains">العنوان يتضمن «%1$s»</string>
+    <string name="zeroagent_language_workflow_text_contains">النص يتضمن «%1$s»</string>
+    <string name="zeroagent_language_workflow_title_matches">العنوان يطابق /%1$s/</string>
+    <string name="zeroagent_language_workflow_text_matches">النص يطابق /%1$s/</string>
+    <string name="zeroagent_language_workflow_boot">بدء تشغيل الجهاز</string>
+    <string name="zeroagent_language_workflow_screen_on">تشغيل الشاشة</string>
+    <string name="zeroagent_language_workflow_screen_off">إطفاء الشاشة</string>
+    <string name="zeroagent_language_workflow_manual">تشغيل يدوي (تشغيل الآن)</string>
+    <string name="zeroagent_language_workflow_time_between">بين %1$s و%2$s</string>
+    <string name="zeroagent_language_workflow_after_sunset">بعد الغروب</string>
+    <string name="zeroagent_language_workflow_before_sunrise">قبل الشروق</string>
+    <string name="zeroagent_language_workflow_offset">(إزاحة %1$d د)</string>
+    <string name="zeroagent_language_workflow_wifi_is">شبكة Wi-Fi هي %1$s</string>
+    <string name="zeroagent_language_workflow_wifi_in">شبكة Wi-Fi ضمن: %1$s</string>
+    <string name="zeroagent_language_workflow_battery_above">البطارية &gt; %1$d%%</string>
+    <string name="zeroagent_language_workflow_battery_below">البطارية &lt; %1$d%%</string>
+    <string name="zeroagent_language_workflow_charging">جارٍ الشحن</string>
+    <string name="zeroagent_language_workflow_not_charging">لا يجري الشحن</string>
+    <string name="zeroagent_language_workflow_foreground">%1$s في المقدمة</string>
+    <string name="zeroagent_language_workflow_foreground_match">مطابقة أحد %1$d تطبيقات في المقدمة</string>
+    <string name="zeroagent_language_workflow_cond_screen_on">الشاشة تعمل</string>
+    <string name="zeroagent_language_workflow_cond_screen_off">الشاشة مطفأة</string>
+    <string name="zeroagent_language_workflow_not">ليس (%1$s)</string>
+    <string name="zeroagent_language_workflow_action">%1$s(%2$s)</string>
+    <string name="zeroagent_language_workflow_delete">حذف سير العمل id=%1$s</string>
+    <string name="zeroagent_language_workflow_enable">تمكين سير العمل id=%1$s</string>
+    <string name="zeroagent_language_workflow_disable">تعطيل سير العمل id=%1$s</string>
+    <string name="zeroagent_language_workflow_run_now">تشغيل سير العمل الآن id=%1$s</string>
+    <string name="zeroagent_language_mcp_tools">الأدوات %1$d/%2$d</string>
+    <string name="zeroagent_language_mcp_idle">خامل</string>
+    <string name="zeroagent_language_mcp_connecting">جارٍ الاتصال</string>
+    <string name="zeroagent_language_mcp_connected">متصل</string>
+    <string name="zeroagent_language_mcp_reconnecting">إعادة الاتصال (%1$d/%2$d)</string>
+    <string name="zeroagent_language_mcp_error">خطأ: %1$s</string>
+    <string name="zeroagent_language_mcp_needs_authorization">يلزم التفويض</string>
+    <string name="zeroagent_language_mcp_authorizing">جارٍ التفويض</string>
+    <string name="zeroagent_language_usage_tokens">%1$s رمزاً</string>
+    <string name="zeroagent_language_usage_cache">(إصابة %1$s / عدم إصابة %2$s / %3$d%%)</string>
+    <string name="zeroagent_language_usage_cached">(%1$s من الذاكرة المؤقتة)</string>
+    <string name="zeroagent_language_google_import_success">تم استيراد حساب الخدمة</string>
+    <string name="zeroagent_language_google_import_failed">فشل الاستيراد: %1$s</string>
+</resources>

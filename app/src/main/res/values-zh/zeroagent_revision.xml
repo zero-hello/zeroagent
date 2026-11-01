@@ -1,0 +1,14 @@
+<resources>
+    <string name="zeroagent_control_center">控制中心</string>
+    <string name="zeroagent_control_hint">集中管理模型、工具与数据</string>
+    <string name="zeroagent_models_ready">已可开始对话</string>
+    <string name="zeroagent_models_setup">先设置供应商与模型</string>
+    <string name="zeroagent_cloud">云端</string>
+    <string name="zeroagent_on_device">本机</string>
+    <string name="zeroagent_connections">自定义与账号</string>
+    <string name="zeroagent_catalog_hint">官方 API，密钥由你自行管理。</string>
+    <string name="zeroagent_workspace">你的工作空间</string>
+    <string name="zeroagent_workspace_hint">对话、创作与自动化</string>
+    <string name="zeroagent_continue_setup">设置模型</string>
+    <string name="zeroagent_optional_tools">可选：工具与自动化</string>
+</resources>
