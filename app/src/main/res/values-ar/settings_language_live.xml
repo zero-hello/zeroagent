@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doctor_error_internal">تعذّر إكمال التشخيص</string>
+    <string name="doctor_report_title">ZeroAgent — تقرير التشخيص</string>
+    <string name="doctor_report_generated">وقت الإنشاء</string>
+    <string name="doctor_report_summary">الملخص</string>
+    <string name="accessibility_action_ok">نجاح</string>
+    <string name="accessibility_action_failed">فشل</string>
+    <string name="accessibility_service_inactive">خدمة تسهيل الاستخدام غير قيد التشغيل.</string>
+    <string name="accessibility_action_tap">نقر</string>
+    <string name="accessibility_action_long_press">ضغط مطوّل</string>
+    <string name="accessibility_action_swipe">تمرير</string>
+    <string name="accessibility_action_scroll">تمرير المحتوى</string>
+    <string name="accessibility_action_find_node">البحث عن عنصر</string>
+    <string name="accessibility_action_click_node">تنشيط عنصر</string>
+    <string name="accessibility_action_set_text">إدخال نص</string>
+    <string name="accessibility_action_screenshot">التقاط الشاشة</string>
+    <string name="accessibility_action_read_window">قراءة بنية الشاشة</string>
+    <string name="accessibility_action_system">إجراء نظام</string>
+    <string name="accessibility_action_other">إجراء</string>
+    <string name="wake_capture_countdown">سيبدأ التسجيل خلال %1$d ثوانٍ. يُرجى التزام الهدوء.</string>
+    <string name="wake_capture_initializing">جارٍ تجهيز الميكروفون…</string>
+    <string name="wake_capture_resting">تم حفظ التسجيل. انتظر إشارة التسجيل التالية.</string>
+    <string name="wake_capture_snr">نسبة الإشارة إلى الضوضاء التقديرية: %1$.1f ديسيبل</string>
+    <string name="wake_capture_threshold">تحدث بوضوح ليعلو مستوى الصوت فوق حد الضوضاء المتقطع.</string>
+    <string name="wake_capture_saved">تم حفظ %1$d من أصل %2$d تسجيلات</string>
+    <string name="wake_capture_waveform">موجة مستوى صوت الميكروفون</string>
+    <string name="tool_approval_review">مراجعة وموافقة</string>
+    <string name="tool_approval_hint">راجع تفاصيل الأداة ونطاق الموافقة. تظل قواعد الأمان الحالية وأذونات Android سارية.</string>
+    <string name="tool_approval_details">عرض تفاصيل الأداة</string>
+</resources>

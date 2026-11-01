@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_input_hint_1">عمّ نتحدث؟</string>
+    <string name="chat_input_hint_2">من أين نبدأ؟</string>
+    <string name="chat_input_hint_3">لنواصل…</string>
+    <string name="chat_input_hint_4">بمَ تفكر؟</string>
+    <string name="chat_input_hint_5">ما الخطوة التالية؟</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_choose_title">操作をどのように承認しますか？</string>
+    <string name="access_choose_subtitle">この会話での操作の承認方法を選びます。</string>
+    <string name="access_ask_description">ツールの実行前に確認します。この会話で明示的に許可した操作は引き続き有効です。</string>
+    <string name="access_assisted_description">独立した Review Agent が操作と引数を毎回審査します。危険や不明な点があれば、あなたに確認します。</string>
+    <string name="access_full_description">ファイル、アプリ操作、通信の通常の確認を省略します。Root と Android の権限確認は必要です。</string>
+    <string name="access_review_model">審査モデル：%1$s</string>
+    <string name="access_review_detail">現在のモデルを、ツールや実行権限のない独立セッションで使用します。審査にもトークンを使用します。拒否リスト、MCP、必須の手動確認は維持されます。</string>
+    <string name="access_session_detail">この会話のみ有効で、アプリ終了時にリセットされます。レベル変更で以前の許可は解除されます。Android の権限は別に管理されます。</string>
+    <string name="access_reviewing">Review Agent が %1$s を確認中…</string>
+    <string name="access_review_allowed">Review Agent · この操作を承認</string>
+    <string name="access_review_ask">Review Agent · 承認が必要です</string>
+    <string name="access_review_unavailable">Review Agent が確認を完了できませんでした。この操作を確認してください。</string>
+    <string name="access_review_changed">権限レベルが変更されました。操作を再確認してください。</string>
+    <string name="access_close">権限の選択肢を閉じる</string>
+    <string name="access_chat_grant">このチャットで許可</string>
+    <string name="access_manual_required">現在の安全ルールにより、この操作は確認が必要です。</string>
+</resources>

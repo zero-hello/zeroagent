@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="local_v11_download_channel">Загрузка локальных моделей</string>
+    <string name="local_v11_download_title">Загружается локальная модель</string>
+    <string name="local_v11_pause">Приостановить загрузку</string>
+    <string name="local_v11_resume">Продолжить загрузку</string>
+    <string name="local_v11_background_download">Загрузка продолжается в фоновом режиме. При паузе проверенные части файла сохраняются; при возобновлении повторяется та же загрузка.</string>
+    <string name="local_v11_weights_portable">Веса GGUF не зависят от архитектуры процессора. Установленная среда выполнения должна поддерживать ABI процесса этого приложения.</string>
+    <string name="local_v11_abi">ABI процесса: %1$s · ABI устройства: %2$s</string>
+    <string name="local_v11_native_missing">Недоступно: процесс приложения не может загрузить нативную библиотеку среды выполнения.</string>
+    <string name="local_v11_cpu_only">GPU недоступен: в этой сборке JNI для llama.cpp все слои модели загружаются на CPU.</string>
+    <string name="local_v11_gpu_driver_missing">GPU недоступен: не удалось проверить работу встроенного ускорителя или драйвера OpenGL ES 3.</string>
+    <string name="local_v11_gpu_candidate">Проверка драйвера GPU пройдена. Выбранная модель всё ещё должна успешно пройти инициализацию. Если произойдёт переход на CPU, это будет показано после загрузки.</string>
+    <string name="local_v11_actual_backend">Последний загруженный бэкенд: %1$s</string>
+    <string name="local_v11_not_loaded">Ещё не загружен</string>
+    <string name="local_v11_rootfs_unknown">Для этой архитектуры ядра не найден совместимый rootfs по умолчанию. Введите URL совместимого архива вручную.</string>
+    <string name="local_v11_allow_notifications">Разрешить уведомления о загрузке</string>
+</resources>

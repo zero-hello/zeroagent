@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_language_workflow_create">Create workflow \"%1$s\"</string>
+    <string name="zeroagent_language_workflow_update">Update workflow \"%1$s\"</string>
+    <string name="zeroagent_language_workflow_when">When: %1$s</string>
+    <string name="zeroagent_language_workflow_only_if">Only if: %1$s</string>
+    <string name="zeroagent_language_workflow_do">Do:</string>
+    <string name="zeroagent_language_workflow_cooldown">Cooldown: %1$s</string>
+    <string name="zeroagent_language_workflow_daily_cap">Daily cap: %1$s</string>
+    <string name="zeroagent_language_workflow_always">always</string>
+    <string name="zeroagent_language_workflow_none">none</string>
+    <string name="zeroagent_language_workflow_unlimited">unlimited</string>
+    <string name="zeroagent_language_workflow_seconds">%1$ds</string>
+    <string name="zeroagent_language_workflow_runs">%1$d runs</string>
+    <string name="zeroagent_language_workflow_daily">every day</string>
+    <string name="zeroagent_language_workflow_days">on day(s) %1$s</string>
+    <string name="zeroagent_language_workflow_at_time">every %1$s %2$s</string>
+    <string name="zeroagent_language_workflow_schedule_cron">schedule (%1$s)</string>
+    <string name="zeroagent_language_workflow_schedule">schedule</string>
+    <string name="zeroagent_language_workflow_wifi_connects">WiFi connects</string>
+    <string name="zeroagent_language_workflow_wifi_connects_to">WiFi connects to %1$s</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects">WiFi disconnects</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects_from">WiFi disconnects from %1$s</string>
+    <string name="zeroagent_language_workflow_bluetooth_connects">Bluetooth device connects</string>
+    <string name="zeroagent_language_workflow_bluetooth_disconnects">Bluetooth device disconnects</string>
+    <string name="zeroagent_language_workflow_headphones_in">headphones plugged in</string>
+    <string name="zeroagent_language_workflow_headphones_out">headphones unplugged</string>
+    <string name="zeroagent_language_workflow_power_in">power connected</string>
+    <string name="zeroagent_language_workflow_power_out">power disconnected</string>
+    <string name="zeroagent_language_workflow_battery_drops">battery drops below %1$d%%</string>
+    <string name="zeroagent_language_workflow_battery_rises">battery rises above %1$d%%</string>
+    <string name="zeroagent_language_workflow_enter">you enter %1$s</string>
+    <string name="zeroagent_language_workflow_leave">you leave %1$s</string>
+    <string name="zeroagent_language_workflow_place">a place (%1$s,%2$s, %3$sm)</string>
+    <string name="zeroagent_language_workflow_app_launched">%1$s is launched</string>
+    <string name="zeroagent_language_workflow_app_closed">%1$s is closed</string>
+    <string name="zeroagent_language_workflow_notification">a notification arrives</string>
+    <string name="zeroagent_language_workflow_notification_filters">%1$s (%2$s)</string>
+    <string name="zeroagent_language_workflow_from">from %1$s</string>
+    <string name="zeroagent_language_workflow_title_contains">title contains \'%1$s\'</string>
+    <string name="zeroagent_language_workflow_text_contains">text contains \'%1$s\'</string>
+    <string name="zeroagent_language_workflow_title_matches">title matches /%1$s/</string>
+    <string name="zeroagent_language_workflow_text_matches">text matches /%1$s/</string>
+    <string name="zeroagent_language_workflow_boot">device boots</string>
+    <string name="zeroagent_language_workflow_screen_on">screen turns on</string>
+    <string name="zeroagent_language_workflow_screen_off">screen turns off</string>
+    <string name="zeroagent_language_workflow_manual">you fire it manually (Run now)</string>
+    <string name="zeroagent_language_workflow_time_between">between %1$s and %2$s</string>
+    <string name="zeroagent_language_workflow_after_sunset">after sunset</string>
+    <string name="zeroagent_language_workflow_before_sunrise">before sunrise</string>
+    <string name="zeroagent_language_workflow_offset">(%1$dm offset)</string>
+    <string name="zeroagent_language_workflow_wifi_is">WiFi is %1$s</string>
+    <string name="zeroagent_language_workflow_wifi_in">WiFi in %1$s</string>
+    <string name="zeroagent_language_workflow_battery_above">battery &gt; %1$d%%</string>
+    <string name="zeroagent_language_workflow_battery_below">battery &lt; %1$d%%</string>
+    <string name="zeroagent_language_workflow_charging">charging</string>
+    <string name="zeroagent_language_workflow_not_charging">not charging</string>
+    <string name="zeroagent_language_workflow_foreground">%1$s is foreground</string>
+    <string name="zeroagent_language_workflow_foreground_match">%1$d-app foreground match</string>
+    <string name="zeroagent_language_workflow_cond_screen_on">screen on</string>
+    <string name="zeroagent_language_workflow_cond_screen_off">screen off</string>
+    <string name="zeroagent_language_workflow_not">NOT (%1$s)</string>
+    <string name="zeroagent_language_workflow_action">%1$s(%2$s)</string>
+    <string name="zeroagent_language_workflow_delete">Delete workflow id=%1$s</string>
+    <string name="zeroagent_language_workflow_enable">Enable workflow id=%1$s</string>
+    <string name="zeroagent_language_workflow_disable">Disable workflow id=%1$s</string>
+    <string name="zeroagent_language_workflow_run_now">Run workflow now id=%1$s</string>
+    <string name="zeroagent_language_mcp_tools">%1$d/%2$d tools</string>
+    <string name="zeroagent_language_mcp_idle">Idle</string>
+    <string name="zeroagent_language_mcp_connecting">Connecting</string>
+    <string name="zeroagent_language_mcp_connected">Connected</string>
+    <string name="zeroagent_language_mcp_reconnecting">Reconnecting (%1$d/%2$d)</string>
+    <string name="zeroagent_language_mcp_error">Error: %1$s</string>
+    <string name="zeroagent_language_mcp_needs_authorization">Needs authorization</string>
+    <string name="zeroagent_language_mcp_authorizing">Authorizing</string>
+    <string name="zeroagent_language_usage_tokens">%1$s tokens</string>
+    <string name="zeroagent_language_usage_cache">(%1$s hit / %2$s miss / %3$d%%)</string>
+    <string name="zeroagent_language_usage_cached">(%1$s hit)</string>
+    <string name="zeroagent_language_google_import_success">Service account imported</string>
+    <string name="zeroagent_language_google_import_failed">Failed to import: %1$s</string>
+</resources>

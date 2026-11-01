@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent11_model_parameters">Настройки модели</string>
+    <string name="zeroagent11_model_parameters_hint">Промпт и параметры сохраняются для этой модели. Пустое поле использует значение сервиса.</string>
+    <string name="zeroagent11_system_prompt">Системный промпт</string>
+    <string name="zeroagent11_temperature">Температура</string>
+    <string name="zeroagent11_max_tokens">Лимит токенов ответа</string>
+    <string name="zeroagent11_server_default">По умолчанию сервиса</string>
+    <string name="zeroagent11_parameter_unavailable">Модель или движок не предоставляет эту настройку.</string>
+    <string name="zeroagent11_parameter_invalid">Введите число в допустимом диапазоне.</string>
+    <string name="zeroagent11_stream_output">Показывать ответ постепенно</string>
+    <string name="zeroagent11_safety_title">Настройки безопасности Gemini</string>
+    <string name="zeroagent11_safety_harassment">Домогательства</string>
+    <string name="zeroagent11_safety_hate">Язык ненависти</string>
+    <string name="zeroagent11_safety_sexual">Откровенный сексуальный контент</string>
+    <string name="zeroagent11_safety_dangerous">Опасный контент</string>
+    <string name="zeroagent11_safety_civic">Гражданские и выборные темы</string>
+    <string name="zeroagent11_safety_strict">Строго: блокировать с низкого риска</string>
+    <string name="zeroagent11_safety_balanced">Сбалансированно: со среднего риска</string>
+    <string name="zeroagent11_safety_high">Блокировать только высокий риск</string>
+    <string name="zeroagent11_safety_none">Не блокировать по оценке категории</string>
+    <string name="zeroagent11_safety_off">Отключить проверку категории</string>
+    <string name="zeroagent11_speech_services">Голосовые сервисы</string>
+    <string name="zeroagent11_voice_conversation">Голосовой разговор</string>
+    <string name="zeroagent11_voice_service_hint">Введите адрес и API-ключ для автоматического поиска и выбора совместимых моделей. Звук поступает напрямую от модели.</string>
+    <string name="zeroagent11_voice_add_provider">Добавить голосовой сервис</string>
+    <string name="zeroagent11_base_url">Базовый URL API</string>
+    <string name="zeroagent11_detect_models">Повторно найти модели</string>
+    <string name="zeroagent11_read_aloud">Озвучивание текста</string>
+    <string name="zeroagent11_model_tools">Инструменты и разрешения модели</string>
+    <string name="zeroagent11_model_memory">Память модели</string>
+    <string name="zeroagent11_model_mcp">MCP-сервисы модели</string>
+    <string name="zeroagent11_save">Сохранить</string>
+    <string name="zeroagent11_notification_no_title">Без заголовка</string>
+    <string name="zeroagent11_notification_no_text">Нет текста</string>
+</resources>

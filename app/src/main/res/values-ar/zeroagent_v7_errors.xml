@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent7_error_title">تعذّر إكمال العملية</string>
+    <string name="zeroagent7_error_unknown">حدث خطأ. حاول مجددًا، وانسخ معلومات التشخيص إذا استمر.</string>
+    <string name="zeroagent7_error_network">تعذّر الاتصال. تحقق من الشبكة وعنوان الخدمة.</string>
+    <string name="zeroagent7_error_timeout">انتهت مهلة العملية. تحقق من الاتصال وحاول مجددًا.</string>
+    <string name="zeroagent7_error_auth">رُفض الوصول. تحقق من مفتاح API وصلاحيات النموذج.</string>
+    <string name="zeroagent7_error_rate">الطلبات كثيرة جدًا. انتظر قليلًا وحاول مجددًا.</string>
+    <string name="zeroagent7_error_quota">تم بلوغ حد الاستخدام أو الرصيد. تحقق من حسابك.</string>
+    <string name="zeroagent7_error_service">الخدمة غير متاحة مؤقتًا. حاول لاحقًا.</string>
+    <string name="zeroagent7_error_model">النموذج أو نقطة الاتصال غير متاحة. تحقق من الاسم والعنوان.</string>
+    <string name="zeroagent7_error_context">تجاوزت المحادثة حد النموذج. ابدأ محادثة جديدة أو قلّل السياق.</string>
+    <string name="zeroagent7_error_permission">الإذن المطلوب مفقود. تحقق من أذونات Android وتفويض الأدوات.</string>
+    <string name="zeroagent7_error_cancelled">أُلغيت العملية.</string>
+    <string name="zeroagent7_error_storage">مساحة التخزين غير كافية. أفرغ بعض المساحة وحاول مجددًا.</string>
+    <string name="zeroagent7_error_memory">الذاكرة غير كافية. أغلق تطبيقات أخرى أو استخدم نموذجًا أصغر.</string>
+    <string name="zeroagent7_error_audio">الصوت غير متاح. تحقق من إذن الميكروفون ومن التطبيقات الأخرى التي تستخدم الصوت.</string>
+    <string name="zeroagent7_error_corrupt">ملف النموذج غير مكتمل أو غير متوافق. نزّله مجددًا أو اختر ملفًا متوافقًا.</string>
+    <string name="zeroagent7_error_unsupported">هذا النموذج أو الخدمة أو الجهاز لا يدعم العملية المطلوبة.</string>
+    <string name="zeroagent7_error_request">رُفض الطلب. تحقق من إعدادات النموذج والطلب.</string>
+    <string name="zeroagent7_error_reasoning">النموذج لا يدعم إعداد التفكير المختار. اختر مستوى آخر.</string>
+    <string name="zeroagent7_error_format">تنسيق البيانات غير صالح. تحقق من الإدخال أو محتويات الملف.</string>
+    <string name="zeroagent7_error_config">هذه الميزة غير معدّة. اختر الخدمة أو النموذج في الإعدادات أولًا.</string>
+</resources>
