@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="termux_setup_environment">بيئة طرفية كاملة</string>
+    <string name="termux_setup_source_size">Termux %1$s · %2$s · إصدار F-Droid المستقر</string>
+    <string name="termux_setup_download">تنزيل Termux</string>
+    <string name="termux_setup_install">تثبيت Termux المتحقق منه</string>
+    <string name="termux_setup_downloading">جارٍ تنزيل Termux</string>
+    <string name="termux_setup_download_ready">مثبّت Termux جاهز</string>
+    <string name="termux_setup_install_hint">انقر لمراجعة الحزمة الرسمية وتثبيتها.</string>
+    <string name="termux_setup_download_channel">تنزيلات بيئة الطرفية</string>
+    <string name="termux_setup_install_permission">اسمح لتطبيق ZeroAgent بتثبيت التطبيقات من هذا المصدر، ثم عد للمتابعة.</string>
+    <string name="termux_setup_configure">نسخ أمر إعداد الاتصال</string>
+    <string name="termux_setup_configure_hint">الصق الأمر في Termux وشغّله. يتيح تنفيذ الأوامر للتطبيقات المصرّح لها ويثبّت tmux للجلسات التفاعلية.</string>
+    <string name="termux_setup_copied">تم نسخ أمر الإعداد</string>
+    <string name="termux_setup_model_tools">إعداد أدوات الطرفية للنموذج</string>
+    <string name="termux_setup_model_tools_hint">فعّل Termux في الأدوات المحلية للنموذج الحالي. تظل قواعد الموافقة والأمان سارية.</string>
+    <string name="termux_setup_open_failed">تعذّر فتح Termux. تحقق من عدم تعطيله في إعدادات تطبيقات Android.</string>
+    <string name="termux_setup_permission_usage">يسمح لتطبيق ZeroAgent بتنفيذ أوامر الطرفية التي توافق عليها عبر Termux. لا يتجاوز ذلك موافقات المحادثة أو أذونات Android.</string>
+</resources>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="local_v11_download_channel">تنزيل النماذج المحلية</string>
+    <string name="local_v11_download_title">جارٍ تنزيل النموذج المحلي</string>
+    <string name="local_v11_pause">إيقاف التنزيل مؤقتًا</string>
+    <string name="local_v11_resume">استئناف التنزيل</string>
+    <string name="local_v11_background_download">يستمر التنزيل في الخلفية. يحتفظ الإيقاف المؤقت بالأجزاء التي تم التحقق منها، وعند الاستئناف تُعاد محاولة التنزيل نفسه.</string>
+    <string name="local_v11_weights_portable">أوزان GGUF مستقلة عن بنية المعالج. يجب أن تدعم بيئة التشغيل المثبتة واجهة ABI الخاصة بعملية هذا التطبيق.</string>
+    <string name="local_v11_abi">واجهة ABI للعملية: %1$s · واجهات ABI للجهاز: %2$s</string>
+    <string name="local_v11_native_missing">غير متاح: لا تستطيع عملية التطبيق تحميل المكتبة الأصلية لبيئة التشغيل.</string>
+    <string name="local_v11_cpu_only">تسريع GPU غير متاح: تُحمّل نسخة JNI هذه من llama.cpp جميع طبقات النموذج على CPU.</string>
+    <string name="local_v11_gpu_driver_missing">تسريع GPU غير متاح: فشل التحقق من عمل مسرّع العتاد المضمّن أو برنامج تشغيل OpenGL ES 3.</string>
+    <string name="local_v11_gpu_candidate">نجح فحص برنامج تشغيل GPU. لكن يجب أيضًا أن تتم تهيئة النموذج المحدد بنجاح. وإذا تم الرجوع إلى CPU، فسيظهر ذلك بعد التحميل.</string>
+    <string name="local_v11_actual_backend">آخر محرك تنفيذ تم تحميله: %1$s</string>
+    <string name="local_v11_not_loaded">لم يتم التحميل بعد</string>
+    <string name="local_v11_rootfs_unknown">لا يتوفر rootfs افتراضي معروف يتوافق مع بنية هذه النواة. أدخل عنوان URL لأرشيف متوافق يدويًا.</string>
+    <string name="local_v11_allow_notifications">السماح بإشعارات التنزيل</string>
+</resources>

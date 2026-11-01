@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="termux_setup_environment">完整終端環境</string>
+    <string name="termux_setup_source_size">Termux %1$s · %2$s · F-Droid 穩定版</string>
+    <string name="termux_setup_download">下載 Termux</string>
+    <string name="termux_setup_install">安裝已驗證的 Termux</string>
+    <string name="termux_setup_downloading">正在下載 Termux</string>
+    <string name="termux_setup_download_ready">Termux 安裝檔已就緒</string>
+    <string name="termux_setup_install_hint">點一下檢查並安裝官方套件。</string>
+    <string name="termux_setup_download_channel">終端環境下載</string>
+    <string name="termux_setup_install_permission">請允許 ZeroAgent 安裝此來源的 App，再返回繼續。</string>
+    <string name="termux_setup_configure">複製連結設定命令</string>
+    <string name="termux_setup_configure_hint">請將命令貼到 Termux 執行。這會允許已授權的 App 執行指令，並安裝 tmux 以支援互動工作階段。</string>
+    <string name="termux_setup_copied">設定命令已複製</string>
+    <string name="termux_setup_model_tools">設定模型的終端機工具</string>
+    <string name="termux_setup_model_tools_hint">在目前模型的本地工具中開啟 Termux；執行時仍會套用對話核准與安全規則。</string>
+    <string name="termux_setup_open_failed">無法開啟 Termux，請到 Android 應用程式設定確認它未被停用。</string>
+    <string name="termux_setup_permission_usage">允許 ZeroAgent 透過 Termux 執行你核准的終端指令；這不會略過對話核准或 Android 系統權限。</string>
+</resources>

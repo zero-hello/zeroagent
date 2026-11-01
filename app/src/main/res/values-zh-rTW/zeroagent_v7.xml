@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent7_reasoning_minimal">最低</string>
+    <string name="zeroagent7_reasoning_detected">依模型或本地執行環境提供的能力，顯示可用的推理設定。</string>
+    <string name="zeroagent7_reasoning_unknown">後端尚未提供推理程度清單，目前顯示手動選項，實際支援情況依模型而定。</string>
+    <string name="zeroagent7_speech_streaming_hint">錄音時會陸續顯示辨識文字，停止後完成最後一段。</string>
+    <string name="zeroagent7_speech_recorded_hint">這個介面會在停止錄音後辨識，單次錄音最長 55 秒。</string>
+    <string name="zeroagent7_speech_capability_hint">這裡設定的是語音輸入，不會替文字模型增加原生雙向音訊。即時通話請在模型設定選擇相容協定。</string>
+    <string name="zeroagent7_speech_language_hint">留空時跟隨 App 語言；語言是否可用依供應商與模型而定。</string>
+    <string name="zeroagent7_export_summary">已匯出 %1$d／%2$d 個檔案。</string>
+</resources>

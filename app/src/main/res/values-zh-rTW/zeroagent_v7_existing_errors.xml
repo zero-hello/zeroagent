@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doctor_detail_db_integrity_timeout">完整性檢查逾時或失敗。</string>
+    <string name="doctor_detail_probe_failed">診斷失敗：%1$s：%2$s</string>
+    <string name="doctor_fix_browser_mkdirs_failed">mkdirs() 回傳 false，底層儲存空間可能是唯讀。</string>
+    <string name="doctor_fix_browser_mkdirs_failed_2">mkdirs() 回傳 false，底層儲存空間可能是唯讀。</string>
+    <string name="doctor_fix_db_repair_failed">修復失敗：%1$s：%2$s</string>
+    <string name="doctor_pill_failures">失敗</string>
+    <string name="setting_page_accessibility_repair_shizuku_permission_denied">需要 Shizuku：ZeroAgent 尚未取得 Shizuku 權限。</string>
+    <string name="setting_page_preferences_network_first_output_timeout">首次回應逾時</string>
+    <string name="setting_page_preferences_network_first_output_timeout_desc">串流回覆在這段秒數內完全沒有資料時，會視為連線中斷，並以新連線重新請求。設為 0 可關閉監測。請設定得比模型最慢的輸入處理時間長，較長的上下文可能需要更多時間才開始回覆。</string>
+    <string name="setting_page_preferences_network_first_output_timeout_input">秒</string>
+    <string name="setting_page_preferences_network_stall_timeout">回覆中途停頓逾時</string>
+    <string name="setting_page_preferences_network_stall_timeout_desc">串流開始後，若這段秒數內沒有任何資料，會視為停滯：已有部分內容就接續回答，否則重新請求。每收到一段資料都會重新計時，因此不會中斷仍持續回應的慢速模型。設為 0 可關閉監測。</string>
+    <string name="setting_page_tool_approvals_load_failed">無法載入工具清單。</string>
+    <string name="videogen_page_delete_videos_failed">已刪除 %1$d 項，失敗 %2$d 項，請再試一次。</string>
+    <string name="videogen_page_save_failed">儲存失敗：%1$s</string>
+    <string name="workspace_cwd_new_folder_invalid">請輸入單一資料夾名稱，不可包含斜線。</string>
+</resources>

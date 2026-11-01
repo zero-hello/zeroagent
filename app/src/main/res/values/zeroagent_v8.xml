@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent8_gradient">Animated gradient background</string>
+    <string name="zeroagent8_gradient_hint">Soft flowing colors on the chat page. Off by default.</string>
+    <string name="zeroagent8_access_ask">Require approval</string>
+    <string name="zeroagent8_access_assisted">Assist approval</string>
+    <string name="zeroagent8_access_full">Full access</string>
+    <string name="zeroagent8_access_hint">Only this chat, until the app closes. Changing levels clears previous chat grants. Android permissions are managed separately.</string>
+    <string name="zeroagent8_access_risk_title">Allow full access?</string>
+    <string name="zeroagent8_access_risk">The agent may read or change files, control apps and send network requests without normal tool prompts. Mistakes can expose data or cause loss. Only enable this for tasks and models you trust. Root commands and Android permission requests still need confirmation. You can switch back at any time.</string>
+    <string name="zeroagent8_access_accept">I understand and accept this risk</string>
+    <string name="zeroagent8_cmd_compact">Compress this conversation</string>
+    <string name="zeroagent8_cmd_plan">Plan first; use /plan off to leave</string>
+    <string name="zeroagent8_cmd_goal">Set a goal: /goal your task; /goal off clears it</string>
+    <string name="zeroagent8_cmd_image">Open image generation</string>
+    <string name="zeroagent8_cmd_voice">Open native live voice</string>
+    <string name="zeroagent8_cmd_access">Change this conversation access mode</string>
+    <string name="zeroagent8_cmd_help">Show all commands</string>
+    <string name="zeroagent8_commands">Chat commands</string>
+    <string name="zeroagent8_directive_off">Conversation mode cleared</string>
+    <string name="zeroagent8_directive_saved">Saved to this conversation</string>
+    <string name="zeroagent8_goal_usage">Type /goal followed by your task</string>
+    <string name="zeroagent8_plan_active">Planning mode · /plan off to leave</string>
+    <string name="zeroagent8_goal_active">Goal set · /goal off to clear</string>
+    <string name="zeroagent8_download_models">Downloads</string>
+    <string name="zeroagent8_voice_model">Live voice model</string>
+    <string name="zeroagent8_voice_models_hint">Models come from your provider account. Choose a native live-audio model; connection confirms support. Custom gateways may require a model ID entered manually.</string>
+    <string name="zeroagent8_voice_models_empty">No native live-audio models were listed. Check the provider, API key and account access. Speech-to-text and TTS services are not live conversation models.</string>
+    <string name="zeroagent8_voice_provider">Voice provider</string>
+    <string name="zeroagent8_voice_refresh">Refresh voice models</string>
+    <string name="zeroagent8_voice_setup_hint">Choose a provider with an API key and a native live-audio model. This call uses model audio directly and does not use phone TTS.</string>
+    <string name="zeroagent8_voice_start">Start voice conversation</string>
+    <string name="zeroagent8_voice_configure_provider">Configure provider and API key</string>
+    <string name="zeroagent8_voice_speaker">Speaker</string>
+    <string name="zeroagent8_voice_earpiece">Earpiece</string>
+    <string name="zeroagent8_voice_headset">Headphones / USB audio</string>
+    <string name="zeroagent8_voice_bluetooth">Bluetooth audio</string>
+    <string name="zeroagent8_voice_other">Other audio device</string>
+    <string name="zeroagent8_voice_mute">Mute voice output</string>
+    <string name="zeroagent8_voice_unmute">Enable voice output</string>
+    <string name="zeroagent8_voice_route_error">This audio device is unavailable. Choose another output.</string>
+    <string name="zeroagent8_access_title">Conversation access</string>
+    <string name="zeroagent8_tool_rules_hint">Your blacklist always requires human approval in Assist mode. Other actions are checked by an independent Review Agent. Choose the overall access level in the conversation.</string>
+</resources>
