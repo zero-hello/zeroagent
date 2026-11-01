@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<voice-interaction-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:sessionService="me.rerere.zeroagent.assistant.ZeroVoiceSessionService"
+    android:recognitionService="me.rerere.zeroagent.assistant.ZeroRecognitionService"
+    android:settingsActivity="me.rerere.zeroagent.assistant.AssistantSettingsActivity"
+    android:supportsAssist="true"
+    android:supportsLaunchVoiceAssistFromKeyguard="false" />

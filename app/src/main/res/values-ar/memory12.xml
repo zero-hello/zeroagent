@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="memory12_title">الذاكرة السياقية</string>
+    <string name="memory12_enable">تذكّر المحادثات ذات الصلة</string>
+    <string name="memory12_privacy">تُحفظ على الجهاز. تُرسل مقتطفات ذات صلة إلى النموذج المحدد عند المحادثة. تبقى الذكريات اليدوية منفصلة.</string>
+    <string name="memory12_tone">تكييف نبرة الرد</string>
+    <string name="memory12_tone_hint">استخدام إشارات عاطفية غير مؤكدة لتعديل النبرة ودرجة الحرارة المدعومة بلطف. يمكن إيقافه.</string>
+    <string name="memory12_building">جارٍ إنشاء الذاكرة الدلالية…</string>
+    <string name="memory12_initialize">تنزيل وتهيئة</string>
+    <string name="memory12_error">تعذرت تهيئة الذاكرة أو البحث. تحقق من الذاكرة والمساحة والاتصال. تبقى المحادثة العادية متاحة.</string>
+    <string name="memory12_retry">إعادة التهيئة</string>
+    <string name="memory12_graph">رسم الذاكرة</string>
+    <string name="memory12_graph_hint">اضغط عقدة لعرضها أو حذفها. توضح الخطوط تشابه جيب التمام فوق 0.8.</string>
+    <string name="memory12_recent_count">عرض أحدث %1$d مقتطفات</string>
+    <string name="memory12_empty">لا توجد ذكريات سياقية بعد</string>
+    <string name="memory12_erase">حذف الذاكرة السياقية</string>
+    <string name="memory12_consent">هل تريد تنزيل النموذج متعدد اللغات المتحقق منه بحجم نحو 132 م.ب وحفظ المحادثات القادمة محليًا؟ تُرسل المقتطفات ذات الصلة للنموذج المحدد. لا تُمنح صلاحيات أدوات إضافية.</string>
+    <string name="memory12_accept">تفعيل وتنزيل</string>
+    <string name="memory12_cancel">إلغاء</string>
+    <string name="memory12_erase_hint">سيُحذف السياق والحالة العاطفية ويتوقف الجمع. تبقى الذكريات اليدوية وسجل المحادثات.</string>
+    <string name="memory12_record">مقتطف محفوظ</string>
+    <string name="memory12_close">إغلاق</string>
+    <string name="memory12_delete">حذف المقتطف</string>
+    <string name="memory12_wake_steps">لتفعيل Hey Zero: اضبط نموذج الصوت، ثم فعّل المساعد وحدده كمساعد النظام، وسجّل 5 أو 10 عينات أدناه وأنشئ الملف، ثم فعّل الاستماع.</string>
+</resources>

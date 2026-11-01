@@ -1,0 +1,292 @@
+package me.rerere.zeroagent.di
+
+import kotlinx.serialization.json.Json
+import me.rerere.zeroagent.AppScope
+import me.rerere.zeroagent.data.ai.AILoggingManager
+import me.rerere.zeroagent.data.ai.tools.ChatToolFactory
+import me.rerere.zeroagent.data.ai.tools.LocalTools
+import me.rerere.zeroagent.data.ai.tools.local.BiometricResultBuffer
+import me.rerere.zeroagent.data.ai.tools.local.CameraResultBuffer
+import me.rerere.zeroagent.data.event.AppEventBus
+import me.rerere.zeroagent.data.ai.tools.local.InteractiveToolStreamer
+import me.rerere.zeroagent.data.repository.ScheduledJobRepository
+import me.rerere.zeroagent.data.repository.SshHostRepository
+import me.rerere.zeroagent.service.ChatService
+import me.rerere.zeroagent.service.CronJobScheduler
+import me.rerere.zeroagent.ui.pages.extensions.workspace.WorkspaceTerminalSessionManager
+import me.rerere.zeroagent.utils.EmojiData
+import me.rerere.zeroagent.utils.EmojiUtils
+import me.rerere.zeroagent.utils.JsonInstant
+import me.rerere.zeroagent.utils.SoundEffectPlayer
+import me.rerere.zeroagent.utils.UpdateChecker
+import me.rerere.zeroagent.web.WebServerManager
+import me.rerere.tts.provider.TTSManager
+import org.koin.dsl.module
+
+val appModule = module {
+    single<Json> { JsonInstant }
+
+    single {
+        AppEventBus()
+    }
+
+    single { CameraResultBuffer() }
+    single { BiometricResultBuffer() }
+    // Phase 25 — NFC reader-mode + SAF directory-picker Activity bridges, and the SAF
+    // tree-grant store backing the ExternalStorage tools.
+    single { me.rerere.zeroagent.data.ai.tools.local.NfcResultBuffer() }
+    single { me.rerere.zeroagent.data.ai.tools.local.SafPickerResultBuffer() }
+    single { me.rerere.zeroagent.data.storage.StorageVolumeGrantStore(get()) }
+
+    single { ScheduledJobRepository(get<me.rerere.zeroagent.data.db.AppDatabase>().scheduledJobDao()) }
+    single { me.rerere.zeroagent.data.repository.ScheduledJobRunRepository(get<me.rerere.zeroagent.data.db.AppDatabase>().scheduledJobRunDao()) }
+    single { me.rerere.zeroagent.service.DirectModeActionRunner(get()) }
+    single { CronJobScheduler(get(), get()) }
+    single { SshHostRepository(get<me.rerere.zeroagent.data.db.AppDatabase>().sshHostDao()) }
+    single { me.rerere.zeroagent.browser.BrowserPreferences(get()) }
+    single { me.rerere.zeroagent.data.preferences.TermuxPreferences(get()) }
+    single { me.rerere.zeroagent.data.preferences.ToolApprovalPreferences(get()) }
+
+    // Phase 13: External Automation Intent API
+    single { me.rerere.zeroagent.automation.ExternalAutomationConfig(get()) }
+    single {
+        me.rerere.zeroagent.automation.ExternalAutomationDispatcher(
+            context = get(),
+            config = get(),
+            chatService = get(),
+            conversationRepo = get(),
+            settingsStore = get(),
+            appScope = get(),
+            // Phase 24 — unified AgentRun ledger writer.
+            agentRunRepo = get(),
+        )
+    }
+
+    // Phase 14: Reliability bundle
+    single { me.rerere.zeroagent.reliability.GitHubReleaseChecker(get()) }
+    single { me.rerere.zeroagent.reliability.BugReportBuilder(get()) }
+
+    // Phase 11: Sub-agents
+    single { me.rerere.zeroagent.subagent.SubAgentRegistry() }
+    single {
+        me.rerere.zeroagent.subagent.SubAgentEngine(
+            registry = get(),
+            // chatService is resolved lazily inside SubAgentEngine to break the
+            // ChatService→LocalTools→SubAgentEngine→ChatService cycle. See SubAgentEngine kdoc.
+            conversationRepo = get(),
+            settingsStore = get(),
+            appScope = get(),
+            // Phase 24 — unified AgentRun ledger writer. No DI cycle: AgentRunRepository
+            // depends only on its DAO.
+            agentRunRepo = get(),
+            // P2-06b — the expert library, the source of truth for a dispatch's `agent` name.
+            agentDefinitionRepository = get(),
+            // P2-23 — read-only: only asked whether the configured archive folder still exists.
+            folderRepository = get(),
+            // P2-13 — read-only: the budget gate and the run usage read-back.
+            usageLedger = get(),
+        )
+    }
+
+    // Phase 16: Skill URL-import
+    single {
+        me.rerere.zeroagent.skills.SkillUrlImporter(
+            skillManager = get<me.rerere.zeroagent.data.files.SkillManager>(),
+        )
+    }
+
+    // Phase 19B: Skill isolation tester. Eager construction is safe here — ChatService
+    // doesn't reach back into SkillTestRunner anywhere, so no DI cycle.
+    single {
+        me.rerere.zeroagent.skills.SkillTestRunner(
+            chatService = get(),
+            skillManager = get(),
+            conversationRepo = get(),
+            settingsStore = get(),
+        )
+    }
+
+    // Phase 18: JS skills (run_js + secrets store)
+    single { me.rerere.zeroagent.skills.js.JsSkillRunner(get()) }
+    single { me.rerere.zeroagent.skills.js.SkillSecretsStore(get()) }
+
+    // T-07: named secrets a workflow action can reference as {{secret:NAME}} — keystore-backed
+    // so the token never has to live inside the (plaintext, model-visible) workflow JSON.
+    single { me.rerere.zeroagent.workflow.secrets.WorkflowSecretsStore(get()) }
+
+    // Phase 12: Workflows
+    single {
+        me.rerere.zeroagent.workflow.repository.WorkflowRepository(
+            workflowDao = get<me.rerere.zeroagent.data.db.AppDatabase>().workflowDao(),
+            workflowRunDao = get<me.rerere.zeroagent.data.db.AppDatabase>().workflowRunDao(),
+        )
+    }
+    single { me.rerere.zeroagent.workflow.condition.ContextProvider(get()) }
+    single { me.rerere.zeroagent.workflow.execution.WorkflowActionRunner() }
+    single {
+        me.rerere.zeroagent.workflow.execution.WorkflowEngine(
+            repository = get(),
+            settingsStore = get(),
+            contextProvider = get(),
+            actionRunner = get(),
+        ).also { engine ->
+            // Bridge for the repo to notify the engine on delete so the engine's per-workflow
+            // lock map doesn't leak. Lazy because both singletons have to exist first.
+            get<me.rerere.zeroagent.workflow.repository.WorkflowRepository>().bindEngine(engine)
+        }
+    }
+    single {
+        me.rerere.zeroagent.workflow.trigger.TriggerRegistry(
+            context = get(),
+            appScope = get(),
+            workflowRepository = get(),
+        )
+    }
+
+    single { me.rerere.zeroagent.data.keyboard.KeyboardApiClient(get()) }
+
+    single {
+        LocalTools(
+            usageRecordDao = get(),
+            agentRunRepository = get(),
+            context = get(),
+            eventBus = get(),
+            cameraResultBuffer = get(),
+            biometricResultBuffer = get(),
+            scheduledJobRepository = get(),
+            scheduledJobRunRepository = get(),
+            cronJobScheduler = get(),
+            settingsStore = get(),
+            sshHostRepository = get(),
+            mcpManager = get(),
+            externalAutomationConfig = get(),
+            gitHubReleaseChecker = get(),
+            bugReportBuilder = get(),
+            agentDefinitionRepository = get(),
+            subAgentEngine = get(),
+            subAgentRegistry = get(),
+            conversationRepo = get(),
+            workflowRepository = get(),
+            workflowEngine = get(),
+            skillUrlImporter = get(),
+            skillManager = get(),
+            jsSkillRunner = get(),
+            skillSecretsStore = get(),
+            browserPreferences = get(),
+            termuxPreferences = get(),
+            interactiveToolStreamer = InteractiveToolStreamer.NoOp,
+            nfcResultBuffer = get(),
+            safPickerResultBuffer = get(),
+            storageVolumeGrantStore = get(),
+            okHttpClient = get(),
+            keyboardApiClient = get(),
+            // P2-33 image generation tools
+            providerManager = get(),
+            filesManager = get(),
+            genMediaRepository = get(),
+        )
+    }
+
+    single {
+        UpdateChecker(
+            client = get(),
+            appScope = get<AppScope>(),
+            // No self-hosted UPDATE_API_URL in this fork — the card reads GitHub Releases.
+            githubReleases = get(),
+        )
+    }
+
+    single {
+        AppScope()
+    }
+
+    single<EmojiData> {
+        EmojiUtils.loadEmoji(get())
+    }
+
+    single {
+        TTSManager(get())
+    }
+
+    single {
+        SoundEffectPlayer(get())
+    }
+
+    single {
+        AILoggingManager(get(), get())
+    }
+
+    single {
+        WorkspaceTerminalSessionManager(get(), get())
+    }
+
+    // Phase 22A: Local-LLM on-device providers
+    single { me.rerere.locallm.LocalRuntimePreferences(get()) }
+    single { me.rerere.locallm.litert.LiteRtRuntime(get()) }
+    single { me.rerere.llamacpp.LlamaCppRuntime() }
+
+    single<me.rerere.zeroagent.data.ai.tools.ChatToolSources> {
+        me.rerere.zeroagent.data.ai.tools.DefaultChatToolSources(
+            localTools = get(), mcpManager = get(), skillManager = get(), workspaceRepository = get(),
+        )
+    }
+    single { ChatToolFactory(get()) }
+
+    single {
+        ChatService(
+            context = get(),
+            appScope = get(),
+            appEventBus = get(),
+            settingsStore = get(),
+            conversationRepo = get(),
+            memoryRepository = get(),
+            generationLoop = get(),
+            translationHandler = get(),
+            templateTransformer = get(),
+            providerManager = get(),
+            localTools = get(),
+            chatToolFactory = get(),
+            mcpManager = get(),
+            filesManager = get(),
+            toolApprovalPreferences = get(),
+            workspaceRepository = get(),
+            folderRepository = get()
+        )
+    }
+
+    single {
+        WebServerManager(
+            context = get(),
+            appScope = get(),
+            chatService = get(),
+            conversationRepo = get(),
+            folderRepo = get(),
+            settingsStore = get(),
+            filesManager = get()
+        )
+    }
+
+    single {
+        me.rerere.zeroagent.ui.pages.setting.doctor.DoctorChecks(
+            context = get(),
+            settingsStore = get(),
+            workflowRepository = get(),
+            scheduledJobRepository = get(),
+            scheduledJobRunRepository = get(),
+            conversationRepository = get(),
+            database = get(),
+            // Pass 3: surface the browser write-tools-enabled INFO row + profile-dir AutoFix.
+            browserPreferences = get(),
+            // Phase 25: surface the SAF granted-directories live count.
+            storageVolumeGrantStore = get(),
+            // LiteRT accelerator status row in the Doctor: shows the persisted backend
+            // decision so a silent GPU -> CPU fallback is visible.
+            localRuntimePreferences = get(),
+            // Doctor refresh: skills.* and service.mcp_servers rows.
+            skillManager = get(),
+            mcpManager = get(),
+            // P2-06b: the expert library behind the assistant.subagent_profiles row.
+            agentDefinitionRepository = get(),
+        )
+    }
+}

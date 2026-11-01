@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_input_hint_1">О чём поговорим?</string>
+    <string name="chat_input_hint_2">С чего начнём?</string>
+    <string name="chat_input_hint_3">Продолжим…</string>
+    <string name="chat_input_hint_4">О чём вы думаете?</string>
+    <string name="chat_input_hint_5">Что дальше?</string>
+</resources>

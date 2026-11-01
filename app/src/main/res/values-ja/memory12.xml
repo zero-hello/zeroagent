@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="memory12_title">コンテキスト記憶</string>
+    <string name="memory12_enable">関連する会話を記憶</string>
+    <string name="memory12_privacy">端末に保存します。会話時に関連する抜粋を選択したモデルへ送信します。手動の記憶は別に保持します。</string>
+    <string name="memory12_tone">応答の口調を調整</string>
+    <string name="memory12_tone_hint">不確かな感情の手掛かりから、口調と対応する温度を穏やかに調整します。無効化できます。</string>
+    <string name="memory12_building">意味記憶を構築中…</string>
+    <string name="memory12_initialize">ダウンロードして初期化</string>
+    <string name="memory12_error">記憶の初期化または検索に失敗しました。空きメモリ・容量・接続を確認してください。通常のチャットは利用できます。</string>
+    <string name="memory12_retry">初期化を再試行</string>
+    <string name="memory12_graph">記憶グラフ</string>
+    <string name="memory12_graph_hint">ノードをタップして表示・削除します。線はコサイン類似度0.8超を示します。</string>
+    <string name="memory12_recent_count">最新の %1$d 件を表示</string>
+    <string name="memory12_empty">コンテキスト記憶はありません</string>
+    <string name="memory12_erase">コンテキスト記憶を削除</string>
+    <string name="memory12_consent">検証済みの約132 MBの多言語モデルをダウンロードし、今後の会話の抜粋を端末に保存しますか？関連する履歴は選択したモデルに送信されます。ツール権限は増えません。</string>
+    <string name="memory12_accept">有効にしてダウンロード</string>
+    <string name="memory12_cancel">キャンセル</string>
+    <string name="memory12_erase_hint">記憶と感情状態を削除し、収集を停止します。手動の記憶と会話履歴は残ります。</string>
+    <string name="memory12_record">記憶の抜粋</string>
+    <string name="memory12_close">閉じる</string>
+    <string name="memory12_delete">抜粋を削除</string>
+    <string name="memory12_wake_steps">Hey Zero：音声モデルを設定 → 助手を有効化 → システムの既定に設定 → 下で5回または10回録音してプロファイルを作成 → 待受を有効化。</string>
+</resources>

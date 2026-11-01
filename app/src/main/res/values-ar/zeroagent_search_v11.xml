@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_search_cancel">إلغاء البحث</string>
+    <string name="zeroagent_search_limits">يعرض البحث حتى 20 نتيجة. قد يعيد استخدام النتائج الحديثة عند تكرار البحث نفسه خلال دقيقة.</string>
+</resources>
