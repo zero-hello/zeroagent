@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doctor_error_internal">진단을 완료할 수 없습니다</string>
+    <string name="doctor_report_title">ZeroAgent — 진단 보고서</string>
+    <string name="doctor_report_generated">생성 시간</string>
+    <string name="doctor_report_summary">요약</string>
+    <string name="accessibility_action_ok">성공</string>
+    <string name="accessibility_action_failed">실패</string>
+    <string name="accessibility_service_inactive">접근성 서비스가 실행 중이 아닙니다.</string>
+    <string name="accessibility_action_tap">탭</string>
+    <string name="accessibility_action_long_press">길게 누르기</string>
+    <string name="accessibility_action_swipe">스와이프</string>
+    <string name="accessibility_action_scroll">스크롤</string>
+    <string name="accessibility_action_find_node">화면 요소 찾기</string>
+    <string name="accessibility_action_click_node">화면 요소 실행</string>
+    <string name="accessibility_action_set_text">텍스트 입력</string>
+    <string name="accessibility_action_screenshot">스크린샷 촬영</string>
+    <string name="accessibility_action_read_window">화면 구조 읽기</string>
+    <string name="accessibility_action_system">시스템 작업</string>
+    <string name="accessibility_action_other">작업</string>
+    <string name="wake_capture_countdown">%1$d초 후 시작합니다. 조용히 기다려 주세요.</string>
+    <string name="wake_capture_initializing">마이크 준비 중…</string>
+    <string name="wake_capture_resting">녹음이 저장되었습니다. 다음 안내를 기다려 주세요.</string>
+    <string name="wake_capture_snr">추정 신호 대 잡음비: %1$.1f dB</string>
+    <string name="wake_capture_threshold">음량이 점선으로 표시된 소음 임계값을 넘도록 또렷하게 말하세요.</string>
+    <string name="wake_capture_saved">녹음 %2$d개 중 %1$d개 저장됨</string>
+    <string name="wake_capture_waveform">마이크 음량 파형</string>
+    <string name="tool_approval_review">검토 후 승인</string>
+    <string name="tool_approval_hint">도구 내용과 승인 범위를 확인하세요. 기존 안전 규칙과 Android 권한은 계속 적용됩니다.</string>
+    <string name="tool_approval_details">도구 세부정보 보기</string>
+</resources>

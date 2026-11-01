@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_language_workflow_create">워크플로 “%1$s” 만들기</string>
+    <string name="zeroagent_language_workflow_update">워크플로 “%1$s” 수정</string>
+    <string name="zeroagent_language_workflow_when">실행 계기: %1$s</string>
+    <string name="zeroagent_language_workflow_only_if">실행 조건: %1$s</string>
+    <string name="zeroagent_language_workflow_do">실행할 동작:</string>
+    <string name="zeroagent_language_workflow_cooldown">대기 시간: %1$s</string>
+    <string name="zeroagent_language_workflow_daily_cap">일일 한도: %1$s</string>
+    <string name="zeroagent_language_workflow_always">항상 일치</string>
+    <string name="zeroagent_language_workflow_none">없음</string>
+    <string name="zeroagent_language_workflow_unlimited">제한 없음</string>
+    <string name="zeroagent_language_workflow_seconds">%1$d초</string>
+    <string name="zeroagent_language_workflow_runs">%1$d회</string>
+    <string name="zeroagent_language_workflow_daily">매일</string>
+    <string name="zeroagent_language_workflow_days">요일(%1$s)</string>
+    <string name="zeroagent_language_workflow_at_time">%2$s %1$s</string>
+    <string name="zeroagent_language_workflow_schedule_cron">일정(%1$s)</string>
+    <string name="zeroagent_language_workflow_schedule">일정</string>
+    <string name="zeroagent_language_workflow_wifi_connects">Wi-Fi 연결</string>
+    <string name="zeroagent_language_workflow_wifi_connects_to">Wi-Fi 연결: %1$s</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects">Wi-Fi 연결 해제</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects_from">Wi-Fi 연결 해제: %1$s</string>
+    <string name="zeroagent_language_workflow_bluetooth_connects">Bluetooth 기기 연결</string>
+    <string name="zeroagent_language_workflow_bluetooth_disconnects">Bluetooth 기기 연결 해제</string>
+    <string name="zeroagent_language_workflow_headphones_in">헤드폰 연결</string>
+    <string name="zeroagent_language_workflow_headphones_out">헤드폰 분리</string>
+    <string name="zeroagent_language_workflow_power_in">전원 연결</string>
+    <string name="zeroagent_language_workflow_power_out">전원 분리</string>
+    <string name="zeroagent_language_workflow_battery_drops">배터리가 %1$d%% 미만으로 감소</string>
+    <string name="zeroagent_language_workflow_battery_rises">배터리가 %1$d%%를 초과</string>
+    <string name="zeroagent_language_workflow_enter">%1$s에 진입</string>
+    <string name="zeroagent_language_workflow_leave">%1$s에서 나감</string>
+    <string name="zeroagent_language_workflow_place">장소(%1$s,%2$s, 반경 %3$s m)</string>
+    <string name="zeroagent_language_workflow_app_launched">%1$s 실행</string>
+    <string name="zeroagent_language_workflow_app_closed">%1$s 종료</string>
+    <string name="zeroagent_language_workflow_notification">알림 수신</string>
+    <string name="zeroagent_language_workflow_notification_filters">%1$s(%2$s)</string>
+    <string name="zeroagent_language_workflow_from">발신 앱 %1$s</string>
+    <string name="zeroagent_language_workflow_title_contains">제목에 “%1$s” 포함</string>
+    <string name="zeroagent_language_workflow_text_contains">내용에 “%1$s” 포함</string>
+    <string name="zeroagent_language_workflow_title_matches">제목이 /%1$s/와 일치</string>
+    <string name="zeroagent_language_workflow_text_matches">내용이 /%1$s/와 일치</string>
+    <string name="zeroagent_language_workflow_boot">기기 부팅</string>
+    <string name="zeroagent_language_workflow_screen_on">화면 켜짐</string>
+    <string name="zeroagent_language_workflow_screen_off">화면 꺼짐</string>
+    <string name="zeroagent_language_workflow_manual">수동 실행(지금 실행)</string>
+    <string name="zeroagent_language_workflow_time_between">%1$s부터 %2$s 사이</string>
+    <string name="zeroagent_language_workflow_after_sunset">일몰 후</string>
+    <string name="zeroagent_language_workflow_before_sunrise">일출 전</string>
+    <string name="zeroagent_language_workflow_offset">(%1$d분 보정)</string>
+    <string name="zeroagent_language_workflow_wifi_is">Wi-Fi가 %1$s</string>
+    <string name="zeroagent_language_workflow_wifi_in">Wi-Fi가 다음 중 하나: %1$s</string>
+    <string name="zeroagent_language_workflow_battery_above">배터리 %1$d%% 초과</string>
+    <string name="zeroagent_language_workflow_battery_below">배터리 %1$d%% 미만</string>
+    <string name="zeroagent_language_workflow_charging">충전 중</string>
+    <string name="zeroagent_language_workflow_not_charging">충전 중이 아님</string>
+    <string name="zeroagent_language_workflow_foreground">%1$s가 전면에서 실행 중</string>
+    <string name="zeroagent_language_workflow_foreground_match">전면 앱이 %1$d개 앱 중 하나와 일치</string>
+    <string name="zeroagent_language_workflow_cond_screen_on">화면 켜짐</string>
+    <string name="zeroagent_language_workflow_cond_screen_off">화면 꺼짐</string>
+    <string name="zeroagent_language_workflow_not">일치하지 않음(%1$s)</string>
+    <string name="zeroagent_language_workflow_action">%1$s(%2$s)</string>
+    <string name="zeroagent_language_workflow_delete">워크플로 ID=%1$s 삭제</string>
+    <string name="zeroagent_language_workflow_enable">워크플로 ID=%1$s 활성화</string>
+    <string name="zeroagent_language_workflow_disable">워크플로 ID=%1$s 비활성화</string>
+    <string name="zeroagent_language_workflow_run_now">워크플로 ID=%1$s 지금 실행</string>
+    <string name="zeroagent_language_mcp_tools">도구 %1$d/%2$d</string>
+    <string name="zeroagent_language_mcp_idle">대기 중</string>
+    <string name="zeroagent_language_mcp_connecting">연결 중</string>
+    <string name="zeroagent_language_mcp_connected">연결됨</string>
+    <string name="zeroagent_language_mcp_reconnecting">다시 연결 중(%1$d/%2$d)</string>
+    <string name="zeroagent_language_mcp_error">오류: %1$s</string>
+    <string name="zeroagent_language_mcp_needs_authorization">인증 필요</string>
+    <string name="zeroagent_language_mcp_authorizing">인증 중</string>
+    <string name="zeroagent_language_usage_tokens">%1$s 토큰</string>
+    <string name="zeroagent_language_usage_cache">(적중 %1$s / 미적중 %2$s / %3$d%%)</string>
+    <string name="zeroagent_language_usage_cached">(캐시 적중 %1$s)</string>
+    <string name="zeroagent_language_google_import_success">서비스 계정을 가져왔습니다</string>
+    <string name="zeroagent_language_google_import_failed">가져오기 실패: %1$s</string>
+</resources>

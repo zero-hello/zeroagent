@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_connection_choose_provider">选择语音供应商</string>
+    <string name="voice_connection_idle">填写 API 密钥与 HTTPS 端点，即可检测语音模型。</string>
+    <string name="voice_connection_loading">正在连接并检查可用的语音模型…</string>
+    <string name="voice_connection_ready">已连接・找到 %1$d 个可用语音模型</string>
+    <string name="voice_connection_no_models">已连接，但此账户未列出兼容的实时语音模型。</string>
+    <string name="voice_connection_failed">连接验证失败</string>
+    <string name="voice_connection_endpoint_hint">请输入有效的 HTTPS 地址，地址中不能包含用户名或密码。</string>
+</resources>
