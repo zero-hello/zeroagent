@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wake_v11_fixed_phrase">喚醒詞固定為 Hey Zero，不提供改詞入口。</string>
+    <string name="wake_v11_continuous_hint">開始時先安靜片刻，接著連續說幾次 Hey Zero，每次之間停約半秒。通過檢查的樣本會自動儲存，直到達到目標。</string>
+    <string name="wake_v11_calibrating">正在量測環境噪音，請先安靜約 0.4 秒。</string>
+    <string name="wake_v11_listening">已準備好，請說 Hey Zero，然後稍停。</string>
+    <string name="wake_v11_speaking">正在收音，請自然說完整句。</string>
+    <string name="wake_v11_saving">正在檢查並儲存這段樣本，儲存成功後才會更新計數。</string>
+    <string name="wake_v11_accepted_quality">上次儲存樣本：%1$.2f 秒 · 訊噪比 %2$.1f dB</string>
+    <string name="wake_v11_rejected">未計入：%1$s 可以再說一次，或停止後重錄。</string>
+    <string name="wake_v11_save_failed">樣本儲存失敗，這段沒有計入；原本已儲存的樣本仍保留。</string>
+    <string name="wake_v11_speech_title">語音對話</string>
+    <string name="wake_v11_speech_settings">前往「語音對話」統一設定</string>
+    <string name="wake_v11_voice_missing">尚未設定原生語音對話模型。</string>
+    <string name="wake_v11_shared_voice_model">助理直接使用「語音對話」選取的服務與模型；此處不另外選擇 STT、TTS 或聊天模型。</string>
+    <string name="wake_v11_language_preserves">切換 App 或喚醒語言不會刪除已儲存的 Hey Zero 樣本；聲學樣本只保留在本機。</string>
+    <string name="wake_v11_quality_quiet">聲音太小，無法與麥克風底噪區分，請靠近一點自然說話。</string>
+    <string name="wake_v11_quality_short">有效說話片段太短，請完整說出 Hey Zero。</string>
+    <string name="wake_v11_quality_long">片段太長或沒有清楚停頓；說完一次後請停約半秒。</string>
+    <string name="wake_v11_quality_noisy">背景聲蓋過人聲，或沒有清楚的人聲特徵，請換較安靜的地方。</string>
+    <string name="wake_v11_quality_clipped">麥克風訊號削波失真，請降低音量或稍微離遠一點。</string>
+    <string name="wake_v11_quality_inconsistent">這段與已儲存的發音差異太大，請保持相近的語速與距離。</string>
+    <string name="wake_v11_quality_timeout">等待期間沒有收到完整語句；請確認麥克風可用，並在環境量測完成後說話。</string>
+    <string name="wake_v11_quality_tonal">錄音較像持續單音，缺少語句的能量變化，請關閉測試音或音樂後重錄。</string>
+    <string name="wake_v11_new_recordings_hint">重新收集會清除已儲存樣本與聲學範本，並暫停背景喚醒；只有儲存變更成功後才會重設計數。</string>
+    <string name="wake_v11_start_collection">開始連續錄製</string>
+    <string name="wake_v11_consent_body">助理會使用麥克風與「語音對話」選取的原生模型，通話音訊會送至該服務。Hey Zero 背景待命需另外啟用，使用常駐通知與裝置資源；個人聲學樣本只保留在本機。採集時不會轉文字核對你說的內容。</string>
+</resources>

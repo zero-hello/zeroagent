@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wake_v11_fixed_phrase">呼びかけはHey Zeroに固定されています。</string>
+    <string name="wake_v11_continuous_hint">最初は少し静かにして周囲の音を測定させてから、Hey Zeroを繰り返してください。毎回、約0.5秒の間を空けてください。基準を満たすサンプルは、目標数に達するまで自動保存されます。</string>
+    <string name="wake_v11_calibrating">周囲のノイズを測定中です。約0.4秒、静かにしてください。</string>
+    <string name="wake_v11_listening">準備ができました。Hey Zeroと言ってから、少し間を空けてください。</string>
+    <string name="wake_v11_speaking">音声を録音中です。呼びかけを自然に最後まで話してください。</string>
+    <string name="wake_v11_saving">このサンプルを確認して保存しています。保存に成功してから件数が更新されます。</string>
+    <string name="wake_v11_accepted_quality">前回保存したサンプル：%1$.2f秒 · 信号対雑音比 %2$.1f dB</string>
+    <string name="wake_v11_rejected">カウントされませんでした：%1$s もう一度話すか、録音を停止して録り直してください。</string>
+    <string name="wake_v11_save_failed">サンプルを保存できなかったため、カウントされていません。保存済みのサンプルはそのまま残っています。</string>
+    <string name="wake_v11_speech_title">音声対話</string>
+    <string name="wake_v11_speech_settings">音声対話の共通設定を開く</string>
+    <string name="wake_v11_voice_missing">音声対話に直接対応したモデルが設定されていません。</string>
+    <string name="wake_v11_shared_voice_model">アシスタントは「音声対話」で選択したサービスとモデルを使います。ここでは文字起こし（STT）、読み上げ（TTS）、チャット用モデルを個別に選択しません。</string>
+    <string name="wake_v11_language_preserves">アプリや呼びかけの言語を変更しても、保存済みのHey Zeroのサンプルは残ります。音響サンプルはこの端末内に保存されます。</string>
+    <string name="wake_v11_quality_quiet">マイクのノイズに対して声が小さすぎます。マイクに少し近づいて、自然な声で話してください。</string>
+    <string name="wake_v11_quality_short">話した区間が短すぎます。Hey Zeroを最後まではっきり話してください。</string>
+    <string name="wake_v11_quality_long">録音が長すぎるか、区切りがはっきりしていません。1回話すごとに約0.5秒の間を空けてください。</string>
+    <string name="wake_v11_quality_noisy">周囲の音に声が埋もれているか、はっきりした声の特徴がありません。より静かな場所で試してください。</string>
+    <string name="wake_v11_quality_clipped">マイクの音がひずんでいます。少し声を小さくするか、マイクから少し離れてください。</string>
+    <string name="wake_v11_quality_inconsistent">保存済みの呼びかけと違いが大きすぎます。話す速さとマイクまでの距離をできるだけそろえてください。</string>
+    <string name="wake_v11_quality_timeout">待機時間内に呼びかけ全体を録音できませんでした。マイクへのアクセスを確認し、周囲の音の測定が終わってから話してください。</string>
+    <string name="wake_v11_quality_tonal">録音が一定の音に近く、話し声のような変化がありません。テスト音や音楽を止めて、もう一度試してください。</string>
+    <string name="wake_v11_new_recordings_hint">新しく収集を始めると、保存済みのサンプルと音響プロファイルが消去され、バックグラウンドの待受が一時停止します。保存処理に成功してから新しい状態に切り替わります。</string>
+    <string name="wake_v11_start_collection">連続録音を開始</string>
+    <string name="wake_v11_consent_body">アシスタントはマイクと、「音声対話」で選択した音声対応モデルを使います。会話の音声はそのサービスに送信されます。Hey Zeroの待受は別途有効にする必要があり、常駐通知と端末のリソースを使います。個人用の音響サンプルは端末内だけに保存されます。サンプル収集中に文字起こしを行ったり、話した内容を照合したりすることはありません。</string>
+</resources>

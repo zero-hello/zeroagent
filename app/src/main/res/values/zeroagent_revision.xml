@@ -1,0 +1,14 @@
+<resources>
+    <string name="zeroagent_control_center">Control center</string>
+    <string name="zeroagent_control_hint">Models, tools and data in one place</string>
+    <string name="zeroagent_models_ready">Ready to chat</string>
+    <string name="zeroagent_models_setup">Choose a provider and model to begin</string>
+    <string name="zeroagent_cloud">Cloud</string>
+    <string name="zeroagent_on_device">On device</string>
+    <string name="zeroagent_connections">Connections</string>
+    <string name="zeroagent_catalog_hint">Official APIs. Your keys stay under your control.</string>
+    <string name="zeroagent_workspace">Your workspace</string>
+    <string name="zeroagent_workspace_hint">Chat, create and automate</string>
+    <string name="zeroagent_continue_setup">Model setup</string>
+    <string name="zeroagent_optional_tools">Optional: tools and automation</string>
+</resources>
