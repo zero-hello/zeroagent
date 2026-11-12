@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_connection_choose_provider">Выберите голосового провайдера</string>
+    <string name="voice_connection_idle">Введите ключ API и HTTPS-адрес для поиска голосовых моделей.</string>
+    <string name="voice_connection_loading">Подключение и проверка доступных голосовых моделей…</string>
+    <string name="voice_connection_ready">Подключено · доступно голосовых моделей: %1$d</string>
+    <string name="voice_connection_no_models">Подключение установлено, но у аккаунта нет совместимых моделей голосового общения в реальном времени.</string>
+    <string name="voice_connection_failed">Не удалось проверить подключение</string>
+    <string name="voice_connection_endpoint_hint">Введите действительный HTTPS-адрес без имени пользователя и пароля.</string>
+</resources>

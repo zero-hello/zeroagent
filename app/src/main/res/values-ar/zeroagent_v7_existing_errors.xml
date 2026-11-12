@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_generation_network_timeout">انتهت مهلة الاتصال</string>
+    <string name="chat_page_voice_failed">تعطّل وضع الصوت. أعد تشغيله.</string>
+    <string name="chat_page_voice_generation_failed">تعذّر على النموذج إنشاء الرد. تحقق من الخطأ في المحادثة.</string>
+    <string name="doctor_detail_db_integrity_timeout">انتهت مهلة فحص السلامة أو فشل الفحص.</string>
+    <string name="doctor_detail_probe_failed">فشل التشخيص: %1$s: %2$s</string>
+    <string name="doctor_fix_browser_mkdirs_failed">أعادت mkdirs() القيمة false. قد يكون التخزين للقراءة فقط.</string>
+    <string name="doctor_fix_browser_mkdirs_failed_2">أعادت mkdirs() القيمة false. قد يكون التخزين للقراءة فقط.</string>
+    <string name="doctor_fix_db_repair_failed">فشل الإصلاح: %1$s: %2$s</string>
+    <string name="doctor_pill_failures">الإخفاقات</string>
+    <string name="imggen_page_delete_images_failed">حُذف: %1$d. فشل: %2$d. حاول مجددًا.</string>
+    <string name="setting_page_accessibility_repair_shizuku_permission_denied">يلزم Shizuku: لم يحصل ZeroAgent على إذن Shizuku بعد.</string>
+    <string name="setting_page_preferences_network_first_output_timeout">مهلة أول استجابة</string>
+    <string name="setting_page_preferences_network_first_output_timeout_desc">إذا لم يصل أي جزء من الرد خلال هذه الثواني، يُعد الاتصال منقطعًا ويُعاد إرسال الطلب باتصال جديد. القيمة 0 توقف المراقبة. اضبط المهلة لتكون أطول من أبطأ وقت لمعالجة الإدخال؛ فقد يحتاج السياق الطويل وقتًا قبل بدء الرد.</string>
+    <string name="setting_page_preferences_network_first_output_timeout_input">ثوانٍ</string>
+    <string name="setting_page_preferences_network_proxy_invalid">أدخل عنوان وكيل صالحًا يتضمن المضيف والمنفذ.</string>
+    <string name="setting_page_preferences_network_stall_timeout">مهلة التوقف أثناء الرد</string>
+    <string name="setting_page_preferences_network_stall_timeout_desc">بعد بدء الرد، إذا لم تصل بيانات خلال هذه الثواني يُعد متوقفًا: يُستكمل الرد الجزئي إن وُجد، وإلا يُعاد من البداية. تُعاد المدة للصفر عند كل جزء، فلا يُقطع نموذج بطيء ما دام يرسل بيانات. القيمة 0 توقف المراقبة.</string>
+    <string name="setting_page_tool_approvals_load_failed">تعذّر تحميل قائمة الأدوات.</string>
+    <string name="setting_ssh_page_error_credential_missing">أدخل كلمة مرور أو مفتاحًا خاصًا</string>
+    <string name="setting_ssh_page_error_host_blank">أدخل المضيف</string>
+    <string name="setting_ssh_page_error_name_blank">أدخل اسمًا</string>
+    <string name="setting_ssh_page_error_name_taken">يوجد مضيف بهذا الاسم بالفعل</string>
+    <string name="setting_ssh_page_error_port_invalid">يجب أن يكون المنفذ من 1 إلى 65535</string>
+    <string name="setting_ssh_page_error_user_blank">أدخل اسم المستخدم</string>
+    <string name="setting_ssh_page_test_failed">فشل: %1$s</string>
+    <string name="videogen_page_delete_videos_failed">حُذف: %1$d. فشل: %2$d. حاول مجددًا.</string>
+    <string name="videogen_page_save_failed">فشل الحفظ: %1$s</string>
+    <string name="workspace_cwd_new_folder_invalid">أدخل اسم مجلد واحدًا دون شرطات مائلة.</string>
+    <string name="workspace_detail_settings_save_failed">تعذّر حفظ الإعدادات</string>
+    <string name="zeroagent6s_root_denied">لم يُمنح الإذن. تحقق من مدير المستخدم الفائق وحاول مجددًا.</string>
+    <string name="zeroagent6s_root_error">تعذّر التحقق من صلاحية Root. حاول مجددًا.</string>
+</resources>

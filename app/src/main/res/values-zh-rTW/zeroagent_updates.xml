@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_language">App 語言</string>
+    <string name="zeroagent_language_system">跟隨系統</string>
+    <string name="zeroagent_language_hint">依照手機的語言顯示，也可以另外選擇 ZeroAgent 的語言。</string>
+    <string name="zeroagent_phone_control">手機操作 · 目前助理</string>
+    <string name="zeroagent_phone_tools_on">已啟用螢幕操作與開啟 App 的工具。下方的無障礙服務也必須正常執行。</string>
+    <string name="zeroagent_phone_tools_off">只有 Agent Core 操作說明還不能操控手機。請為這個助理啟用螢幕操作與開啟 App 的工具。</string>
+    <string name="zeroagent_phone_enable">啟用工具</string>
+    <string name="zeroagent_phone_model">模型工具呼叫</string>
+    <string name="zeroagent_phone_model_missing">請選擇支援工具呼叫的聊天模型。</string>
+    <string name="zeroagent_phone_model_ready">目前模型已開啟工具呼叫。實際支援情況仍取決於供應商。</string>
+    <string name="zeroagent_phone_model_no_tools">目前模型未開啟工具呼叫。請選擇支援的模型，並在模型設定中啟用工具能力。</string>
+    <string name="zeroagent_phone_manage">管理助理工具</string>
+    <string name="zeroagent_phone_manage_hint">有 %1$d 個工具被個別停用。會保留原本停用的工具與授權規則。</string>
+    <string name="zeroagent_settings_workspace">工作區與任務</string>
+    <string name="zeroagent_settings_projects">專案</string>
+    <string name="zeroagent_settings_memory">記憶</string>
+    <string name="zeroagent_settings_translate">翻譯</string>
+    <string name="zeroagent_settings_images">產生圖片</string>
+    <string name="zeroagent_settings_videos">產生影片</string>
+    <string name="zeroagent_settings_saved">已收藏訊息</string>
+    <string name="zeroagent_settings_usage">用量統計</string>
+    <string name="zeroagent_settings_root">Root 權限</string>
+    <string name="zeroagent_settings_root_hint">選擇性啟用超級使用者權限，每次執行命令前都會詢問。</string>
+</resources>

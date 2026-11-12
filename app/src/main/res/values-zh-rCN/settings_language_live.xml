@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doctor_error_internal">无法完成诊断</string>
+    <string name="doctor_report_title">ZeroAgent — 诊断报告</string>
+    <string name="doctor_report_generated">生成时间</string>
+    <string name="doctor_report_summary">摘要</string>
+    <string name="accessibility_action_ok">成功</string>
+    <string name="accessibility_action_failed">失败</string>
+    <string name="accessibility_service_inactive">无障碍服务尚未启动。</string>
+    <string name="accessibility_action_tap">点按</string>
+    <string name="accessibility_action_long_press">长按</string>
+    <string name="accessibility_action_swipe">滑动</string>
+    <string name="accessibility_action_scroll">滚动</string>
+    <string name="accessibility_action_find_node">查找屏幕元素</string>
+    <string name="accessibility_action_click_node">激活屏幕元素</string>
+    <string name="accessibility_action_set_text">输入文字</string>
+    <string name="accessibility_action_screenshot">截取屏幕</string>
+    <string name="accessibility_action_read_window">读取屏幕结构</string>
+    <string name="accessibility_action_system">系统操作</string>
+    <string name="accessibility_action_other">操作</string>
+    <string name="audio_level_waveform">麦克风音量波形</string>
+    <string name="tool_approval_review">查看并批准</string>
+    <string name="tool_approval_hint">请确认工具内容与批准范围；现有安全规则和 Android 系统权限仍然有效。</string>
+    <string name="tool_approval_details">查看工具详情</string>
+</resources>
