@@ -1,0 +1,7 @@
+<resources>
+    <string name="access_save_failed">無法保存存取權選擇，先前的選擇仍然有效。請確認裝置儲存空間後重試。</string>
+    <string name="root_status_unverified">已保存 Root 偏好，目前的系統授權尚未驗證。</string>
+    <string name="root_status_checking">正在檢查超級使用者授權…</string>
+    <string name="root_recheck">重新檢查 Root 權限</string>
+    <string name="root_enable_warning">Root 指令可讀取或修改受保護的檔案，可能造成無法復原的資料損失。啟用後，前景 Agent 操作會使用此授權，ZeroAgent 不再逐次要求確認；系統授權仍由超級使用者管理工具控制。你可以隨時在此撤銷。</string>
+</resources>

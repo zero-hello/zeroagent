@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="embedded_terminal_title">內建終端機</string>
+    <string name="embedded_terminal_description">在應用程式內使用工作區 Linux 環境，不需另行安裝 Termux。</string>
+    <string name="embedded_terminal_privilege">一般 App 權限 · 起始目錄 /workspace；PRoot 的 root 不代表 Android Root</string>
+    <string name="embedded_terminal_interrupt">中斷 Ctrl+C</string>
+    <string name="embedded_terminal_root_command">Android Root 命令</string>
+    <string name="embedded_terminal_start_failed">終端機啟動失敗，請檢查工作區環境後重試。</string>
+    <string name="embedded_terminal_prepare">準備環境</string>
+    <string name="embedded_terminal_retry">重試</string>
+    <string name="embedded_terminal_stopped">已中止命令。</string>
+    <string name="embedded_terminal_root_help">使用與 AI 工具相同的 Root 授權。外部 Root 管理工具仍可要求系統授權。命令最長執行 30 秒；請用 pwd 確認工作目錄。</string>
+    <string name="embedded_terminal_root_disabled">尚未啟用 Root，請先到 Root 設定閱讀說明並選擇授權。</string>
+    <string name="embedded_terminal_root_unverified">Root 狀態尚未確認。</string>
+    <string name="embedded_terminal_root_checking">正在確認實際 Root 權限…</string>
+    <string name="embedded_terminal_root_available">已確認 Android Root 可用。</string>
+    <string name="embedded_terminal_root_unavailable">目前無法取得 Root，請檢查裝置與 Root 管理工具。</string>
+    <string name="embedded_terminal_command">輸入命令</string>
+    <string name="embedded_terminal_recheck_root">重新檢查 Root</string>
+    <string name="embedded_terminal_root_settings">Root 設定</string>
+    <string name="embedded_terminal_root_result">退出代碼：%1$d\n%2$s</string>
+    <string name="embedded_terminal_stop">中止</string>
+    <string name="embedded_terminal_execute">執行</string>
+    <string name="embedded_terminal_unbound">目前助理尚未綁定工作區，請先建立或選擇工作區。</string>
+    <string name="embedded_terminal_ready">環境已就緒，可直接開啟終端機。</string>
+    <string name="embedded_terminal_not_ready">請先下載並準備工作區的 Linux 環境。</string>
+    <string name="embedded_terminal_open">開啟終端機</string>
+    <string name="embedded_terminal_workspaces">管理工作區</string>
+</resources>

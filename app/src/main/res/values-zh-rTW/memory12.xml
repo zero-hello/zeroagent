@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="memory12_title">情境記憶</string>
+    <string name="memory12_enable">記住相關對話</string>
+    <string name="memory12_privacy">資料儲存在這部裝置。聊天時會將相關片段傳給你選定的模型；原有手動記憶會獨立保留。</string>
+    <string name="memory12_tone">調整回應語氣</string>
+    <string name="memory12_tone_hint">參考不確定的情緒語義線索，溫和調整語氣與模型支援的溫度。可隨時關閉。</string>
+    <string name="memory12_building">正在構建語義大腦…</string>
+    <string name="memory12_initialize">下載並初始化</string>
+    <string name="memory12_error">記憶初始化或檢索失敗。請確認可用記憶體、儲存空間與網路後重試；一般聊天仍可使用。</string>
+    <string name="memory12_retry">重新初始化</string>
+    <string name="memory12_graph">記憶節點圖</string>
+    <string name="memory12_graph_hint">點選節點可查看或刪除內容。連線代表餘弦相似度高於 0.8。</string>
+    <string name="memory12_recent_count">顯示最近 %1$d 個片段</string>
+    <string name="memory12_empty">尚未儲存情境記憶</string>
+    <string name="memory12_erase">清除情境記憶</string>
+    <string name="memory12_consent">下載並驗證約 132 MB 的多語言模型，並將之後的對話片段儲存在本機？聊天時會把相關歷史內容傳給選定的模型；這不會增加工具的存取權限。</string>
+    <string name="memory12_accept">啟用並下載</string>
+    <string name="memory12_cancel">取消</string>
+    <string name="memory12_erase_hint">將清除情境記憶與情緒狀態，並停止收集。原有手動記憶與對話紀錄會保留。</string>
+    <string name="memory12_record">記憶片段</string>
+    <string name="memory12_close">關閉</string>
+    <string name="memory12_delete">刪除此片段</string>
+</resources>

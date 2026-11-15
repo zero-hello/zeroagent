@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_language_workflow_create">ワークフロー「%1$s」を作成</string>
+    <string name="zeroagent_language_workflow_update">ワークフロー「%1$s」を更新</string>
+    <string name="zeroagent_language_workflow_when">実行のきっかけ：%1$s</string>
+    <string name="zeroagent_language_workflow_only_if">実行条件：%1$s</string>
+    <string name="zeroagent_language_workflow_do">実行する操作：</string>
+    <string name="zeroagent_language_workflow_cooldown">待機時間：%1$s</string>
+    <string name="zeroagent_language_workflow_daily_cap">1 日の上限：%1$s</string>
+    <string name="zeroagent_language_workflow_always">常に一致</string>
+    <string name="zeroagent_language_workflow_none">なし</string>
+    <string name="zeroagent_language_workflow_unlimited">制限なし</string>
+    <string name="zeroagent_language_workflow_seconds">%1$d 秒</string>
+    <string name="zeroagent_language_workflow_runs">%1$d 回</string>
+    <string name="zeroagent_language_workflow_daily">毎日</string>
+    <string name="zeroagent_language_workflow_days">曜日（%1$s）</string>
+    <string name="zeroagent_language_workflow_at_time">%2$s %1$s</string>
+    <string name="zeroagent_language_workflow_schedule_cron">スケジュール（%1$s）</string>
+    <string name="zeroagent_language_workflow_schedule">スケジュール</string>
+    <string name="zeroagent_language_workflow_wifi_connects">Wi-Fi に接続</string>
+    <string name="zeroagent_language_workflow_wifi_connects_to">Wi-Fi に接続：%1$s</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects">Wi-Fi の接続を解除</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects_from">Wi-Fi の接続を解除：%1$s</string>
+    <string name="zeroagent_language_workflow_bluetooth_connects">Bluetooth デバイスに接続</string>
+    <string name="zeroagent_language_workflow_bluetooth_disconnects">Bluetooth デバイスの接続を解除</string>
+    <string name="zeroagent_language_workflow_headphones_in">ヘッドホンを接続</string>
+    <string name="zeroagent_language_workflow_headphones_out">ヘッドホンを取り外す</string>
+    <string name="zeroagent_language_workflow_power_in">電源に接続</string>
+    <string name="zeroagent_language_workflow_power_out">電源を取り外す</string>
+    <string name="zeroagent_language_workflow_battery_drops">電池残量が %1$d%% 未満になる</string>
+    <string name="zeroagent_language_workflow_battery_rises">電池残量が %1$d%% を超える</string>
+    <string name="zeroagent_language_workflow_enter">%1$s に入る</string>
+    <string name="zeroagent_language_workflow_leave">%1$s から出る</string>
+    <string name="zeroagent_language_workflow_place">場所（%1$s,%2$s、半径 %3$s m）</string>
+    <string name="zeroagent_language_workflow_app_launched">%1$s を起動</string>
+    <string name="zeroagent_language_workflow_app_closed">%1$s を終了</string>
+    <string name="zeroagent_language_workflow_notification">通知を受信</string>
+    <string name="zeroagent_language_workflow_notification_filters">%1$s（%2$s）</string>
+    <string name="zeroagent_language_workflow_from">送信元 %1$s</string>
+    <string name="zeroagent_language_workflow_title_contains">タイトルに「%1$s」を含む</string>
+    <string name="zeroagent_language_workflow_text_contains">本文に「%1$s」を含む</string>
+    <string name="zeroagent_language_workflow_title_matches">タイトルが /%1$s/ に一致</string>
+    <string name="zeroagent_language_workflow_text_matches">本文が /%1$s/ に一致</string>
+    <string name="zeroagent_language_workflow_boot">端末を起動</string>
+    <string name="zeroagent_language_workflow_screen_on">画面がオンになる</string>
+    <string name="zeroagent_language_workflow_screen_off">画面がオフになる</string>
+    <string name="zeroagent_language_workflow_manual">手動で実行（今すぐ実行）</string>
+    <string name="zeroagent_language_workflow_time_between">%1$s から %2$s の間</string>
+    <string name="zeroagent_language_workflow_after_sunset">日没後</string>
+    <string name="zeroagent_language_workflow_before_sunrise">日の出前</string>
+    <string name="zeroagent_language_workflow_offset">（%1$d 分の補正）</string>
+    <string name="zeroagent_language_workflow_wifi_is">Wi-Fi が %1$s</string>
+    <string name="zeroagent_language_workflow_wifi_in">Wi-Fi が次のいずれか：%1$s</string>
+    <string name="zeroagent_language_workflow_battery_above">電池残量が %1$d%% 超</string>
+    <string name="zeroagent_language_workflow_battery_below">電池残量が %1$d%% 未満</string>
+    <string name="zeroagent_language_workflow_charging">充電中</string>
+    <string name="zeroagent_language_workflow_not_charging">充電していない</string>
+    <string name="zeroagent_language_workflow_foreground">%1$s が前面にある</string>
+    <string name="zeroagent_language_workflow_foreground_match">前面のアプリが %1$d 個のいずれかに一致</string>
+    <string name="zeroagent_language_workflow_cond_screen_on">画面がオン</string>
+    <string name="zeroagent_language_workflow_cond_screen_off">画面がオフ</string>
+    <string name="zeroagent_language_workflow_not">一致しない（%1$s）</string>
+    <string name="zeroagent_language_workflow_action">%1$s(%2$s)</string>
+    <string name="zeroagent_language_workflow_delete">ワークフロー ID=%1$s を削除</string>
+    <string name="zeroagent_language_workflow_enable">ワークフロー ID=%1$s を有効化</string>
+    <string name="zeroagent_language_workflow_disable">ワークフロー ID=%1$s を無効化</string>
+    <string name="zeroagent_language_workflow_run_now">ワークフロー ID=%1$s を今すぐ実行</string>
+    <string name="zeroagent_language_mcp_tools">ツール %1$d/%2$d</string>
+    <string name="zeroagent_language_mcp_idle">待機中</string>
+    <string name="zeroagent_language_mcp_connecting">接続中</string>
+    <string name="zeroagent_language_mcp_connected">接続済み</string>
+    <string name="zeroagent_language_mcp_reconnecting">再接続中（%1$d/%2$d）</string>
+    <string name="zeroagent_language_mcp_error">エラー：%1$s</string>
+    <string name="zeroagent_language_mcp_needs_authorization">認証が必要</string>
+    <string name="zeroagent_language_mcp_authorizing">認証中</string>
+    <string name="zeroagent_language_usage_tokens">%1$s トークン</string>
+    <string name="zeroagent_language_usage_cache">（ヒット %1$s／ミス %2$s／%3$d%%）</string>
+    <string name="zeroagent_language_usage_cached">（キャッシュヒット %1$s）</string>
+    <string name="zeroagent_language_google_import_success">サービスアカウントをインポートしました</string>
+    <string name="zeroagent_language_google_import_failed">インポート失敗：%1$s</string>
+</resources>

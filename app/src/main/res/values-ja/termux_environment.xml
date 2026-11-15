@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="termux_setup_environment">完全なターミナル環境</string>
+    <string name="termux_setup_source_size">Termux %1$s · %2$s · F-Droid 安定版</string>
+    <string name="termux_setup_download">Termux をダウンロード</string>
+    <string name="termux_setup_install">検証済みの Termux をインストール</string>
+    <string name="termux_setup_downloading">Termux をダウンロード中</string>
+    <string name="termux_setup_download_ready">Termux のインストーラーを準備できました</string>
+    <string name="termux_setup_install_hint">タップして公式パッケージを確認し、インストールします。</string>
+    <string name="termux_setup_download_channel">ターミナル環境のダウンロード</string>
+    <string name="termux_setup_install_permission">この提供元からのインストールを ZeroAgent に許可してから戻ってください。</string>
+    <string name="termux_setup_configure">接続設定コマンドをコピー</string>
+    <string name="termux_setup_configure_hint">コマンドを Termux に貼り付けて実行してください。許可したアプリからのコマンド実行を有効にし、対話セッション用の tmux をインストールします。</string>
+    <string name="termux_setup_copied">設定コマンドをコピーしました</string>
+    <string name="termux_setup_model_tools">モデルのターミナルツールを設定</string>
+    <string name="termux_setup_model_tools_hint">現在のモデルのローカルツールで Termux を有効にします。会話の承認と安全規則は引き続き適用されます。</string>
+    <string name="termux_setup_open_failed">Termux を開けません。Android のアプリ設定で無効になっていないか確認してください。</string>
+    <string name="termux_setup_permission_usage">承認したターミナルコマンドを ZeroAgent が Termux 経由で実行できるようにします。会話の承認や Android の権限を回避するものではありません。</string>
+</resources>

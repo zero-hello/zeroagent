@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="local_v11_download_channel">Local model downloads</string>
+    <string name="local_v11_download_title">Downloading local model</string>
+    <string name="local_v11_pause">Pause download</string>
+    <string name="local_v11_resume">Resume download</string>
+    <string name="local_v11_background_download">Downloads continue in the background. Pause retains verified partial data; resume retries the same download.</string>
+    <string name="local_v11_weights_portable">GGUF weights are architecture independent. The installed runtime must support this app process ABI.</string>
+    <string name="local_v11_abi">Process ABI: %1$s · Device ABIs: %2$s</string>
+    <string name="local_v11_native_missing">Unavailable: the runtime native library cannot be loaded by this app process.</string>
+    <string name="local_v11_cpu_only">GPU unavailable: this llama.cpp JNI build loads all model layers on CPU.</string>
+    <string name="local_v11_gpu_driver_missing">GPU unavailable: the packaged accelerator or an OpenGL ES 3 driver probe failed.</string>
+    <string name="local_v11_gpu_candidate">GPU driver probe passed. The selected model must still initialize successfully; CPU fallback is reported after loading.</string>
+    <string name="local_v11_actual_backend">Last loaded backend: %1$s</string>
+    <string name="local_v11_not_loaded">Not loaded yet</string>
+    <string name="local_v11_rootfs_unknown">No compatible default rootfs is known for this kernel architecture. Enter a compatible archive URL manually.</string>
+    <string name="local_v11_allow_notifications">Allow download notifications</string>
+</resources>

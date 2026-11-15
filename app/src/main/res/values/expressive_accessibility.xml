@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_battery_manage">Manage battery optimization</string>
+    <string name="accessibility_overlay_manage">Manage overlay permission</string>
+    <string name="accessibility_diagnostics_description">Capture the current screen to check the accessibility service. The screenshot is saved in the app’s private cache.</string>
+    <string name="accessibility_repair_running">Repairing service…</string>
+    <string name="accessibility_capture_running">Capturing screenshot…</string>
+</resources>

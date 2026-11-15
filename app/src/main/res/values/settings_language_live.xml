@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doctor_error_internal">Unable to complete diagnostics</string>
+    <string name="doctor_report_title">ZeroAgent — diagnostic report</string>
+    <string name="doctor_report_generated">Generated</string>
+    <string name="doctor_report_summary">Summary</string>
+    <string name="accessibility_action_ok">Succeeded</string>
+    <string name="accessibility_action_failed">Failed</string>
+    <string name="accessibility_service_inactive">The accessibility service is not running.</string>
+    <string name="accessibility_action_tap">Tap</string>
+    <string name="accessibility_action_long_press">Long press</string>
+    <string name="accessibility_action_swipe">Swipe</string>
+    <string name="accessibility_action_scroll">Scroll</string>
+    <string name="accessibility_action_find_node">Find element</string>
+    <string name="accessibility_action_click_node">Activate element</string>
+    <string name="accessibility_action_set_text">Enter text</string>
+    <string name="accessibility_action_screenshot">Capture screenshot</string>
+    <string name="accessibility_action_read_window">Read screen structure</string>
+    <string name="accessibility_action_system">System action</string>
+    <string name="accessibility_action_other">Action</string>
+    <string name="audio_level_waveform">Microphone volume waveform</string>
+    <string name="tool_approval_review">Review and approve</string>
+    <string name="tool_approval_hint">Check the tool details and choose the approval scope. Existing safety rules and Android permissions still apply.</string>
+    <string name="tool_approval_details">View tool details</string>
+</resources>

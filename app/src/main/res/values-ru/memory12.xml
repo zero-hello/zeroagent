@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="memory12_title">Контекстная память</string>
+    <string name="memory12_enable">Запоминать связанные разговоры</string>
+    <string name="memory12_privacy">Данные хранятся на устройстве. Связанные отрывки отправляются выбранной модели. Ручные заметки сохраняются отдельно.</string>
+    <string name="memory12_tone">Подстраивать тон ответов</string>
+    <string name="memory12_tone_hint">Осторожно учитывать неточные эмоциональные признаки и поддерживаемую температуру. Можно отключить.</string>
+    <string name="memory12_building">Создание семантической памяти…</string>
+    <string name="memory12_initialize">Скачать и настроить</string>
+    <string name="memory12_error">Ошибка настройки или поиска памяти. Проверьте свободную память, место и подключение. Обычный чат доступен.</string>
+    <string name="memory12_retry">Повторить настройку</string>
+    <string name="memory12_graph">Граф памяти</string>
+    <string name="memory12_graph_hint">Нажмите узел для просмотра или удаления. Линии показывают косинусное сходство выше 0,8.</string>
+    <string name="memory12_recent_count">Последние отрывки: %1$d</string>
+    <string name="memory12_empty">Контекстная память пока пуста</string>
+    <string name="memory12_erase">Удалить контекстную память</string>
+    <string name="memory12_consent">Скачать проверенную многоязычную модель около 132 МБ и сохранять будущие разговоры локально? Связанные отрывки будут отправляться выбранной модели. Дополнительные права инструментам не выдаются.</string>
+    <string name="memory12_accept">Включить и скачать</string>
+    <string name="memory12_cancel">Отмена</string>
+    <string name="memory12_erase_hint">Память и эмоциональное состояние будут удалены, сбор остановлен. Ручные заметки и история останутся.</string>
+    <string name="memory12_record">Отрывок памяти</string>
+    <string name="memory12_close">Закрыть</string>
+    <string name="memory12_delete">Удалить отрывок</string>
+</resources>

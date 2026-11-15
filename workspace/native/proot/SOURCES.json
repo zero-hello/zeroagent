@@ -1,0 +1,45 @@
+{
+  "proot": {
+    "repository": "https://github.com/termux/proot",
+    "commit": "7266fb3e8516535682f5a9c8f3a7e70f6506eddb",
+    "tag": "v5.1.107.92",
+    "archive_url": "https://github.com/termux/proot/archive/v5.1.107.92.zip",
+    "archive_sha256": "29385d1ddb619a9c4449ab512bfd55032034b22f724ddf98fc95ff300ea32135",
+    "license": "GPL-2.0-or-later",
+    "local_path": "proot",
+    "source_modifications": []
+  },
+  "talloc": {
+    "repository": "https://github.com/samba-team/samba",
+    "commit": "77229f73c20af69ab0f3c96efbb229ff64a9dfe4",
+    "tag": "talloc-2.4.3",
+    "upstream_paths": ["lib/talloc/talloc.c", "lib/talloc/talloc.h", "lib/talloc/LICENSE", "COPYING"],
+    "license": "LGPL-3.0-or-later",
+    "local_path": "talloc",
+    "source_modifications": [],
+    "local_build_adaptation": "replace.h supplies Android bionic API 31+ headers, macros and talloc build configuration. No Samba libreplace implementation is linked.",
+    "source_modifications": []
+  },
+  "libandroid-shmem": {
+    "repository": "https://github.com/termux/libandroid-shmem",
+    "commit": "7f0bd7e25dbdd146265aff7c6a890029e374622d",
+    "tag": "v0.7",
+    "archive_url": "https://github.com/termux/libandroid-shmem/archive/refs/tags/v0.7.tar.gz",
+    "archive_sha256": "1e5ff8459bc0a8c229dd8a94b27d119987e09ef3414331c2b5ebfff20b98e867",
+    "license": "BSD-3-Clause",
+    "local_path": "libandroid-shmem",
+    "source_modifications": [
+      "libandroid-shmem/shmem.c: use P_tmpdir from stdio.h because Android NDK paths.h does not define _PATH_TMP."
+    ]
+  },
+  "build_recipe": "../../../scripts/build-proot.py",
+  "toolchain_revision": "Android NDK r28c / 28.2.13676358",
+  "minimum_android_api": 31,
+  "linkage": "talloc.c and shmem.c linked directly into the PIE executable; loader is freestanding and statically linked.",
+  "android_platform_libraries": ["libc", "libdl", "libm", "liblog", "libandroid"],
+  "build_adaptations": [
+    "scripts/build-proot.py generates Android build.h, probes target features, includes string.h for PRoot's legacy source, and links talloc.c and shmem.c directly.",
+    "The Android loader is built as a freestanding PIE companion for the pinned PRoot source."
+  ],
+  "scope": "The v1.9.5 APK native libraries were rebuilt from the pinned source inputs listed here. Runtime behavior still requires Android device verification. This evidence does not retroactively establish the source of binaries in earlier releases."
+}

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_search_cancel">検索をキャンセル</string>
+    <string name="zeroagent_search_limits">1 回の検索で最大 20 件を表示します。1 分以内の同じ検索では最近の結果を再利用できます。</string>
+</resources>

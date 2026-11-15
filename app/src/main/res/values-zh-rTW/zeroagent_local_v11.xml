@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="local_v11_download_channel">本地模型下載</string>
+    <string name="local_v11_download_title">正在下載本地模型</string>
+    <string name="local_v11_pause">暫停下載</string>
+    <string name="local_v11_resume">繼續下載</string>
+    <string name="local_v11_background_download">切換頁面或退到背景仍會繼續下載。暫停會保留可續傳資料；繼續會重試原本的下載。</string>
+    <string name="local_v11_weights_portable">GGUF 權重不限定處理器架構；安裝的執行引擎必須支援目前 App 程序的 ABI。</string>
+    <string name="local_v11_abi">程序 ABI：%1$s · 裝置 ABI：%2$s</string>
+    <string name="local_v11_native_missing">無法使用：目前 App 程序無法載入執行引擎的原生程式庫。</string>
+    <string name="local_v11_cpu_only">GPU 無法使用：此版本 llama.cpp JNI 將所有模型層載入 CPU。</string>
+    <string name="local_v11_gpu_driver_missing">GPU 無法使用：內建加速程式庫或 OpenGL ES 3 驅動探測失敗。</string>
+    <string name="local_v11_gpu_candidate">GPU 驅動探測通過，仍須實際初始化所選模型；載入後會回報是否回退 CPU。</string>
+    <string name="local_v11_actual_backend">上次載入的後端：%1$s</string>
+    <string name="local_v11_not_loaded">尚未載入</string>
+    <string name="local_v11_rootfs_unknown">此核心架構沒有已知相容的預設 rootfs，請手動輸入相容映像檔網址。</string>
+    <string name="local_v11_allow_notifications">允許顯示下載通知</string>
+</resources>

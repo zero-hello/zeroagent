@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="provider_api_format_title">API 格式</string>
+    <string name="provider_api_format_hint">請依供應商文件選擇協定。切換格式會保留網址、API 金鑰及模型。</string>
+    <string name="provider_api_format_google_legacy">既有 Gemini 設定會保留原生協定、金鑰及安全設定，不會自動轉換。</string>
+    <string name="provider_identity_title">供應商名稱</string>
+    <string name="provider_credentials_title">身分驗證</string>
+    <string name="provider_connection_title">連線與端點</string>
+    <string name="provider_base_url_hint">可輸入基底網址或完整端點；最終請求路徑會依所選 API 格式決定。</string>
+    <string name="provider_endpoint_preview">最終請求網址：%1$s</string>
+    <string name="provider_endpoint_invalid">請輸入有效的 HTTP(S) 網址及 API 路徑；網址不可包含帳號或密碼。</string>
+    <string name="provider_api_format_cohere">Cohere v2 原生 API</string>
+</resources>

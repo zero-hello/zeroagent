@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="image_model_unavailable">請先選擇已啟用且支援圖片輸出的供應商與模型。若清單為空，請到供應商設定新增可用的圖片模型。</string>
+    <string name="image_edit_unavailable">目前模型可生成圖片，但不支援此應用程式的圖片編輯流程。請移除參考圖片，或選擇支援編輯的模型。</string>
+</resources>

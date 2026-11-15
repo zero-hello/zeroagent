@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_extra_approval_tools">Tools that require extra approval</string>
+    <string name="ui_extra_approval_on">Requires extra approval</string>
+    <string name="ui_extra_approval_off">No additional approval rule</string>
+    <string name="ui_rule_save_failed">Could not save the approval rule. Please try again.</string>
+    <string name="ui_rules_loading">Loading saved rules…</string>
+    <string name="ui_rules_load_failed">Could not load saved approval rules. Changes are disabled.</string>
+    <string name="ui_rules_retry">Retry loading rules</string>
+    <string name="ui_rules_saving">Saving approval rules…</string>
+</resources>
