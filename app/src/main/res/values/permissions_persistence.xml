@@ -1,0 +1,7 @@
+<resources>
+    <string name="access_save_failed">Could not save your access choice. The previous choice is still active. Check available storage and try again.</string>
+    <string name="root_status_unverified">Your Root preference is saved. The current system grant has not been verified.</string>
+    <string name="root_status_checking">Checking the superuser grant…</string>
+    <string name="root_recheck">Check Root access again</string>
+    <string name="root_enable_warning">Root commands can read or change protected files and cause permanent data loss. Once enabled, foreground Agent operations will use this grant without repeated ZeroAgent confirmation. Your superuser manager still controls the system grant. You can revoke access here at any time.</string>
+</resources>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_search_cancel">取消搜尋</string>
+    <string name="zeroagent_search_limits">每次搜尋最多顯示 20 筆結果。一分鐘內重複相同搜尋可重用近期結果。</string>
+</resources>

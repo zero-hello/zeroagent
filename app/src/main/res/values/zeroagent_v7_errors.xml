@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent7_error_title">Unable to finish</string>
+    <string name="zeroagent7_error_unknown">Something went wrong. Try again; copy diagnostics if it continues.</string>
+    <string name="zeroagent7_error_network">Unable to connect. Check your network and service address.</string>
+    <string name="zeroagent7_error_timeout">The operation timed out. Check the connection and try again.</string>
+    <string name="zeroagent7_error_auth">Access was rejected. Check your API key and model permissions.</string>
+    <string name="zeroagent7_error_rate">Too many requests. Wait a moment and try again.</string>
+    <string name="zeroagent7_error_quota">Your provider usage or credit limit has been reached. Check your account.</string>
+    <string name="zeroagent7_error_service">The service is temporarily unavailable. Try again later.</string>
+    <string name="zeroagent7_error_model">The model or endpoint is unavailable. Check its name and address.</string>
+    <string name="zeroagent7_error_context">The conversation is too long for this model. Start a new chat or reduce context.</string>
+    <string name="zeroagent7_error_permission">The required permission is missing. Check Android permissions and tool authorization.</string>
+    <string name="zeroagent7_error_cancelled">The operation was cancelled.</string>
+    <string name="zeroagent7_error_storage">There is not enough storage. Free some space and try again.</string>
+    <string name="zeroagent7_error_memory">There is not enough memory. Close other apps or use a smaller model.</string>
+    <string name="zeroagent7_error_audio">Audio is unavailable. Check microphone permission and other apps using audio.</string>
+    <string name="zeroagent7_error_corrupt">The model file is incomplete or incompatible. Download it again or choose a compatible file.</string>
+    <string name="zeroagent7_error_unsupported">This model, service or device does not support the requested operation.</string>
+    <string name="zeroagent7_error_request">The service rejected the request. Check the model and request settings.</string>
+    <string name="zeroagent7_error_reasoning">This model does not support the selected reasoning setting. Choose another level.</string>
+    <string name="zeroagent7_error_format">The data format is invalid. Check the input or file contents.</string>
+    <string name="zeroagent7_error_config">This feature is not configured. Choose its service or model in Settings first.</string>
+</resources>

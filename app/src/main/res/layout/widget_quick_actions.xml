@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="16dp" android:background="@drawable/widget_panel">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="ZeroAgent" android:textColor="#F5F3FF" android:textSize="20sp" android:textStyle="bold" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <Button android:id="@+id/widget_new_chat" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="match_parent" android:text="@string/chat_page_new_chat" android:textColor="#F5F3FF" android:backgroundTint="#514378" />
+        <Button android:id="@+id/widget_voice" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="match_parent" android:text="@string/zeroagent11_voice_conversation" android:textColor="#F5F3FF" android:backgroundTint="#514378" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <Button android:id="@+id/widget_projects" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="match_parent" android:text="@string/productivity_title" android:textColor="#F5F3FF" android:backgroundTint="#514378" />
+        <Button android:id="@+id/widget_visual" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="match_parent" android:text="@string/visual_assist_title" android:textColor="#F5F3FF" android:backgroundTint="#514378" />
+    </LinearLayout>
+</LinearLayout>
