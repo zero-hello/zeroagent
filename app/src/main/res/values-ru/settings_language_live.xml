@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doctor_error_internal">Не удалось завершить диагностику</string>
+    <string name="doctor_report_title">ZeroAgent — отчёт диагностики</string>
+    <string name="doctor_report_generated">Создан</string>
+    <string name="doctor_report_summary">Сводка</string>
+    <string name="accessibility_action_ok">Успешно</string>
+    <string name="accessibility_action_failed">Ошибка</string>
+    <string name="accessibility_service_inactive">Служба специальных возможностей не запущена.</string>
+    <string name="accessibility_action_tap">Нажатие</string>
+    <string name="accessibility_action_long_press">Долгое нажатие</string>
+    <string name="accessibility_action_swipe">Смахивание</string>
+    <string name="accessibility_action_scroll">Прокрутка</string>
+    <string name="accessibility_action_find_node">Поиск элемента</string>
+    <string name="accessibility_action_click_node">Активация элемента</string>
+    <string name="accessibility_action_set_text">Ввод текста</string>
+    <string name="accessibility_action_screenshot">Снимок экрана</string>
+    <string name="accessibility_action_read_window">Чтение структуры экрана</string>
+    <string name="accessibility_action_system">Системное действие</string>
+    <string name="accessibility_action_other">Действие</string>
+    <string name="audio_level_waveform">График громкости микрофона</string>
+    <string name="tool_approval_review">Проверить и разрешить</string>
+    <string name="tool_approval_hint">Проверьте действие инструмента и область разрешения. Правила безопасности и разрешения Android продолжают действовать.</string>
+    <string name="tool_approval_details">Сведения об инструменте</string>
+</resources>

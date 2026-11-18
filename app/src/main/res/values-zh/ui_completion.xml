@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_extra_approval_tools">需額外核准的工具</string>
+    <string name="ui_extra_approval_on">需要額外核准</string>
+    <string name="ui_extra_approval_off">沒有額外核准規則</string>
+    <string name="ui_rule_save_failed">無法儲存核准規則，請再試一次。</string>
+    <string name="ui_rules_loading">正在讀取已儲存的規則…</string>
+    <string name="ui_rules_load_failed">無法讀取已儲存的核准規則，目前無法修改。</string>
+    <string name="ui_rules_retry">重新讀取規則</string>
+    <string name="ui_rules_saving">正在儲存核准規則…</string>
+</resources>

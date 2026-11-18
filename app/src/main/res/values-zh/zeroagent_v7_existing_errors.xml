@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doctor_detail_db_integrity_timeout">完整性检查超时或失败。</string>
+    <string name="doctor_detail_probe_failed">诊断失败：%1$s：%2$s</string>
+    <string name="doctor_fix_browser_mkdirs_failed">mkdirs() 返回 false，底层存储可能为只读。</string>
+    <string name="doctor_fix_browser_mkdirs_failed_2">mkdirs() 返回 false，底层存储可能为只读。</string>
+    <string name="doctor_fix_db_repair_failed">修复失败：%1$s：%2$s</string>
+    <string name="doctor_pill_failures">失败</string>
+</resources>

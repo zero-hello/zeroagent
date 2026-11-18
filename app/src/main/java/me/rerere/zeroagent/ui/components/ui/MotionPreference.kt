@@ -1,0 +1,28 @@
+package me.rerere.zeroagent.ui.components.ui
+
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+
+/** Observes the system preference while this UI exists, including changes made in Settings. */
+@Composable
+fun rememberMotionEnabled(): Boolean {
+    val resolver = LocalContext.current.contentResolver
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val lifecycleState by lifecycle.currentStateFlow.collectAsState()
+    fun readMotionEnabled() = Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
+    var enabled by remember(resolver) { mutableStateOf(readMotionEnabled()) }
+    DisposableEffect(resolver) {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) { enabled = readMotionEnabled() }
+        }
+        resolver.registerContentObserver(Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE), false, observer)
+        onDispose { resolver.unregisterContentObserver(observer) }
+    }
+    return enabled && lifecycleState.isAtLeast(Lifecycle.State.STARTED)
+}

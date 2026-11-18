@@ -1,0 +1,64 @@
+{
+  "checked_on": "2026-11-12",
+  "binary_provenance": "Exact upstream binary bytes verified; corresponding build source is not established.",
+  "binaries": [
+    {
+      "path": "workspace/src/main/jniLibs/arm64-v8a/libproot_exec.so",
+      "bytes": 267752,
+      "sha256": "06c4b8d620c960e2ae873786e81dc04d797b5af47967819b5ec4cbb7635590c9",
+      "exact_upstream_binary_url": "https://raw.githubusercontent.com/rikkahub/rikkahub/f4508dfac2255cf83e75859a8fe37dd7da6778a3/workspace/src/main/jniLibs/arm64-v8a/libproot_exec.so",
+      "upstream_bytes_verified_equal": true,
+      "gnu_build_id": null,
+      "dynamic_dependencies": [
+        "liblog.so",
+        "libc.so"
+      ],
+      "last_upstream_content_commit": "f4508dfac2255cf83e75859a8fe37dd7da6778a3"
+    },
+    {
+      "path": "workspace/src/main/jniLibs/arm64-v8a/libproot_loader.so",
+      "bytes": 18136,
+      "sha256": "44ef39c1e1a18c09f6e4c4b5d6f8bba82d30596598bd155ec162d05c5122ff04",
+      "exact_upstream_binary_url": "https://raw.githubusercontent.com/rikkahub/rikkahub/f4508dfac2255cf83e75859a8fe37dd7da6778a3/workspace/src/main/jniLibs/arm64-v8a/libproot_loader.so",
+      "upstream_bytes_verified_equal": true,
+      "gnu_build_id": null,
+      "dynamic_dependencies": [],
+      "last_upstream_content_commit": "ead966334c9ade5a467cd1d833faac05b3aa8930"
+    },
+    {
+      "path": "workspace/src/main/jniLibs/x86_64/libproot_exec.so",
+      "bytes": 282968,
+      "sha256": "29ad3f63f5a1a030d0db8a58c6f14124386ce4a2fc31c24003b8fac3febe5a02",
+      "exact_upstream_binary_url": "https://raw.githubusercontent.com/rikkahub/rikkahub/f4508dfac2255cf83e75859a8fe37dd7da6778a3/workspace/src/main/jniLibs/x86_64/libproot_exec.so",
+      "upstream_bytes_verified_equal": true,
+      "gnu_build_id": null,
+      "dynamic_dependencies": [
+        "liblog.so",
+        "libc.so"
+      ],
+      "last_upstream_content_commit": "f4508dfac2255cf83e75859a8fe37dd7da6778a3"
+    },
+    {
+      "path": "workspace/src/main/jniLibs/x86_64/libproot_loader.so",
+      "bytes": 18352,
+      "sha256": "914564ea1c66f50b38f18cac857fcf814c6b1ab027789178880fca1d530599b3",
+      "exact_upstream_binary_url": "https://raw.githubusercontent.com/rikkahub/rikkahub/f4508dfac2255cf83e75859a8fe37dd7da6778a3/workspace/src/main/jniLibs/x86_64/libproot_loader.so",
+      "upstream_bytes_verified_equal": true,
+      "gnu_build_id": null,
+      "dynamic_dependencies": [],
+      "last_upstream_content_commit": "ead966334c9ade5a467cd1d833faac05b3aa8930"
+    }
+  ],
+  "reference_source_candidate": {
+    "version_string_seen_in_exec": "5.1.107.92",
+    "source_tag_url": "https://github.com/termux/proot/tree/v5.1.107.92",
+    "source_tag_commit": "7266fb3e8516535682f5a9c8f3a7e70f6506eddb",
+    "archive_url": "https://github.com/termux/proot/archive/v5.1.107.92.zip",
+    "archive_sha256": "29385d1ddb619a9c4449ab512bfd55032034b22f724ddf98fc95ff300ea32135",
+    "archive_checksum_verified": true,
+    "recipe_commit": "08b49b3ce00b1e14a3a0365200f30e50f8dfafe1",
+    "recipe_url": "https://raw.githubusercontent.com/termux/termux-packages/08b49b3ce00b1e14a3a0365200f30e50f8dfafe1/packages/proot/build.sh",
+    "recipe_sha256": "d8ef12ff5eeaec16007a7547640ab27895d8e09ffad8e8f606f1ebfe88669d44",
+    "binary_correspondence_confirmed": false
+  }
+}

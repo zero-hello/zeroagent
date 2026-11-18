@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_input_hint_1">想聊些什麼？</string>
+    <string name="chat_input_hint_2">從哪裡開始？</string>
+    <string name="chat_input_hint_3">繼續聊吧…</string>
+    <string name="chat_input_hint_4">正在想什麼？</string>
+    <string name="chat_input_hint_5">接下來做什麼？</string>
+</resources>

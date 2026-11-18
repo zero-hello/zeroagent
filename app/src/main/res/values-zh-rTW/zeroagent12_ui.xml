@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent12_voice_add_provider">新增 %1$s</string>
+    <string name="zeroagent12_voice_shared_accounts">與模型設定共用相同的供應商帳戶及 API 金鑰。</string>
+</resources>

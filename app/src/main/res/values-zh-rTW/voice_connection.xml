@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="voice_connection_choose_provider">選擇語音供應商</string>
+    <string name="voice_connection_idle">填入 API 金鑰與 HTTPS 端點，即可偵測語音模型。</string>
+    <string name="voice_connection_loading">正在連線並確認可用的語音模型…</string>
+    <string name="voice_connection_ready">已連線・找到 %1$d 個可用語音模型</string>
+    <string name="voice_connection_no_models">已連線，但此帳戶未列出相容的即時語音模型。</string>
+    <string name="voice_connection_failed">連線驗證失敗</string>
+    <string name="voice_connection_endpoint_hint">請輸入有效的 HTTPS 網址，網址中不可包含帳號或密碼。</string>
+</resources>
