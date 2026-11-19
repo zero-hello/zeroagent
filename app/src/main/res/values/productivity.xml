@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="productivity_title">效率工具</string>
+    <string name="productivity_desc">專案、文件知識庫、多模型比較與畫面協助</string>
+    <string name="visual_assist_title">畫面協助</string>
+</resources>

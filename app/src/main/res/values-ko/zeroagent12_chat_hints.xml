@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_input_hint_1">무엇을 이야기할까요?</string>
+    <string name="chat_input_hint_2">어디서 시작할까요?</string>
+    <string name="chat_input_hint_3">계속 이야기해요…</string>
+    <string name="chat_input_hint_4">무슨 생각을 하고 있나요?</string>
+    <string name="chat_input_hint_5">다음에는 무엇을 할까요?</string>
+    <string name="chat_input_placeholder">AI와 대화</string>
+</resources>

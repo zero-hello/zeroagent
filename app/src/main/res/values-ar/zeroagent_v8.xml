@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent8_gradient">خلفية متدرجة متحركة</string>
+    <string name="zeroagent8_gradient_hint">ألوان انسيابية هادئة في صفحة المحادثة. معطلة افتراضيًا.</string>
+    <string name="zeroagent8_access_ask">طلب الموافقة</string>
+    <string name="zeroagent8_access_assisted">الموافقة المساعدة</string>
+    <string name="zeroagent8_access_full">وصول كامل</string>
+    <string name="zeroagent8_access_hint">لهذه المحادثة فقط حتى إغلاق التطبيق. تغيير المستوى يمحو موافقات المحادثة السابقة. تُدار أذونات Android بشكل منفصل.</string>
+    <string name="zeroagent8_access_risk_title">السماح بالوصول الكامل؟</string>
+    <string name="zeroagent8_access_risk">The agent may read or change files, control apps and send network requests without normal tool prompts. Mistakes can expose data or cause loss. Only enable this for tasks and models you trust. Root must be enabled separately; Android and superuser managers still control system grants. This choice is saved and inherited by new chats. You can switch back at any time.</string>
+    <string name="zeroagent8_access_accept">أفهم هذه المخاطر وأقبلها</string>
+    <string name="zeroagent8_cmd_compact">ضغط هذه المحادثة</string>
+    <string name="zeroagent8_cmd_plan">التخطيط أولًا؛ للإلغاء استخدم /plan off</string>
+    <string name="zeroagent8_cmd_goal">تحديد هدف: /goal المهمة؛ /goal off للمسح</string>
+    <string name="zeroagent8_cmd_image">فتح إنشاء الصور</string>
+    <string name="zeroagent8_cmd_voice">فتح المحادثة الصوتية المباشرة</string>
+    <string name="zeroagent8_cmd_access">تغيير وضع الوصول لهذه المحادثة</string>
+    <string name="zeroagent8_cmd_help">عرض جميع الأوامر</string>
+    <string name="zeroagent8_commands">أوامر المحادثة</string>
+    <string name="zeroagent8_directive_off">تم مسح وضع المحادثة</string>
+    <string name="zeroagent8_directive_saved">تم التطبيق على هذه المحادثة</string>
+    <string name="zeroagent8_goal_usage">اكتب المهمة بعد /goal</string>
+    <string name="zeroagent8_plan_active">وضع التخطيط · /plan off للخروج</string>
+    <string name="zeroagent8_goal_active">تم تحديد الهدف · /goal off للمسح</string>
+    <string name="zeroagent8_download_models">تنزيل النماذج</string>
+    <string name="zeroagent8_voice_model">نموذج المحادثة الصوتية</string>
+    <string name="zeroagent8_voice_models_hint">تُجلب القائمة من حساب المزوّد. اختر نموذج صوت مباشر أصلي؛ يُؤكَّد الدعم عند الاتصال. قد تتطلب البوابات المخصصة إدخال معرّف النموذج يدويًا.</string>
+    <string name="zeroagent8_voice_models_empty">لم تُدرج نماذج صوت مباشر أصلية. تحقق من المزوّد ومفتاح API وصلاحيات الحساب. التعرف على الكلام وTTS ليسا نماذج محادثة مباشرة.</string>
+    <string name="zeroagent8_voice_provider">مزوّد المحادثة الصوتية</string>
+    <string name="zeroagent8_voice_refresh">تحديث نماذج الصوت</string>
+    <string name="zeroagent8_voice_setup_hint">اختر مزوّدًا بمفتاح API ونموذج صوت مباشر أصلي. تُشغَّل أصوات النموذج مباشرة دون TTS الهاتف.</string>
+    <string name="zeroagent8_voice_start">بدء المحادثة الصوتية</string>
+    <string name="zeroagent8_voice_configure_provider">إعداد المزوّد ومفتاح API</string>
+    <string name="zeroagent8_voice_speaker">مكبر الصوت</string>
+    <string name="zeroagent8_voice_earpiece">سماعة الأذن</string>
+    <string name="zeroagent8_voice_headset">سماعات / صوت USB</string>
+    <string name="zeroagent8_voice_bluetooth">صوت Bluetooth</string>
+    <string name="zeroagent8_voice_other">جهاز صوت آخر</string>
+    <string name="zeroagent8_voice_mute">كتم إخراج الصوت</string>
+    <string name="zeroagent8_voice_unmute">تفعيل إخراج الصوت</string>
+    <string name="zeroagent8_voice_route_error">هذا الجهاز الصوتي غير متاح. اختر مخرجًا آخر.</string>
+    <string name="zeroagent8_access_title">الوصول في المحادثة</string>
+    <string name="zeroagent8_tool_rules_hint">تتطلب قائمة الحظر موافقة بشرية في وضع المساعدة. يراجع Review Agent مستقل الإجراءات الأخرى كل مرة. اختر مستوى الوصول العام في المحادثة.</string>
+</resources>

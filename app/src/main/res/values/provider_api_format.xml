@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="provider_api_format_title">API format</string>
+    <string name="provider_api_format_hint">Choose the protocol documented by your provider. Changing the format preserves your URL, API key and models.</string>
+    <string name="provider_api_format_google_legacy">Existing Gemini API configuration is preserved with its original protocol, credentials and safety settings.</string>
+    <string name="provider_identity_title">Provider name</string>
+    <string name="provider_credentials_title">Authentication</string>
+    <string name="provider_connection_title">Connection and endpoint</string>
+    <string name="provider_base_url_hint">Enter the base URL or full endpoint. The selected API format determines the final request path.</string>
+    <string name="provider_endpoint_preview">Request URL: %1$s</string>
+    <string name="provider_endpoint_invalid">Enter a valid HTTP(S) URL without a username or password, and a valid API path.</string>
+    <string name="provider_api_format_cohere">Native Cohere v2 API</string>
+</resources>

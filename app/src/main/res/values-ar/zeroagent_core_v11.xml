@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent11_model_parameters">إعدادات النموذج</string>
+    <string name="zeroagent11_model_parameters_hint">تُحفظ التعليمات ومعلمات التوليد لهذا النموذج. اترك الحقل فارغًا لاستخدام إعدادات الخدمة.</string>
+    <string name="zeroagent11_system_prompt">تعليمات النظام</string>
+    <string name="zeroagent11_temperature">درجة الحرارة</string>
+    <string name="zeroagent11_max_tokens">الحد الأقصى لرموز الإجابة</string>
+    <string name="zeroagent11_server_default">إعداد الخدمة الافتراضي</string>
+    <string name="zeroagent11_parameter_unavailable">لا يوفر هذا النموذج أو محرك التشغيل هذا الخيار.</string>
+    <string name="zeroagent11_parameter_invalid">أدخل رقمًا ضمن النطاق المسموح.</string>
+    <string name="zeroagent11_stream_output">عرض الإجابة تدريجيًا</string>
+    <string name="zeroagent11_safety_title">إعدادات أمان Gemini</string>
+    <string name="zeroagent11_safety_harassment">التحرش</string>
+    <string name="zeroagent11_safety_hate">خطاب الكراهية</string>
+    <string name="zeroagent11_safety_sexual">محتوى جنسي صريح</string>
+    <string name="zeroagent11_safety_dangerous">محتوى خطير</string>
+    <string name="zeroagent11_safety_civic">النزاهة المدنية</string>
+    <string name="zeroagent11_safety_strict">صارم: حظر المخاطر المنخفضة وما فوق</string>
+    <string name="zeroagent11_safety_balanced">متوازن: حظر المخاطر المتوسطة وما فوق</string>
+    <string name="zeroagent11_safety_high">حظر المخاطر العالية فقط</string>
+    <string name="zeroagent11_safety_none">عدم الحظر حسب تقييم الفئة</string>
+    <string name="zeroagent11_safety_off">إيقاف فحص هذه الفئة</string>
+    <string name="zeroagent11_speech_services">الخدمات الصوتية</string>
+    <string name="zeroagent11_voice_conversation">المحادثة الصوتية</string>
+    <string name="zeroagent11_voice_service_hint">أدخل عنوان الخدمة ومفتاح API لاكتشاف النماذج الصوتية المتوافقة واختيارها تلقائيًا. تستخدم المكالمات صوت النموذج مباشرة.</string>
+    <string name="zeroagent11_voice_add_provider">إضافة خدمة صوتية</string>
+    <string name="zeroagent11_base_url">عنوان API الأساسي</string>
+    <string name="zeroagent11_detect_models">اكتشاف النماذج مجددًا</string>
+    <string name="zeroagent11_read_aloud">قراءة النص بصوت عالٍ</string>
+    <string name="zeroagent11_model_tools">أدوات النموذج وأذوناته</string>
+    <string name="zeroagent11_model_memory">ذاكرة النموذج</string>
+    <string name="zeroagent11_model_mcp">خدمات MCP للنموذج</string>
+    <string name="zeroagent11_save">حفظ</string>
+    <string name="zeroagent11_notification_no_title">بلا عنوان</string>
+    <string name="zeroagent11_notification_no_text">لا يوجد نص</string>
+</resources>
