@@ -1,0 +1,374 @@
+package me.rerere.zeroagent.ui.pages.search
+
+import androidx.compose.material3.ButtonDefaults
+
+import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Refresh01
+import me.rerere.hugeicons.stroke.Sorting01
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import me.rerere.zeroagent.R
+import me.rerere.zeroagent.data.db.fts.MessageSearchResult
+import me.rerere.zeroagent.data.db.fts.MessageSearchSort
+import me.rerere.zeroagent.ui.components.ui.ChatPrivacy
+import me.rerere.zeroagent.ui.components.nav.BackButton
+import me.rerere.zeroagent.ui.context.LocalNavController
+import me.rerere.zeroagent.ui.theme.CustomColors
+import me.rerere.zeroagent.utils.navigateToChatPage
+import me.rerere.zeroagent.utils.plus
+import me.rerere.zeroagent.utils.toLocalDateTime
+import org.koin.androidx.compose.koinViewModel
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import kotlin.uuid.Uuid
+
+@Composable
+fun SearchPage(vm: SearchVM = koinViewModel()) {
+    val navController = LocalNavController.current
+    val context = LocalContext.current
+    val visibleResults = vm.results.filter { result ->
+        runCatching { Uuid.parse(result.conversationId) }.getOrNull()?.let { id ->
+            !ChatPrivacy.chatLocked(context, id)
+        } == true
+    }
+    val focusRequester = remember { FocusRequester() }
+    var showRebuildDialog by remember { mutableStateOf(false) }
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    if (showRebuildDialog) {
+        AlertDialog(
+            onDismissRequest = { showRebuildDialog = false },
+            title = { Text(stringResource(R.string.search_page_rebuild_index)) },
+            text = { Text(stringResource(R.string.search_page_rebuild_index_desc)) },
+            confirmButton = {
+                TextButton(
+                    shapes = ButtonDefaults.shapes(), onClick = {
+                        showRebuildDialog = false
+                        vm.rebuildIndex()
+                    }
+                ) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(shapes = ButtonDefaults.shapes(), onClick = { showRebuildDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    Scaffold(
+        topBar = {
+            LargeFlexibleTopAppBar(
+                navigationIcon = { BackButton() },
+                title = { Text(stringResource(R.string.search_page_title)) },
+                actions = {
+                    SortMenuButton(
+                        current = vm.sortOrder,
+                        onSortChange = { vm.onSortChange(it) },
+                    )
+                    IconButton(
+                        onClick = { showRebuildDialog = true },
+                        enabled = !vm.isRebuilding,
+                    ) {
+                        Icon(
+                            HugeIcons.Refresh01,
+                            contentDescription = stringResource(R.string.search_page_rebuild_button)
+                        )
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+                colors = CustomColors.topBarColors,
+            )
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = CustomColors.topBarColors.containerColor,
+    ) { contentPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding)
+        ) {
+            OutlinedTextField(
+                value = vm.searchQuery,
+                onValueChange = { vm.onQueryChange(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .focusRequester(focusRequester),
+                placeholder = { Text(stringResource(R.string.search_page_placeholder)) },
+                supportingText = { Text("可搭配更新日期 after:2026-01-01 before:2027-01-01（UTC）、model:GPT、type:document、tag:工作。舊附件檔名請先重建索引。") },
+                isError = vm.searchError != null,
+                shape = RoundedCornerShape(50),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = { vm.search() }
+                ),
+            )
+
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 8.dp),
+            ) {
+                MessageSearchScope.entries.forEachIndexed { index, scope ->
+                    SegmentedButton(
+                        selected = vm.searchScope == scope,
+                        onClick = { vm.onScopeChange(scope) },
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = MessageSearchScope.entries.size,
+                        ),
+                    ) {
+                        Text(
+                            stringResource(
+                                when (scope) {
+                                    MessageSearchScope.CURRENT_ASSISTANT -> R.string.search_page_scope_current_assistant
+                                    MessageSearchScope.ALL_ASSISTANTS -> R.string.search_page_scope_all_assistants
+                                }
+                            )
+                        )
+                    }
+                }
+            }
+
+            Box(modifier = Modifier.weight(1f)) {
+                if (vm.isLoading || vm.isRebuilding) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+
+                when {
+                    vm.searchError != null -> Text(vm.searchError!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                    vm.isRebuilding -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val (current, total) = vm.rebuildProgress
+                            Text(
+                                text = if (total > 0) stringResource(
+                                    R.string.search_page_rebuilding,
+                                    current,
+                                    total
+                                ) else stringResource(R.string.search_page_rebuilding_simple),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    vm.searchQuery.isBlank() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.search_page_hint),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    visibleResults.isEmpty() && !vm.isLoading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.search_page_no_results),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    else -> {
+                        LazyColumn(
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            items(visibleResults) { result ->
+                                SearchResultItem(
+                                    result = result,
+                                    onClick = {
+                                        navigateToChatPage(
+                                            navController,
+                                            chatId = Uuid.parse(result.conversationId),
+                                            nodeId = result.nodeId.takeIf { it.isNotBlank() }?.let { Uuid.parse(it) },
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SortMenuButton(
+    current: MessageSearchSort,
+    onSortChange: (MessageSearchSort) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                HugeIcons.Sorting01,
+                contentDescription = stringResource(R.string.search_page_sort)
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            MessageSearchSort.entries.forEach { sort ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            stringResource(
+                                when (sort) {
+                                    MessageSearchSort.RELEVANCE -> R.string.search_page_sort_relevance
+                                    MessageSearchSort.NEWEST_FIRST -> R.string.search_page_sort_newest
+                                    MessageSearchSort.OLDEST_FIRST -> R.string.search_page_sort_oldest
+                                }
+                            )
+                        )
+                    },
+                    leadingIcon = {
+                        RadioButton(
+                            selected = sort == current,
+                            onClick = null,
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onSortChange(sort)
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchResultItem(
+    result: MessageSearchResult,
+    onClick: () -> Unit,
+) {
+    val highlightColor = MaterialTheme.colorScheme.tertiaryContainer
+    val untitled = stringResource(R.string.search_page_untitled)
+    val snippetText = buildAnnotatedString {
+        val snippet = result.snippet
+        var index = 0
+        while (index < snippet.length) {
+            val start = snippet.indexOf('[', index)
+            if (start == -1) {
+                append(snippet.substring(index))
+                break
+            }
+            if (start > index) {
+                append(snippet.substring(index, start))
+            }
+            val end = snippet.indexOf(']', start + 1)
+            if (end == -1) {
+                append(snippet.substring(start))
+                break
+            }
+            val matched = snippet.substring(start + 1, end)
+            withStyle(SpanStyle(background = highlightColor)) {
+                append(matched)
+            }
+            index = end + 1
+        }
+    }
+    val formattedTime = remember(result.updateAt) {
+        result.updateAt.toLocalDateTime()
+    }
+
+    Surface(
+        onClick = onClick,
+        color = CustomColors.listItemColors.containerColor,
+        shape = MaterialTheme.shapes.large,
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = result.title.ifBlank { untitled },
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = snippetText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = formattedTime,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}

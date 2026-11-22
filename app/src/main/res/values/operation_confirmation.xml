@@ -1,0 +1,7 @@
+<resources>
+    <string name="imggen_confirm_billable_title">Generate image?</string>
+    <string name="imggen_confirm_billable_body">Your prompt and any reference images will be sent to %1$s. This may use credits or incur a charge.</string>
+    <string name="confirm_tool_rerun_title">Run this tool again?</string>
+    <string name="confirm_tool_rerun_body">The tool %1$s will run again with its original input. It may send data, change existing data, or incur a charge.</string>
+    <string name="chat_drawer_unsent_new_chat">New chat · Not sent (%1$s)</string>
+</resources>

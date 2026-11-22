@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_search_cancel">Отменить поиск</string>
+    <string name="zeroagent_search_limits">До 20 результатов за поиск. Повторный запрос в течение минуты может использовать недавние результаты.</string>
+</resources>

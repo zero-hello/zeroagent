@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent_language_workflow_create">Создать процесс «%1$s»</string>
+    <string name="zeroagent_language_workflow_update">Изменить процесс «%1$s»</string>
+    <string name="zeroagent_language_workflow_when">Событие: %1$s</string>
+    <string name="zeroagent_language_workflow_only_if">Условия: %1$s</string>
+    <string name="zeroagent_language_workflow_do">Действия:</string>
+    <string name="zeroagent_language_workflow_cooldown">Пауза: %1$s</string>
+    <string name="zeroagent_language_workflow_daily_cap">Лимит в день: %1$s</string>
+    <string name="zeroagent_language_workflow_always">всегда</string>
+    <string name="zeroagent_language_workflow_none">нет</string>
+    <string name="zeroagent_language_workflow_unlimited">без ограничений</string>
+    <string name="zeroagent_language_workflow_seconds">%1$d с</string>
+    <string name="zeroagent_language_workflow_runs">%1$d запусков</string>
+    <string name="zeroagent_language_workflow_daily">каждый день</string>
+    <string name="zeroagent_language_workflow_days">в дни %1$s</string>
+    <string name="zeroagent_language_workflow_at_time">в %1$s %2$s</string>
+    <string name="zeroagent_language_workflow_schedule_cron">расписание (%1$s)</string>
+    <string name="zeroagent_language_workflow_schedule">расписание</string>
+    <string name="zeroagent_language_workflow_wifi_connects">подключение к Wi-Fi</string>
+    <string name="zeroagent_language_workflow_wifi_connects_to">подключение к Wi-Fi %1$s</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects">отключение от Wi-Fi</string>
+    <string name="zeroagent_language_workflow_wifi_disconnects_from">отключение от Wi-Fi %1$s</string>
+    <string name="zeroagent_language_workflow_bluetooth_connects">подключение Bluetooth-устройства</string>
+    <string name="zeroagent_language_workflow_bluetooth_disconnects">отключение Bluetooth-устройства</string>
+    <string name="zeroagent_language_workflow_headphones_in">подключение наушников</string>
+    <string name="zeroagent_language_workflow_headphones_out">отключение наушников</string>
+    <string name="zeroagent_language_workflow_power_in">подключение питания</string>
+    <string name="zeroagent_language_workflow_power_out">отключение питания</string>
+    <string name="zeroagent_language_workflow_battery_drops">заряд падает ниже %1$d%%</string>
+    <string name="zeroagent_language_workflow_battery_rises">заряд превышает %1$d%%</string>
+    <string name="zeroagent_language_workflow_enter">вход в %1$s</string>
+    <string name="zeroagent_language_workflow_leave">выход из %1$s</string>
+    <string name="zeroagent_language_workflow_place">место (%1$s,%2$s, радиус %3$s м)</string>
+    <string name="zeroagent_language_workflow_app_launched">запуск %1$s</string>
+    <string name="zeroagent_language_workflow_app_closed">закрытие %1$s</string>
+    <string name="zeroagent_language_workflow_notification">получение уведомления</string>
+    <string name="zeroagent_language_workflow_notification_filters">%1$s (%2$s)</string>
+    <string name="zeroagent_language_workflow_from">от %1$s</string>
+    <string name="zeroagent_language_workflow_title_contains">заголовок содержит «%1$s»</string>
+    <string name="zeroagent_language_workflow_text_contains">текст содержит «%1$s»</string>
+    <string name="zeroagent_language_workflow_title_matches">заголовок соответствует /%1$s/</string>
+    <string name="zeroagent_language_workflow_text_matches">текст соответствует /%1$s/</string>
+    <string name="zeroagent_language_workflow_boot">загрузка устройства</string>
+    <string name="zeroagent_language_workflow_screen_on">включение экрана</string>
+    <string name="zeroagent_language_workflow_screen_off">выключение экрана</string>
+    <string name="zeroagent_language_workflow_manual">вручную (запустить сейчас)</string>
+    <string name="zeroagent_language_workflow_time_between">между %1$s и %2$s</string>
+    <string name="zeroagent_language_workflow_after_sunset">после заката</string>
+    <string name="zeroagent_language_workflow_before_sunrise">до рассвета</string>
+    <string name="zeroagent_language_workflow_offset">(смещение %1$d мин)</string>
+    <string name="zeroagent_language_workflow_wifi_is">Wi-Fi — %1$s</string>
+    <string name="zeroagent_language_workflow_wifi_in">Wi-Fi из списка: %1$s</string>
+    <string name="zeroagent_language_workflow_battery_above">заряд &gt; %1$d%%</string>
+    <string name="zeroagent_language_workflow_battery_below">заряд &lt; %1$d%%</string>
+    <string name="zeroagent_language_workflow_charging">идёт зарядка</string>
+    <string name="zeroagent_language_workflow_not_charging">не заряжается</string>
+    <string name="zeroagent_language_workflow_foreground">%1$s на переднем плане</string>
+    <string name="zeroagent_language_workflow_foreground_match">совпадение с одним из %1$d приложений на переднем плане</string>
+    <string name="zeroagent_language_workflow_cond_screen_on">экран включён</string>
+    <string name="zeroagent_language_workflow_cond_screen_off">экран выключен</string>
+    <string name="zeroagent_language_workflow_not">НЕ (%1$s)</string>
+    <string name="zeroagent_language_workflow_action">%1$s(%2$s)</string>
+    <string name="zeroagent_language_workflow_delete">Удалить процесс id=%1$s</string>
+    <string name="zeroagent_language_workflow_enable">Включить процесс id=%1$s</string>
+    <string name="zeroagent_language_workflow_disable">Отключить процесс id=%1$s</string>
+    <string name="zeroagent_language_workflow_run_now">Запустить процесс сейчас id=%1$s</string>
+    <string name="zeroagent_language_mcp_tools">Инструменты: %1$d/%2$d</string>
+    <string name="zeroagent_language_mcp_idle">Ожидание</string>
+    <string name="zeroagent_language_mcp_connecting">Подключение</string>
+    <string name="zeroagent_language_mcp_connected">Подключено</string>
+    <string name="zeroagent_language_mcp_reconnecting">Повторное подключение (%1$d/%2$d)</string>
+    <string name="zeroagent_language_mcp_error">Ошибка: %1$s</string>
+    <string name="zeroagent_language_mcp_needs_authorization">Требуется авторизация</string>
+    <string name="zeroagent_language_mcp_authorizing">Авторизация</string>
+    <string name="zeroagent_language_usage_tokens">%1$s токенов</string>
+    <string name="zeroagent_language_usage_cache">(%1$s из кэша / %2$s без кэша / %3$d%%)</string>
+    <string name="zeroagent_language_usage_cached">(%1$s из кэша)</string>
+    <string name="zeroagent_language_google_import_success">Сервисный аккаунт импортирован</string>
+    <string name="zeroagent_language_google_import_failed">Не удалось импортировать: %1$s</string>
+</resources>

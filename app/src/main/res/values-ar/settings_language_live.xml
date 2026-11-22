@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doctor_error_internal">تعذّر إكمال التشخيص</string>
+    <string name="doctor_report_title">ZeroAgent — تقرير التشخيص</string>
+    <string name="doctor_report_generated">وقت الإنشاء</string>
+    <string name="doctor_report_summary">الملخص</string>
+    <string name="accessibility_action_ok">نجاح</string>
+    <string name="accessibility_action_failed">فشل</string>
+    <string name="accessibility_service_inactive">خدمة تسهيل الاستخدام غير قيد التشغيل.</string>
+    <string name="accessibility_action_tap">نقر</string>
+    <string name="accessibility_action_long_press">ضغط مطوّل</string>
+    <string name="accessibility_action_swipe">تمرير</string>
+    <string name="accessibility_action_scroll">تمرير المحتوى</string>
+    <string name="accessibility_action_find_node">البحث عن عنصر</string>
+    <string name="accessibility_action_click_node">تنشيط عنصر</string>
+    <string name="accessibility_action_set_text">إدخال نص</string>
+    <string name="accessibility_action_screenshot">التقاط الشاشة</string>
+    <string name="accessibility_action_read_window">قراءة بنية الشاشة</string>
+    <string name="accessibility_action_system">إجراء نظام</string>
+    <string name="accessibility_action_other">إجراء</string>
+    <string name="audio_level_waveform">موجة مستوى صوت الميكروفون</string>
+    <string name="tool_approval_review">مراجعة وموافقة</string>
+    <string name="tool_approval_hint">راجع تفاصيل الأداة ونطاق الموافقة. تظل قواعد الأمان الحالية وأذونات Android سارية.</string>
+    <string name="tool_approval_details">عرض تفاصيل الأداة</string>
+</resources>

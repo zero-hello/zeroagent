@@ -1,0 +1,7 @@
+<resources>
+    <string name="imggen_confirm_billable_title">要生成圖片嗎？</string>
+    <string name="imggen_confirm_billable_body">提示詞和所附參考圖片會送到 %1$s，可能消耗額度或產生費用。</string>
+    <string name="confirm_tool_rerun_title">要再次執行這個工具嗎？</string>
+    <string name="confirm_tool_rerun_body">工具 %1$s 會使用原有輸入重新執行，可能對外送出資料、修改資料或產生費用。</string>
+    <string name="chat_drawer_unsent_new_chat">新對話 · 尚未送出（%1$s）</string>
+</resources>

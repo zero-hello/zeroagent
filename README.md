@@ -1,28 +1,41 @@
 # ZeroAgent
 
-ZeroAgent 是由 **Zero** 維護的 Android AI 助理。你可以用自己的 AI 供應商或相容的本機模型聊天、整理文件、管理專案，也可以在同一個 App 裡使用語音和內建終端機。
+ZeroAgent 是由 Zero 維護的 Android AI 助理。你可以使用自己的模型服務，或下載相容的本機模型。支援文字聊天、附件、即時語音、記憶管理與內建終端機。
 
-## 下載與安裝
+**目前版本 v2.2.0 · Android 12 以上**
 
-**目前版本 v2.1.0，適用於 Android 12 以上。**
+[下載完整 APK](https://github.com/zero-hello/zeroagent/releases/latest) · [AGPL-3.0 授權](LICENSE) · [來源與第三方聲明](SOURCE_NOTICE.md)
 
-1. 開啟 [GitHub 發行頁](https://github.com/zero-hello/zeroagent/releases/latest)。
-2. 多數 Android 手機請選 `arm64-v8a`。使用 x86_64 Android 裝置或模擬器時，請選 `x86_64`。兩個檔案都是可單獨安裝的完整 APK。
-3. 依 Android 畫面安裝，然後到「設定 → 供應商」選擇帳戶或模型。升級前可先用 App 的備份功能匯出重要聊天與設定。
+## 開始使用
 
-## v2.1.0 有什麼新功能
+1. 從發行頁選擇 `arm64-v8a` 或 `x86_64` APK，依 Android 指示安裝。
+2. 在「設定 → 供應商」連線到模型服務，或在本機模型頁瀏覽 Hugging Face 的公開 GGUF 模型。
+3. 回到聊天選擇模型。你可以貼上文字或圖片、加入相容附件，或使用 Android 的分享選單。
 
-- **聊天更好讀**。AI 回覆分段浮現，捲到上面閱讀時可保留位置。搜尋結果可以跳到對應訊息。編輯與重新生成時，可切回先前版本。
-- **ZeroAgent Lab**。在設定裡按需要開啟專案工作桌、記憶抽屜、任務配方、指定資料問答、文件差異或格式檢查。實驗功能預設關閉，頁面會標示使用條件與資料保存方式。
-- **更好管理聊天資料**。選擇性備份提供匯入預覽，可合併或取代資料。臨時會話可用來測試，不加入 App 的一般聊天搜尋或備份。
-- **趣味功能**。可選用跟著 AI 文字的貓咪掌印和以本機聊天線索生成的心情天氣。長回覆的動畫模式可在「設定 → 外觀」調整。
+## 聊天與記憶
 
-完整更新內容、驗證範圍、來源 ZIP 及校驗檔請見 [v2.1.0 發行頁](https://github.com/zero-hello/zeroagent/releases/tag/v2.1.0)。
+- AI 回覆逐段浮現。可在「設定 → 趣味功能」開啟貓咪掌印。Android 移除動畫時，文字直接顯示。
+- ZeroAgent Lab 提供記憶抽屜。啟用後可查看、修改或刪除記憶。關閉抽屜會保留既有資料。
+- 可選的情境記憶使用本機 Embedding 模型。下載時會顯示已下載大小與總大小。相關記憶片段可能隨聊天請求交給你選擇的模型服務。
 
-## 權限與資料
+## 模型與工具
 
-雲端供應商的可用功能、收費及保存政策依你的模型與帳戶而定。一般備份排除 API Key、登入憑證與鎖定聊天室。使用語音、附件和裝置工具時，請依 App 或 Android 畫面確認所需權限。
+- 支援多家模型服務與自訂 API。可用模型、費用、推理與圖片功能依供應商、帳戶以及模型而異。
+- 本機模型頁可搜尋 Hugging Face 的 GGUF 目錄並逐頁瀏覽。相容檔案、記憶體與裝置架構會影響安裝與執行。
+- 內建終端機使用 Android 系統 Shell。Root、Shizuku 與手機工具須依 Android 或對應權限管理程式授權。
 
-## 授權
+## 更新與安裝
 
-原始碼與第三方聲明隨發行檔案提供。專案授權見 [LICENSE](LICENSE)。
+下載更新時可在 App 內查看進度。允許通知後，也可在通知列查看。ZeroAgent 會驗證更新的套件與簽章，再交給 Android 安裝。發行頁提供完整 APK 與 SHA-256 校驗檔。
+
+## 從原始碼建置
+
+在 GitHub 選擇 **Fork**，下載你的副本。使用 JDK 21、Gradle Wrapper 和專案指定的 Android SDK。一般開發可先建置可偵錯版本。
+
+```sh
+./gradlew :app:assembleDebug
+```
+
+如果使用 Git 子模組，先執行 `git submodule update --init --recursive`。發行自己的 APK 時，請使用自己的簽章，並透過 `ZEROAGENT_SIGNING_PROPERTIES` 指向倉庫外的簽章設定。不同簽章無法直接覆蓋安裝，切換前請先備份資料。
+
+ZeroAgent 採 [GNU Affero General Public License v3.0](LICENSE)。第三方元件沿用各自的授權。

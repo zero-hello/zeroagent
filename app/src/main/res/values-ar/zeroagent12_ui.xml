@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent12_voice_add_provider">إضافة %1$s</string>
+    <string name="zeroagent12_voice_shared_accounts">يستخدم حسابات المزوّدين ومفاتيح API نفسها الموجودة في إعدادات النماذج.</string>
+</resources>

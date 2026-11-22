@@ -1,0 +1,5 @@
+<resources>
+    <string name="transfer_download_size">已下載 %1$s／總大小 %2$s</string>
+    <string name="transfer_download_unknown">已下載 %1$s · 總大小未知</string>
+    <string name="transfer_verifying_update">正在驗證更新…</string>
+</resources>

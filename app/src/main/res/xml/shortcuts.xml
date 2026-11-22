@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="camera"
+        android:enabled="true"
+        android:icon="@drawable/ic_lucide_camera"
+        android:shortcutShortLabel="@string/shortcut_take_picture"
+        android:shortcutLongLabel="@string/shortcut_take_picture">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="me.rerere.zeroagent.ui.activity.ShortcutHandlerActivity"
+            android:data="zeroagent://shortcut" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="new-chat"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_new_conversation">
+        <intent
+            android:action="app.zeroagent.shortcut.NEW_CHAT"
+            android:targetPackage="app.zeroagent"
+            android:targetClass="me.rerere.zeroagent.RouteActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="terminal"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_terminal">
+        <intent
+            android:action="app.zeroagent.shortcut.TERMINAL"
+            android:targetPackage="app.zeroagent"
+            android:targetClass="me.rerere.zeroagent.RouteActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="voice"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_voice_question">
+        <intent
+            android:action="app.zeroagent.shortcut.VOICE"
+            android:targetPackage="app.zeroagent"
+            android:targetClass="me.rerere.zeroagent.RouteActivity" />
+    </shortcut>
+</shortcuts>

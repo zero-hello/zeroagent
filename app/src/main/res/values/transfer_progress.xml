@@ -1,0 +1,5 @@
+<resources>
+    <string name="transfer_download_size">Downloaded %1$s / %2$s</string>
+    <string name="transfer_download_unknown">Downloaded %1$s · Total size unavailable</string>
+    <string name="transfer_verifying_update">Verifying update…</string>
+</resources>

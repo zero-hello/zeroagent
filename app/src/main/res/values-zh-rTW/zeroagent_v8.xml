@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zeroagent8_gradient">動態背景</string>
+    <string name="zeroagent8_gradient_hint">在聊天頁顯示柔和流動的色彩，預設關閉。</string>
+    <string name="zeroagent8_access_ask">要求核准</string>
+    <string name="zeroagent8_access_assisted">代我核准</string>
+    <string name="zeroagent8_access_full">完整存取權限</string>
+    <string name="zeroagent8_access_hint">只適用於此對話，關閉應用程式後重設。切換等級會清除舊的對話授權；Android 系統權限另行管理。</string>
+    <string name="zeroagent8_access_risk_title">開啟完整存取權限？</string>
+    <string name="zeroagent8_access_risk">Agent 可以略過一般工具提示，讀取或修改檔案、操作 App、傳送網路請求。錯誤操作可能洩漏資料或造成損失，只在信任任務與模型時開啟。Root 須另行啟用，系統授權仍由 Android 與超級使用者管理工具控制。此選擇會保存並套用至新對話，你可以隨時切回要求核准。</string>
+    <string name="zeroagent8_access_accept">我已了解並接受上述高風險授權</string>
+    <string name="zeroagent8_cmd_compact">壓縮目前對話</string>
+    <string name="zeroagent8_cmd_plan">先規劃再行動；/plan off 可關閉</string>
+    <string name="zeroagent8_cmd_goal">設定目標：/goal 你的任務；/goal off 可清除</string>
+    <string name="zeroagent8_cmd_image">開啟繪圖頁面</string>
+    <string name="zeroagent8_cmd_voice">開啟原生即時語音</string>
+    <string name="zeroagent8_cmd_access">調整目前對話的存取權限</string>
+    <string name="zeroagent8_cmd_help">顯示所有指令</string>
+    <string name="zeroagent8_commands">對話指令</string>
+    <string name="zeroagent8_directive_off">已清除這項對話模式</string>
+    <string name="zeroagent8_directive_saved">已套用到目前對話</string>
+    <string name="zeroagent8_goal_usage">請在 /goal 後輸入想完成的任務</string>
+    <string name="zeroagent8_plan_active">規劃模式 · /plan off 可關閉</string>
+    <string name="zeroagent8_goal_active">已設定目標 · /goal off 可清除</string>
+    <string name="zeroagent8_download_models">下載模型</string>
+    <string name="zeroagent8_voice_model">即時語音模型</string>
+    <string name="zeroagent8_voice_models_hint">清單來自你的供應商帳戶，請選擇原生即時音訊模型，連線時會確認支援。自訂閘道可能需要手動輸入模型 ID。</string>
+    <string name="zeroagent8_voice_models_empty">這個帳戶未列出原生即時音訊模型。請確認供應商、API Key 與帳戶權限；語音辨識和文字轉語音服務不能直接當成即時通話模型。</string>
+    <string name="zeroagent8_voice_provider">語音通話供應商</string>
+    <string name="zeroagent8_voice_refresh">重新取得語音模型</string>
+    <string name="zeroagent8_voice_setup_hint">選擇已填入 API Key 的供應商與原生即時語音模型。通話直接播放模型音訊，不使用手機文字轉語音。</string>
+    <string name="zeroagent8_voice_start">開始語音對話</string>
+    <string name="zeroagent8_voice_configure_provider">設定供應商與 API Key</string>
+    <string name="zeroagent8_voice_speaker">喇叭</string>
+    <string name="zeroagent8_voice_earpiece">聽筒</string>
+    <string name="zeroagent8_voice_headset">耳機／USB 音訊</string>
+    <string name="zeroagent8_voice_bluetooth">藍牙音訊</string>
+    <string name="zeroagent8_voice_other">其他音訊裝置</string>
+    <string name="zeroagent8_voice_mute">關閉語音輸出</string>
+    <string name="zeroagent8_voice_unmute">開啟語音輸出</string>
+    <string name="zeroagent8_voice_route_error">目前無法切換到這個音訊裝置，請選擇其他輸出。</string>
+    <string name="zeroagent8_access_title">對話存取權限</string>
+    <string name="zeroagent8_tool_rules_hint">黑名單中的工具在代我核准模式仍須人工確認；其餘操作由獨立 Review Agent 逐次檢查。整體存取等級請在對話中選擇。</string>
+</resources>

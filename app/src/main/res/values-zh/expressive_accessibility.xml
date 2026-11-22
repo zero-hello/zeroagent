@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_battery_manage">管理電池最佳化</string>
+    <string name="accessibility_overlay_manage">管理浮動視窗權限</string>
+    <string name="accessibility_diagnostics_description">擷取目前畫面，確認無障礙服務是否能正常截圖。截圖會儲存在應用程式的私人快取中。</string>
+    <string name="accessibility_repair_running">正在修復服務…</string>
+    <string name="accessibility_capture_running">正在擷取截圖…</string>
+</resources>

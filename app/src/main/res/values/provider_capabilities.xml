@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources><string name="provider_tools_not_supported">The selected model does not advertise tool calling. This check was skipped.</string></resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_choose_title">How should actions be approved?</string>
+    <string name="access_choose_subtitle">Choose how much control to keep in this conversation.</string>
+    <string name="access_ask_description">You review tool actions before they run. Explicit grants for this chat still apply.</string>
+    <string name="access_assisted_description">An independent Review Agent checks each action and its arguments. Risky or uncertain actions come back to you.</string>
+    <string name="access_full_description">Skip normal tool prompts for files, app controls and network requests. Root and Android permission checks still apply.</string>
+    <string name="access_review_model">Review model: %1$s</string>
+    <string name="access_review_detail">Uses the current model in a separate session with no tools or execution rights. Review calls use tokens. Your blacklist, MCP and mandatory human confirmations stay in effect.</string>
+    <string name="access_session_detail">Your choice is saved on this device and becomes the default for new chats. Changing levels clears this chat’s previous tool grants. Root and Android system grants are managed separately.</string>
+    <string name="access_reviewing">Review Agent is checking %1$s…</string>
+    <string name="access_review_allowed">Review Agent · Approved this action</string>
+    <string name="access_review_ask">Review Agent · Your approval is needed</string>
+    <string name="access_review_unavailable">Review Agent could not complete the check. Please review this action yourself.</string>
+    <string name="access_review_changed">The permission level changed. Please review this action again.</string>
+    <string name="access_close">Close permission options</string>
+    <string name="access_chat_grant">Allow for this chat</string>
+    <string name="access_manual_required">This operation requires your confirmation under the current safety rules.</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_choose_title">工具操作如何核准？</string>
+    <string name="access_choose_subtitle">選擇這段對話的控制程度。</string>
+    <string name="access_ask_description">執行工具前由你確認；已明確授予的此對話工具授權仍有效。</string>
+    <string name="access_assisted_description">由獨立 Review Agent 逐次檢查操作與參數；有風險或不確定時交由你核准。</string>
+    <string name="access_full_description">檔案、應用程式控制與網路操作略過一般提示；Root 與 Android 系統授權另行管理。</string>
+    <string name="access_review_model">審查模型：%1$s</string>
+    <string name="access_review_detail">使用目前模型的獨立工作階段，沒有工具或執行權，會產生模型用量。黑名單、MCP 與強制人工確認操作仍由你核准。</string>
+    <string name="access_session_detail">選擇會保存在此裝置，並成為新對話的預設值。切換等級會清除此對話先前的工具核准；Root 與 Android 系統授權另行管理。</string>
+    <string name="access_reviewing">Review Agent 正在檢查 %1$s…</string>
+    <string name="access_review_allowed">Review Agent · 已核准此操作</string>
+    <string name="access_review_ask">Review Agent · 需要你核准</string>
+    <string name="access_review_unavailable">Review Agent 未能完成檢查，請由你確認此操作。</string>
+    <string name="access_review_changed">權限等級已變更，請重新確認此操作。</string>
+    <string name="access_close">關閉權限選項</string>
+    <string name="access_chat_grant">此對話皆允許</string>
+    <string name="access_manual_required">依目前安全規則，此操作需要你確認。</string>
+</resources>
