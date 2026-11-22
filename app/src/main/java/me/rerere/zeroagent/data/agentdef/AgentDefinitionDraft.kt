@@ -291,6 +291,7 @@ object LocalToolGroups {
         LocalToolOption.WifiInfo,
         LocalToolOption.Sensors,
         LocalToolOption.StorageInfo,
+        LocalToolOption.DeviceDiagnostics,
         LocalToolOption.Toast,
         LocalToolOption.Notification,
         LocalToolOption.Share,

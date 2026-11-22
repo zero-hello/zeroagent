@@ -266,5 +266,5 @@
     <string name="doctor_could_not_open">無法開啟：%1$s</string>
     <string name="doctor_clipboard_label">ZeroAgent 診斷報告</string>
     <string name="zeroagent_root_title">Root 存取權</string>
-    <string name="zeroagent_root_desc">可選用超級使用者存取權，每個指令都需要你的核准。</string>
+    <string name="zeroagent_root_desc">在已取得 Root 的裝置上管理進階存取權。</string>
 </resources>

@@ -896,7 +896,7 @@
   <string name="setting_page_group_data">Data &amp; diagnostics</string>
   <string name="setting_page_group_about">About &amp; diagnostics</string>
   <string name="setting_page_about">About</string>
-  <string name="setting_page_about_desc">About this app</string>
+  <string name="setting_page_about_desc">App version, source code, and license.</string>
   <string name="setting_page_assistant">Assistant</string>
   <string name="setting_page_assistant_desc">Set up personalized assistants (agents)</string>
   <string name="setting_page_built_in_tools">Built-in Tools</string>
@@ -928,10 +928,10 @@
   <string name="setting_page_config_api_desc">You haven\'t configured API and model yet, please configure first</string>
   <string name="setting_page_config_api_title">Please configure API and model</string>
   <string name="setting_page_data_backup">Data Backup</string>
-  <string name="setting_page_data_backup_desc">Backup and restore app data</string>
+  <string name="setting_page_data_backup_desc">Keep a copy of your data or restore a saved backup.</string>
   <string name="setting_page_data_settings">Data Settings</string>
   <string name="setting_page_default_model">Default Model and Prompt</string>
-  <string name="setting_page_default_model_desc">Set default models for each feature</string>
+  <string name="setting_page_default_model_desc">Choose which models ZeroAgent uses for each task.</string>
   <string name="setting_page_display_setting">Display Settings</string>
   <string name="setting_page_display_setting_desc">Manage display settings</string>
   <string name="setting_page_preferences">Preferences</string>
@@ -941,9 +941,9 @@
   <string name="setting_page_preferences_notification">Notification alerts</string>
   <string name="setting_page_preferences_notification_desc">Update alerts, message generation notifications</string>
   <string name="setting_page_preferences_general">Interaction</string>
-  <string name="setting_page_preferences_general_desc">Interaction behavior, scrolling, input settings</string>
+  <string name="setting_page_preferences_general_desc">Adjust how chat input and scrolling behave.</string>
   <string name="setting_page_preferences_ui">UI Preferences</string>
-  <string name="setting_page_preferences_ui_desc">Message display, fonts, code blocks</string>
+  <string name="setting_page_preferences_ui_desc">Make messages and code easier to read.</string>
   <string name="setting_page_preferences_network">Network</string>
   <string name="setting_page_preferences_network_desc">User-Agent and network request settings</string>
   <string name="setting_page_preferences_network_user_agent">User-Agent</string>
@@ -960,7 +960,7 @@
   <string name="setting_page_preferences_network_stall_timeout_desc">Once a streamed reply has started, if nothing arrives for this many seconds it is treated as stalled: a partial answer is continued, otherwise the reply is restarted. Every chunk resets the clock, so a slow but alive model is never cut off. 0 disables the watchdog.</string>
   <string name="setting_page_preferences_network_seconds_range">%1$d seconds max (0 disables)</string>
   <string name="setting_page_documentation">Documentation</string>
-  <string name="setting_page_documentation_desc">View app usage instructions and help documentation</string>
+  <string name="setting_page_documentation_desc">Find usage tips and setup instructions.</string>
   <string name="setting_page_dynamic_color">Dynamic Color</string>
   <string name="setting_page_dynamic_color_desc">Generate the app theme colors dynamically from your wallpaper</string>
   <string name="setting_page_extensions">Extensions</string>
@@ -973,22 +973,22 @@
   <string name="setting_page_model_and_services">Models &amp; Services</string>
   <string name="setting_page_no_share_app">No sharing app found</string>
   <string name="setting_page_providers">Providers</string>
-  <string name="setting_page_providers_desc">Configure AI providers</string>
+  <string name="setting_page_providers_desc">Manage connections and choose which models to make available.</string>
   <string name="setting_page_request_logs">Request Logs</string>
-  <string name="setting_page_request_logs_desc">View HTTP request logs</string>
+  <string name="setting_page_request_logs_desc">See request status and timing when troubleshooting connections.</string>
   <string name="setting_page_search_add_provider">Add Provider</string>
   <string name="setting_page_search_common_options">Common Options</string>
   <string name="setting_page_search_config">Configuration</string>
   <string name="setting_page_search_delete_provider">Delete Provider</string>
   <string name="setting_page_search_result_size">Result Size</string>
   <string name="setting_page_search_service">Search Service</string>
-  <string name="setting_page_search_service_desc">Set up search service</string>
+  <string name="setting_page_search_service_desc">Choose where ZeroAgent searches for web results.</string>
   <string name="setting_page_search_test">Test Search</string>
   <string name="setting_page_search_test_query_hint">Enter test query…</string>
   <string name="setting_page_search_test_run">Run Test</string>
   <string name="setting_page_search_title">Search Service</string>
-  <string name="setting_page_search_web_fetch_tools_title">Web fetch and extract</string>
-  <string name="setting_page_search_web_fetch_tools_desc">Let the assistant fetch and read web page content directly. On by default; turn off to rely only on your configured search provider.</string>
+  <string name="setting_page_search_web_fetch_tools_title">Web page reading</string>
+  <string name="setting_page_search_web_fetch_tools_desc">Public pages are formatted locally. A model that supports image input can also view a preview.</string>
   <string name="setting_page_share">Share</string>
   <string name="setting_page_share_desc">Share this app with friends</string>
   <string name="setting_page_share_text">ZeroAgent — by Zero</string>
@@ -1011,7 +1011,7 @@
   <string name="setting_theme_page_import_success">Theme imported successfully</string>
   <string name="setting_theme_page_dynamic_color_hint">Dynamic color is enabled. Disable it in Preferences &gt; Theme to use custom themes.</string>
   <string name="setting_page_tts_service">Speech Services</string>
-  <string name="setting_page_tts_service_desc">Configure text-to-speech and speech recognition providers</string>
+  <string name="setting_page_tts_service_desc">Choose a service for speech recognition and read-aloud.</string>
   <string name="setting_page_tts_settings">TTS Settings</string>
   <string name="setting_provider_page_abilities">Abilities</string>
   <string name="setting_provider_page_abilities_assume_tool">Assume Tool support</string>
@@ -1319,17 +1319,17 @@
   <string name="setting_page_telegram">Telegram bot</string>
   <string name="setting_page_telegram_desc">Run the LLM as a Telegram bot — chat with it remotely from any device.</string>
   <string name="setting_page_workflows">Workflows</string>
-  <string name="setting_page_workflows_desc">Trigger-based automations: when something happens on the device, run a sequence of tools.</string>
+  <string name="setting_page_workflows_desc">Choose what an automation should do when its trigger occurs.</string>
   <string name="setting_page_scheduled_jobs">Scheduled jobs</string>
-  <string name="setting_page_scheduled_jobs_desc">Time-based jobs the assistant scheduled — one-shots and recurring cron expressions.</string>
+  <string name="setting_page_scheduled_jobs_desc">Review upcoming and recurring jobs.</string>
   <string name="setting_page_doctor">Doctor</string>
-  <string name="setting_page_doctor_desc">Diagnose and fix the app — permissions, services, database, network, Termux.</string>
+  <string name="setting_page_doctor_desc">Check connections, permissions, and app services for problems.</string>
   <string name="setting_page_doctor_run_again">Run again</string>
   <string name="setting_page_doctor_running">Running…</string>
   <string name="setting_page_doctor_copy_report">Copy report</string>
   <string name="setting_page_doctor_report_copied">Diagnostic report copied to clipboard.</string>
   <string name="setting_page_tool_approvals">Tool approvals</string>
-  <string name="setting_page_tool_approvals_desc">Tools that must ask before running (the blacklist).</string>
+  <string name="setting_page_tool_approvals_desc">Decide when tools need your confirmation before running.</string>
   <string name="setting_page_tool_approvals_header">Every tool runs without asking unless you add it to the blacklist below. Turn a switch on to require your approval before that tool runs.</string>
   <string name="setting_page_tool_approvals_empty">The blacklist is empty — nothing asks.</string>
   <string name="setting_page_tool_approvals_summary">%1$d tool(s) require approval.</string>
@@ -1392,6 +1392,7 @@
   <string name="assistant_page_local_tools_share_desc">Open the system share sheet to send text or a URL to other apps.</string>
   <string name="assistant_page_local_tools_share_title">Share</string>
   <string name="assistant_page_local_tools_storage_desc">Read total/free/used storage on internal and external volumes.</string>
+  <string name="assistant_page_local_tools_device_diagnostics_title">Device diagnostics</string>
   <string name="assistant_page_local_tools_storage_title">Storage info</string>
   <string name="assistant_page_local_tools_telephony_desc">Read SIM and network info (carrier, network type). Requires READ_PHONE_STATE.</string>
   <string name="assistant_page_local_tools_telephony_title">Telephony info</string>
@@ -1503,7 +1504,7 @@
   <string name="assistant_page_local_tools_cost_guards_title">Cost guards</string>
   <string name="assistant_page_local_tools_cost_guards_desc">Let the assistant inspect its running token totals against the per-assistant soft / hard caps and self-throttle. Read-only — auto-stop integration with the streaming pipeline ships in a follow-up.</string>
   <string name="setting_page_accessibility">Accessibility</string>
-  <string name="setting_page_accessibility_desc">Status, recent actions, and screenshot diagnostics for the screen-automation service.</string>
+  <string name="setting_page_accessibility_desc">Check the Android service used for actions on screen.</string>
   <string name="setting_page_accessibility_status_section">Status</string>
   <string name="setting_page_accessibility_status_running">Service: Running</string>
   <string name="setting_page_accessibility_status_not_running">Service: Not running</string>
@@ -1551,7 +1552,7 @@
   <string name="setting_page_accessibility_overlay_help">Shows a small \"The agent is working\" pill at the top of the screen while the agent is automating, so you always know when it is driving the UI. Optional but recommended.</string>
   <string name="setting_page_accessibility_overlay_open_settings">Grant Display over other apps</string>
   <string name="setting_page_permissions">Permissions</string>
-  <string name="setting_page_permissions_desc">Auto-discovered list of every permission ZeroAgent uses, with a one-tap grant button for each.</string>
+  <string name="setting_page_permissions_desc">Check which Android permissions ZeroAgent has and open the relevant system settings.</string>
   <string name="setting_page_permissions_group_services">Services and integrations</string>
   <string name="setting_page_permissions_group_special">Special access</string>
   <string name="setting_page_permissions_group_runtime">Runtime permissions</string>
@@ -1571,7 +1572,7 @@
   <string name="setting_provider_aicore_downloading">The AICore model is downloading. Wait for setup to finish, then try again.</string>
   <string name="setting_provider_aicore_unavailable">AICore is unavailable on this device or for this account. Check system support and model setup.</string>
   <string name="setting_page_notifications">Notification access</string>
-  <string name="setting_page_notifications_desc">Manage notification access and recent activity.</string>
+  <string name="setting_page_notifications_desc">Check notification access and recent notifications.</string>
   <string name="setting_page_notifications_status_section">Status</string>
   <string name="setting_page_notifications_status_connected">Service: Connected</string>
   <string name="setting_page_notifications_status_not_connected">Service: Not connected</string>
@@ -1700,7 +1701,7 @@
   <string name="relative_time_hours_ago">%1$dh ago</string>
   <string name="relative_time_days_ago">%1$dd ago</string>
   <string name="setting_page_browser">Browser</string>
-  <string name="setting_page_browser_desc">AI-driven web browser and skill viewer.</string>
+  <string name="setting_page_browser_desc">Open the browser and manage AI access to its tools.</string>
   <string name="assistant_page_local_tools_section_browser">Browser</string>
   <string name="assistant_page_local_tools_browser_title">Browser</string>
   <string name="assistant_page_local_tools_browser_desc">AI-driven web browser. 17 individually-togglable tools — configure read/write access in Settings → Browser.</string>
@@ -1796,7 +1797,7 @@
   <string name="setting_page_termux">Termux</string>
   <string name="setting_page_termux_desc">Shell commands, timeouts, and Termux integration.</string>
   <string name="setting_page_shizuku">Shizuku</string>
-  <string name="setting_page_shizuku_desc">Grant permission and check status for shell commands run through Shizuku.</string>
+  <string name="setting_page_shizuku_desc">Check access for operations that use Shizuku.</string>
   <string name="setting_termux_title">Termux</string>
   <string name="setting_termux_section_status">Status</string>
   <string name="setting_termux_status_app">Termux app</string>
@@ -2772,7 +2773,7 @@
 
   <!-- P2-32 ssh hosts page -->
   <string name="setting_page_ssh">SSH hosts</string>
-  <string name="setting_page_ssh_desc">Manage the saved hosts used by ssh_exec_saved, ssh_upload and ssh_download.</string>
+  <string name="setting_page_ssh_desc">Save remote hosts for reuse.</string>
   <string name="setting_ssh_page_title">SSH hosts</string>
   <string name="setting_ssh_page_hosts">Saved hosts</string>
   <string name="setting_ssh_page_empty">No saved hosts yet</string>
@@ -2893,5 +2894,5 @@
   <string name="chat_page_continuing">Connection lost — continuing the reply (%1$d/%2$d)</string>
   <string name="chat_page_subagents_running">%1$d sub-agent(s) running · %2$s</string>
   <string name="zeroagent_root_title">Root access</string>
-  <string name="zeroagent_root_desc">Optional superuser access. Each command needs your approval.</string>
+  <string name="zeroagent_root_desc">Manage elevated access on devices that already have Root.</string>
 </resources>

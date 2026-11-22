@@ -1,6 +1,5 @@
 package me.rerere.zeroagent.data.db.fts
 
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.rerere.ai.ui.UIMessage
@@ -24,7 +23,7 @@ enum class MessageSearchSort(val orderBy: String) {
     OLDEST_FIRST("update_at ASC, rank"),
 }
 
-private const val TAG = "MessageFtsManager"
+internal const val MESSAGE_SEARCH_PAGE_SIZE = 50
 
 /**
  * Schema for the message_fts FTS5 virtual table. Defined here so the table-init path in
@@ -104,7 +103,7 @@ class MessageFtsManager(private val database: AppDatabase) {
         )
     }
 
-    suspend fun deleteAll() = withContext(Dispatchers.IO) {
+    internal fun deleteAllOnCurrentConnection() {
         db.execSQL("DELETE FROM message_fts")
     }
 
@@ -112,6 +111,7 @@ class MessageFtsManager(private val database: AppDatabase) {
         keyword: String,
         sort: MessageSearchSort = MessageSearchSort.RELEVANCE,
         assistantId: String? = null,
+        offset: Int = 0,
     ): List<MessageSearchResult> = withContext(Dispatchers.IO) {
         val results = mutableListOf<MessageSearchResult>()
         val assistantFilter = if (assistantId != null) {
@@ -132,12 +132,11 @@ class MessageFtsManager(private val database: AppDatabase) {
             FROM message_fts
             WHERE text MATCH jieba_query(?)
             $assistantFilter
-            ORDER BY ${sort.orderBy}
-            LIMIT 50
+            ORDER BY ${sort.orderBy}, message_fts.rowid
+            LIMIT $MESSAGE_SEARCH_PAGE_SIZE OFFSET ?
             """.trimIndent(),
-            if (assistantId != null) arrayOf(keyword, assistantId) else arrayOf(keyword)
+            listOfNotNull<Any>(keyword, assistantId, offset).toTypedArray(),
         )
-        Log.i(TAG, "search: $keyword")
         cursor.use {
             while (it.moveToNext()) {
                 results.add(

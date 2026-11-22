@@ -56,7 +56,7 @@
     <string name="chat_device_low_storage">Less than 500 MB of internal storage is available.</string>
     <string name="update_installed_changes_v200">Search and organize conversations, adjust chat models without leaving the conversation, and keep drafts per chat. This update adds private sessions, privacy locks, shortcut actions, optional screenshot suggestions, and a fix for launching the terminal in Root mode.</string>
     <string name="update_open_backup">Open backup</string>
-    <string name="fun_features_description">Cat paw animation and a quiet mood weather card.</string>
+    <string name="fun_features_description">Make AI replies a little more playful.</string>
     <string name="zeroagent_lab_title">ZeroAgent Lab</string>
-    <string name="zeroagent_lab_description">Try new tools at your own pace.</string>
+    <string name="zeroagent_lab_description">Review and edit what ZeroAgent remembers about you.</string>
 </resources>

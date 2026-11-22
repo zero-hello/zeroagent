@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="embedded_terminal_title">內建終端機</string>
-    <string name="embedded_terminal_description">使用 Android 內建 Shell，不需下載 Linux 環境或安裝 Termux。</string>
+    <string name="embedded_terminal_description">Run commands in the Android system shell.</string>
     <string name="embedded_terminal_privilege">Android Shell · 一般 App 權限；無法存取其他 App 私有資料。Root 指令使用另行授權的操作。</string>
     <string name="embedded_terminal_interrupt">中斷 Ctrl+C</string>
     <string name="embedded_terminal_root_command">Android Root 命令</string>

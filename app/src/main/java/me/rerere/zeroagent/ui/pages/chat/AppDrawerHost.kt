@@ -26,9 +26,10 @@ import kotlin.uuid.Uuid
 internal class AppDrawerController(
     val state: DrawerState,
     val isPermanent: Boolean,
+    private val enabled: Boolean,
     private val scope: CoroutineScope,
 ) {
-    fun open() { if (!isPermanent) scope.launch { state.open() } }
+    fun open() { if (enabled && !isPermanent) scope.launch { state.open() } }
 }
 
 internal val LocalAppDrawer = compositionLocalOf<AppDrawerController> {
@@ -46,7 +47,9 @@ internal fun AppDrawerHost(
     val state = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val permanent = currentWindowDpSize().width >= AppLayout.permanentDrawerBreakpoint
-    val controller = remember(state, permanent, scope) { AppDrawerController(state, permanent, scope) }
+    val controller = remember(state, permanent, enabled, scope) {
+        AppDrawerController(state, permanent, enabled, scope)
+    }
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val navigator = LocalNavController.current
@@ -59,19 +62,18 @@ internal fun AppDrawerHost(
         }
     }
     CompositionLocalProvider(LocalAppDrawer provides controller) {
-        if (enabled) {
-            ChatDrawerLayout(
-                isBigScreen = permanent,
-                drawerState = state,
-                drawerContent = {
-                    ChatDrawerContent(
-                        navController = navigator,
-                        settings = settings,
-                        currentConversationId = currentConversationId,
-                    )
-                },
-                content = { Box(Modifier.fillMaxSize()) { content() } },
-            )
-        } else content()
+        ChatDrawerLayout(
+            isBigScreen = permanent,
+            drawerState = state,
+            enabled = enabled,
+            drawerContent = {
+                ChatDrawerContent(
+                    navController = navigator,
+                    settings = settings,
+                    currentConversationId = currentConversationId,
+                )
+            },
+            content = { Box(Modifier.fillMaxSize()) { content() } },
+        )
     }
 }

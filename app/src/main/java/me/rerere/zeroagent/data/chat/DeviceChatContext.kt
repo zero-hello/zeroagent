@@ -10,6 +10,10 @@ import android.os.BatteryManager
 import android.os.PowerManager
 import android.os.StatFs
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import me.rerere.zeroagent.data.root.RootAccessManager
+import me.rerere.zeroagent.data.root.RootAccessStatus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
@@ -65,16 +69,41 @@ private val recentDeviceAlerts = object : LinkedHashMap<String, String>(32, 0.75
     override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean = size > 64
 }
 
-internal fun deviceContextForChat(context: Context, conversationId: String): String? {
+internal suspend fun deviceContextForChat(context: Context, conversationId: String, includeRoot: Boolean): String? = withContext(Dispatchers.IO) {
     val status = readDeviceChatStatus(context)
     val facts = buildList {
         if (status.lowBatteryPercent != null) add("battery is low and not charging")
+        if (status.lowMemory) add("Android reports low available memory")
+        if (status.powerSave) add("battery saver is on")
+        if (status.networkIssue != null) add(status.networkIssue)
+        if (status.metered) add("the active connection is metered")
+        if (includeRoot && status.lowMemory && readRootMemoryPressure(context) == true) {
+            add("most configured swap space is in use")
+        }
         if (status.severeThermalLoad) add("device is under severe thermal load")
         if (status.lowStorage) add("less than 500 MB of internal storage available")
     }
     val current = facts.joinToString("; ")
     val changed = synchronized(recentDeviceAlerts) { recentDeviceAlerts.put(conversationId, current) != current }
-    return current.takeIf { changed && it.isNotEmpty() }?.let {
+    current.takeIf { changed && it.isNotEmpty() }?.let {
         "Android alert for this turn: $it. Mention it only if directly useful. Do not infer missing information."
     }
+}
+
+/** A fixed read-only probe. The system grant is rechecked by run and only a numeric result is used. */
+internal suspend fun readRootMemoryPressure(context: Context): Boolean? {
+    val root = RootAccessManager(context)
+    if (!root.enabled || root.status.value != RootAccessStatus.AVAILABLE) return null
+    val result = withTimeoutOrNull(2_500) {
+        root.run("/system/bin/grep -E '^Swap(Total|Free):' /proc/meminfo", timeoutSeconds = 2)
+    } ?: return null
+    return if (result.exitCode == 0 && root.enabled) parseSwapPressure(result.output) else null
+}
+
+internal fun parseSwapPressure(output: String): Boolean? {
+    val fields = Regex("(?m)^(SwapTotal|SwapFree):[ \\t]+([0-9]{1,12})[ \\t]+kB[ \\t]*\\r?$")
+        .findAll(output).groupBy { it.groupValues[1] }
+    val total = fields["SwapTotal"]?.singleOrNull()?.groupValues?.get(2)?.toLongOrNull() ?: return null
+    val free = fields["SwapFree"]?.singleOrNull()?.groupValues?.get(2)?.toLongOrNull() ?: return null
+    return if (total > 0 && free in 0..total) free * 10 < total else null
 }

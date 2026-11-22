@@ -73,13 +73,9 @@ class UpdateChecker(
                     )
                     .build()
             ).await()
-            if (!response.isSuccessful) {
-                throw Exception("Failed to fetch update info")
-            }
-            return try {
-                json.decodeFromString<UpdateInfo>(response.body.string())
-            } catch (e: Exception) {
-                throw Exception("Failed to fetch update info", e)
+            return response.use {
+                check(it.isSuccessful) { "Failed to fetch update info" }
+                json.decodeFromString<UpdateInfo>(it.body.string())
             }
         }
         githubReleases?.takeIf { it.isConfigured }?.let { return it.fetchUpdateInfo() }

@@ -15,6 +15,7 @@ internal fun localToolTitleRes(option: LocalToolOption): Int = when (option) {
     LocalToolOption.TelephonyInfo -> R.string.assistant_page_local_tools_telephony_title
     LocalToolOption.WifiInfo -> R.string.assistant_page_local_tools_wifi_title
     LocalToolOption.Sensors -> R.string.assistant_page_local_tools_sensors_title
+    LocalToolOption.DeviceDiagnostics -> R.string.assistant_page_local_tools_device_diagnostics_title
     LocalToolOption.StorageInfo -> R.string.assistant_page_local_tools_storage_title
     LocalToolOption.Toast -> R.string.assistant_page_local_tools_toast_title
     LocalToolOption.Notification -> R.string.assistant_page_local_tools_notification_title

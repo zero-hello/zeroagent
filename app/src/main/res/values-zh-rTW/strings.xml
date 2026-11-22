@@ -759,7 +759,7 @@
   <string name="setting_page_group_data">資料與診斷</string>
   <string name="setting_page_group_about">關於與診斷</string>
   <string name="setting_page_about">關於</string>
-  <string name="setting_page_about_desc">關於本APP</string>
+  <string name="setting_page_about_desc">查看 App 版本、原始碼與授權。</string>
   <string name="setting_page_assistant">助手</string>
   <string name="setting_page_assistant_desc">設定個性化助手 (智能體)</string>
   <string name="setting_page_built_in_tools">內置工具</string>
@@ -781,14 +781,14 @@
   <string name="setting_page_config_api_desc">你還沒有配置API和模型，請先配置</string>
   <string name="setting_page_config_api_title">請配置API和模型</string>
   <string name="setting_page_data_backup">資料備份</string>
-  <string name="setting_page_data_backup_desc">備份和恢復應用資料</string>
+  <string name="setting_page_data_backup_desc">保留資料副本，或還原已有的備份。</string>
   <string name="setting_page_data_settings">資料設定</string>
   <string name="setting_page_default_model">預設模型與提示</string>
-  <string name="setting_page_default_model_desc">設定各個功能的預設模型</string>
+  <string name="setting_page_default_model_desc">決定各種用途預設使用哪個模型。</string>
   <string name="setting_page_display_setting">顯示設定</string>
   <string name="setting_page_display_setting_desc">管理顯示設定</string>
   <string name="setting_page_documentation">使用文檔</string>
-  <string name="setting_page_documentation_desc">查看應用使用說明和幫助文檔</string>
+  <string name="setting_page_documentation_desc">查看使用方式與設定指引。</string>
   <string name="setting_page_dynamic_color">動態顏色</string>
   <string name="setting_page_dynamic_color_desc">是否基於桌布動態生成 app 主題配色</string>
   <string name="setting_page_extensions">擴充功能</string>
@@ -801,16 +801,16 @@
   <string name="setting_page_model_and_services">模型與服務</string>
   <string name="setting_page_no_share_app">找不到分享應用</string>
   <string name="setting_page_providers">提供商</string>
-  <string name="setting_page_providers_desc">配置AI提供商</string>
+  <string name="setting_page_providers_desc">管理連線與模型清單。</string>
   <string name="setting_page_request_logs">請求記錄</string>
-  <string name="setting_page_request_logs_desc">檢視 HTTP 要求記錄</string>
+  <string name="setting_page_request_logs_desc">排查連線問題時，可查看請求狀態與耗時。</string>
   <string name="setting_page_search_add_provider">新增提供商</string>
   <string name="setting_page_search_common_options">通用選項</string>
   <string name="setting_page_search_config">設定</string>
   <string name="setting_page_search_delete_provider">刪除提供商</string>
   <string name="setting_page_search_result_size">結果數量</string>
   <string name="setting_page_search_service">搜尋服務</string>
-  <string name="setting_page_search_service_desc">設定搜尋服務</string>
+  <string name="setting_page_search_service_desc">決定 ZeroAgent 從哪裡取得網路搜尋結果。</string>
   <string name="setting_page_search_test">測試搜尋</string>
   <string name="setting_page_search_test_query_hint">輸入測試查詢…</string>
   <string name="setting_page_search_test_run">執行測試</string>
@@ -834,7 +834,7 @@
   <string name="setting_theme_page_save">儲存</string>
   <string name="setting_theme_page_dynamic_color_hint">動態顏色已開啟，請在偏好設定 &gt; 主題中關閉以使用自訂主題。</string>
   <string name="setting_page_tts_service">語音服務</string>
-  <string name="setting_page_tts_service_desc">配置語音合成與語音識別服務提供商</string>
+  <string name="setting_page_tts_service_desc">選擇語音辨識與朗讀回覆所用的服務。</string>
   <string name="setting_page_tts_settings">TTS設定</string>
   <string name="setting_provider_page_abilities">能力</string>
   <string name="setting_provider_page_add">添加</string>
@@ -1103,9 +1103,9 @@
   <string name="setting_page_preferences_notification">通知提醒</string>
   <string name="setting_page_preferences_notification_desc">更新提醒、訊息產生通知</string>
   <string name="setting_page_preferences_general">互動行為</string>
-  <string name="setting_page_preferences_general_desc">互動行為、捲動、輸入設定</string>
+  <string name="setting_page_preferences_general_desc">調整聊天輸入與捲動方式。</string>
   <string name="setting_page_preferences_ui">UI 偏好設定</string>
-  <string name="setting_page_preferences_ui_desc">訊息顯示、字型、程式碼區塊</string>
+  <string name="setting_page_preferences_ui_desc">調整訊息與程式碼的閱讀方式。</string>
   <string name="skills_page_import_from_file">從檔案匯入</string>
   <string name="skills_page_add_manually">手動新增</string>
   <string name="setting_model_page_tab_model">模型</string>
@@ -1208,6 +1208,7 @@
   <string name="assistant_page_local_tools_ssh_desc">讓助理透過 SSH/SFTP 在遠端主機上執行 shell 指令和傳輸檔案。支援儲存主機、密碼或私鑰認證、accept-new 主機金鑰檢查。</string>
   <string name="assistant_page_local_tools_ssh_title">SSH</string>
   <string name="assistant_page_local_tools_storage_desc">讀取內部和外部儲存空間的總計/可用/已用容量。</string>
+  <string name="assistant_page_local_tools_device_diagnostics_title">裝置診斷</string>
   <string name="assistant_page_local_tools_storage_title">儲存空間資訊</string>
   <string name="assistant_page_local_tools_sub_agents_desc">讓助理將專注的子任務（研究、多步驟工作）作為獨立的大型語言模型執行派發到背景。每次執行都需授權、有上限（每個助理預設並行 3 個，全域上限可設定（預設 30）），且內部仍然適用 HARDLINE。</string>
   <string name="assistant_page_local_tools_sub_agents_title">子代理</string>
@@ -1396,7 +1397,7 @@
   <string name="setting_page_accessibility_capture_diag">擷取診斷截圖</string>
   <string name="setting_page_accessibility_capture_fail_toast">截圖失敗：%1$s</string>
   <string name="setting_page_accessibility_capture_ok_toast">截圖已儲存：%1$s</string>
-  <string name="setting_page_accessibility_desc">螢幕自動化服務的狀態、最近操作和截圖診斷。</string>
+  <string name="setting_page_accessibility_desc">查看執行畫面操作所需的 Android 服務狀態。</string>
   <string name="setting_page_accessibility_diagnostics_section">診斷</string>
   <string name="setting_page_accessibility_no_actions">暫無最近操作。</string>
   <string name="setting_page_accessibility_open_settings">開啟無障礙設定</string>
@@ -1411,10 +1412,10 @@
   <string name="setting_page_accessibility_status_running">服務：執行中</string>
   <string name="setting_page_accessibility_status_section">狀態</string>
   <string name="setting_page_browser">瀏覽器</string>
-  <string name="setting_page_browser_desc">AI 驅動的網頁瀏覽器和技能檢視器。</string>
+  <string name="setting_page_browser_desc">開啟內建瀏覽器，管理 AI 能使用的瀏覽工具。</string>
   <string name="setting_page_doctor">診斷工具</string>
   <string name="setting_page_doctor_copy_report">複製報告</string>
-  <string name="setting_page_doctor_desc">診斷並修復應用程式 — 權限、服務、資料庫、網路、Termux。</string>
+  <string name="setting_page_doctor_desc">檢查連線、權限及 App 服務是否有問題。</string>
   <string name="setting_page_doctor_report_copied">診斷報告已複製到剪貼簿。</string>
   <string name="setting_page_doctor_run_again">重新執行</string>
   <string name="setting_page_doctor_running">正在執行…</string>
@@ -1424,7 +1425,7 @@
   <string name="setting_page_notifications_action_ago_seconds">%1$d 秒前</string>
   <string name="setting_page_notifications_default_chat_set">預設 Telegram 聊天：%1$s</string>
   <string name="setting_page_notifications_default_chat_unset">預設 Telegram 聊天：未設定（自動路由已停用）</string>
-  <string name="setting_page_notifications_desc">管理通知存取權限與最近活動記錄。</string>
+  <string name="setting_page_notifications_desc">查看通知存取狀態與近期紀錄。</string>
   <string name="setting_page_notifications_open_settings">開啟通知存取權設定</string>
   <string name="setting_page_notifications_recent_empty">尚未擷取任何通知。</string>
   <string name="setting_page_notifications_recent_section">最近活動</string>
@@ -1445,7 +1446,7 @@
   <string name="setting_page_notifications_whitelist_summary_n_plural">%1$d 個應用程式已加入白名單</string>
   <string name="setting_page_notifications_whitelist_summary_zero">無白名單應用程式</string>
   <string name="setting_page_permissions">權限</string>
-  <string name="setting_page_permissions_desc">自動探索的 ZeroAgent 使用的所有權限清單，每項都有一鍵授予按鈕。</string>
+  <string name="setting_page_permissions_desc">查看 ZeroAgent 已取得的權限，需要時前往系統設定調整。</string>
   <string name="setting_page_permissions_group_auto">自動授予</string>
   <string name="setting_page_permissions_group_runtime">執行階段權限</string>
   <string name="setting_page_permissions_group_services">服務與整合</string>
@@ -1459,7 +1460,7 @@
   <string name="setting_page_scheduled_jobs_delete_confirm_no">取消</string>
   <string name="setting_page_scheduled_jobs_delete_confirm_title">刪除排程任務？</string>
   <string name="setting_page_scheduled_jobs_delete_confirm_yes">刪除</string>
-  <string name="setting_page_scheduled_jobs_desc">助理安排的基於時間的任務 — 一次性任務和重複的 cron 運算式。</string>
+  <string name="setting_page_scheduled_jobs_desc">檢查待執行與定期執行的任務。</string>
   <string name="setting_page_scheduled_jobs_edit">在聊天中編輯</string>
   <string name="setting_page_scheduled_jobs_edit_prefill">編輯名為 “%1$s” 的排程任務。</string>
   <string name="setting_page_scheduled_jobs_empty">暫無排程任務。讓你的助理建立一個。</string>
@@ -1513,7 +1514,7 @@
   <string name="setting_page_telegram_whitelist">允許的聊天 ID</string>
   <string name="setting_page_telegram_whitelist_desc">以逗號分隔。留空 = 不允許任何人。用 @userinfobot 查詢你的 ID。</string>
   <string name="setting_page_tool_approvals">工具授權</string>
-  <string name="setting_page_tool_approvals_desc">設定哪些可調整工具在執行前必須再次確認。</string>
+  <string name="setting_page_tool_approvals_desc">決定哪些工具執行前要先問你。</string>
   <string name="setting_page_tool_approvals_empty">沒有可調整的工具需要額外確認。</string>
   <string name="setting_page_tool_approvals_header">開啟工具開關可要求執行前確認；系統限制的工具仍會一律要求確認。</string>
   <string name="setting_page_tool_approvals_revoke">撤銷</string>
@@ -1555,7 +1556,7 @@
   <string name="setting_page_workflow_detail_stat_last_run_never">上次執行：從未</string>
   <string name="setting_page_workflow_detail_stat_runs_today">今天：%1$d 次執行</string>
   <string name="setting_page_workflows">工作流程</string>
-  <string name="setting_page_workflows_desc">基於觸發器的自動化：當裝置上發生某事時，執行一系列工具。</string>
+  <string name="setting_page_workflows_desc">指定條件成立時，要依序執行哪些動作。</string>
   <string name="setting_page_workflows_empty">暫無工作流程。讓你的助理建立一個。</string>
   <string name="setting_page_workflows_how_it_works">工作流程的運作方式</string>
   <string name="setting_page_workflows_how_it_works_dialog_body">工作流程由一個觸發器加一系列操作組成。觸發器是啟動它的條件（WiFi 連接、排程觸發、你到達某地、通知到達）。操作是按順序執行的工具呼叫 — 與你在聊天中能執行的工具相同。\n\n條件用於篩選被觸發的工作流程是否真正執行（「僅在日落後」、「僅在充電時」）。所有條件都必須通過。\n\n工作流程以無頭模式執行 — 你的助理在建立工作流程時已預先授權這些工具，因此每次觸發都不會提示你。無論如何，HARDLINE 過濾器仍會攔截危險的 shell 指令和對系統路徑的寫入。你可以在工作流程的歷史清單中看到結果。</string>
@@ -1860,8 +1861,8 @@
   <string name="reasoning_max">最大</string>
   <string name="imggen_page_image_missing">圖片檔案遺失，可能未從備份中還原</string>
   <string name="safe_mode_enter_app">進入應用程式</string>
-  <string name="setting_page_search_web_fetch_tools_title">網頁擷取與擷取內容</string>
-  <string name="setting_page_search_web_fetch_tools_desc">允許助理直接擷取並閱讀網頁內容。預設開啟；關閉後將僅依賴你設定的搜尋提供者。</string>
+  <string name="setting_page_search_web_fetch_tools_title">網頁閱讀</string>
+  <string name="setting_page_search_web_fetch_tools_desc">公開網頁會在裝置上排版。支援圖片的模型也能查看畫面預覽。</string>
   <string name="setting_tts_page_temperature">溫度</string>
   <string name="setting_tts_page_temperature_description">控制語音的隨機性（0.0 - 1.0，數值越高越具表現力）</string>
   <string name="setting_tts_page_fish_audio_speed_description">語速（0.5 - 2.0，1.0 為正常速度）</string>
@@ -1917,7 +1918,7 @@
   <string name="setting_page_termux">Termux</string>
   <string name="setting_page_termux_desc">Shell 指令、逾時與 Termux 整合。</string>
   <string name="setting_page_shizuku">Shizuku</string>
-  <string name="setting_page_shizuku_desc">為透過 Shizuku 執行的 shell 指令授權並檢查狀態。</string>
+  <string name="setting_page_shizuku_desc">確認透過 Shizuku 執行操作所需的權限。</string>
   <string name="setting_termux_title">Termux</string>
   <string name="setting_termux_section_status">狀態</string>
   <string name="setting_termux_status_app">Termux 應用程式</string>
@@ -2258,7 +2259,7 @@
 
   <!-- P2-32 ssh hosts page -->
   <string name="setting_page_ssh">SSH 主機</string>
-  <string name="setting_page_ssh_desc">管理已儲存的主機，供 ssh_exec_saved、ssh_upload、ssh_download 依名稱使用。</string>
+  <string name="setting_page_ssh_desc">保存常用的遠端主機，方便下次連線。</string>
   <string name="setting_ssh_page_title">SSH 主機</string>
   <string name="setting_ssh_page_hosts">已儲存主機</string>
   <string name="setting_ssh_page_empty">還沒有儲存的主機</string>

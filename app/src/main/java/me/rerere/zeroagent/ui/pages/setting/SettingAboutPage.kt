@@ -23,7 +23,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import java.io.IOException
 import kotlinx.coroutines.launch
+import me.rerere.zeroagent.AppScope
+import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,7 +51,7 @@ fun SettingAboutPage() {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val context = LocalContext.current
     val store: me.rerere.zeroagent.data.datastore.SettingsStore = org.koin.compose.koinInject()
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val appScope: AppScope = koinInject()
     var taps by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(0) }
     var lastTap by androidx.compose.runtime.remember { androidx.compose.runtime.mutableLongStateOf(0L) }
     Scaffold(
@@ -109,9 +112,14 @@ fun SettingAboutPage() {
                                 lastTap = now
                                 if (taps == 10) {
                                     taps = 0
-                                    scope.launch {
-                                        store.update { it.copy(developerMode = true) }
-                                        android.widget.Toast.makeText(context, "已開啟開發者選項", android.widget.Toast.LENGTH_SHORT).show()
+                                    appScope.launch {
+                                        val message = try {
+                                            store.update { it.copy(developerMode = true) }
+                                            R.string.developer_enabled_confirmation
+                                        } catch (_: IOException) {
+                                            R.string.developer_save_failed
+                                        }
+                                        android.widget.Toast.makeText(context.applicationContext, message, android.widget.Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }

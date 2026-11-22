@@ -413,17 +413,18 @@ class ConversationRepository(
         keyword: String,
         sort: MessageSearchSort = MessageSearchSort.RELEVANCE,
         assistantId: Uuid? = null,
-    ) = messageFtsManager.search(keyword, sort, assistantId?.toString())
+        offset: Int = 0,
+    ) = messageFtsManager.search(keyword, sort, assistantId?.toString(), offset)
 
-    suspend fun rebuildAllIndexes(onProgress: (current: Int, total: Int) -> Unit = { _, _ -> }) {
-        messageFtsManager.deleteAll()
+    suspend fun rebuildAllIndexes(onProgress: (current: Int, total: Int) -> Unit = { _, _ -> }) = database.withTransaction {
+        messageFtsManager.deleteAllOnCurrentConnection()
         val allIds = conversationDAO.getAllIds()
         val total = allIds.size
         allIds.forEachIndexed { index, id ->
             val entity = conversationDAO.getConversationById(id) ?: return@forEachIndexed
             val nodes = loadMessageNodes(entity.id)
             val conversation = conversationEntityToConversation(entity, nodes)
-            messageFtsManager.indexConversation(conversation)
+            messageFtsManager.indexOnCurrentConnection(conversation)
             onProgress(index + 1, total)
         }
     }

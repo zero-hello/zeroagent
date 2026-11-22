@@ -148,6 +148,7 @@ sealed class LocalToolOption {
     @Serializable @SerialName("telephony_info") data object TelephonyInfo  : LocalToolOption()
     @Serializable @SerialName("wifi_info")      data object WifiInfo       : LocalToolOption()
     @Serializable @SerialName("sensors")        data object Sensors        : LocalToolOption()
+    @Serializable @SerialName("device_diagnostics") data object DeviceDiagnostics : LocalToolOption()
     @Serializable @SerialName("storage_info")   data object StorageInfo    : LocalToolOption()
     @Serializable @SerialName("toast")          data object Toast          : LocalToolOption()
     @Serializable @SerialName("notification")   data object Notification   : LocalToolOption()
@@ -774,6 +775,9 @@ class LocalTools(
             tools.add(listSensorsTool(context))
             tools.add(readSensorTool(context))
         }
+        if (options.contains(LocalToolOption.DeviceDiagnostics)) {
+            tools.addAll(me.rerere.zeroagent.data.ai.tools.local.deviceDiagnosticTools(context))
+        }
         if (options.contains(LocalToolOption.StorageInfo)) {
             tools.add(storageTool(context))
         }
@@ -1043,7 +1047,11 @@ class LocalTools(
         // per-assistant toggle.
         if (settingsStore.settingsFlow.value.enableWebFetchTools) {
             tools.add(webFetchTool(okHttpClient))
-            tools.add(webExtractTool(okHttpClient))
+            tools.add(webExtractTool(
+                okHttpClient,
+                context = context,
+                modelCanSeeImages = invocationContext.modelCanSeeImages,
+            ))
         }
         // Phase 25 — Phase 3 second cut + ExternalStorage + Archive.
         if (options.contains(LocalToolOption.SmsSend)) {

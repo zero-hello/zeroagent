@@ -12,6 +12,20 @@ import org.junit.Test
 
 class PreferencesStoreTest {
     @Test
+    fun `developer display choices survive serialization`() {
+        val chosen = DeveloperDisplayOptions(showRequests = true, onlyStreaming = true, showRequestTime = false)
+        val saved = JsonInstant.encodeToString(chosen)
+
+        assertEquals(chosen, DeveloperDisplayOptions.fromPreference(saved))
+    }
+
+    @Test
+    fun `missing developer display choices use safe defaults`() {
+        assertEquals(DeveloperDisplayOptions(), DeveloperDisplayOptions.fromPreference("{}"))
+        assertEquals(DeveloperDisplayOptions(), DeveloperDisplayOptions.fromPreference("{invalid}"))
+    }
+
+    @Test
     fun `compression target defaults to one percent of the active context`() {
         val settings = Settings()
 

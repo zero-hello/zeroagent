@@ -180,6 +180,7 @@ class SettingsStore(
         val DISPLAY_SETTING = stringPreferencesKey("display_setting")
         val NETWORK_SETTING = stringPreferencesKey("network_setting")
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
+        val DEVELOPER_DISPLAY_OPTIONS = stringPreferencesKey("developer_display_options")
 
         // 模型选择
         val FAVORITE_MODELS = stringPreferencesKey("favorite_models")
@@ -297,6 +298,7 @@ class SettingsStore(
                 preferences[THEME_ID] = settings.themeId
                 preferences[CUSTOM_THEMES] = JsonInstant.encodeToString(settings.customThemes)
                 preferences[DEVELOPER_MODE] = settings.developerMode
+                preferences[DEVELOPER_DISPLAY_OPTIONS] = JsonInstant.encodeToString(settings.developerDisplayOptions)
                 preferences[DISPLAY_SETTING] = JsonInstant.encodeToString(
                     settings.displaySetting.copy(
                         pasteLongTextThreshold = settings.displaySetting.pasteLongTextThreshold.coerceIn(100, 10000)
@@ -513,6 +515,8 @@ class SettingsStore(
                     }
                 } ?: emptyList(),
                 developerMode = preferences[DEVELOPER_MODE] == true,
+                developerDisplayOptions = preferences[DEVELOPER_DISPLAY_OPTIONS]
+                    ?.let { DeveloperDisplayOptions.fromPreference(it) } ?: DeveloperDisplayOptions(),
                 // `enableLatexRendering` is forced on: rendering LaTeX is strictly better than
                 // showing the raw `$...$` source, so the switch was removed and the stored value
                 // ignored. The field is kept on DisplaySetting so old blobs still decode.
@@ -897,6 +901,7 @@ data class Settings(
     val themeId: String = PresetThemes[0].id,
     val customThemes: List<CustomTheme> = emptyList(),
     val developerMode: Boolean = false,
+    val developerDisplayOptions: DeveloperDisplayOptions = DeveloperDisplayOptions(),
     val displaySetting: DisplaySetting = DisplaySetting(),
     val networkSetting: NetworkSetting = NetworkSetting(),
     val favoriteModels: List<Uuid> = emptyList(),
@@ -1019,6 +1024,22 @@ data class Settings(
     companion object {
         // 构造一个用于初始化的settings, 但它不能用于保存，防止使用初始值存储
         fun dummy() = Settings(init = true)
+    }
+}
+
+@Serializable
+data class DeveloperDisplayOptions(
+    val showRequests: Boolean = false,
+    val onlyStreaming: Boolean = false,
+    val showRequestTime: Boolean = true,
+) {
+    companion object {
+        internal fun fromPreference(value: String): DeveloperDisplayOptions =
+            try {
+                JsonInstant.decodeFromString<DeveloperDisplayOptions>(value)
+            } catch (_: IllegalArgumentException) {
+                DeveloperDisplayOptions()
+            }
     }
 }
 

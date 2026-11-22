@@ -9,14 +9,21 @@ import android.os.Build
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import java.io.File
+import java.io.IOException
 import java.security.MessageDigest
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.rerere.zeroagent.BuildConfig
 import me.rerere.zeroagent.R
 import me.rerere.zeroagent.reliability.GitHubReleaseChecker
+import okhttp3.Call
 import okhttp3.OkHttpClient
+import okhttp3.Response
 import okhttp3.Request
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
@@ -34,7 +41,7 @@ internal class SignedUpdateInstaller(private val client: OkHttpClient) {
             val temporary = File.createTempFile("download-", ".apk", directory)
             try {
                 val digest = MessageDigest.getInstance("SHA-256")
-                client.newCall(Request.Builder().url(url).build()).execute().use { response ->
+                client.newCall(Request.Builder().url(url).build()).readUpdateResponse { response ->
                     check(response.isSuccessful) { context.getString(R.string.update_download_failed) }
                     val expected = response.body.contentLength().takeIf { it > 0 } ?: asset.sizeBytes
                     var lastReport = 0L
@@ -46,6 +53,7 @@ internal class SignedUpdateInstaller(private val client: OkHttpClient) {
                             while (true) {
                                 ensureActive()
                                 val count = input.read(buffer)
+                                ensureActive()
                                 if (count < 0) break
                                 total += count
                                 check(total <= 250L * 1024 * 1024) { context.getString(R.string.update_invalid_apk) }
@@ -119,5 +127,25 @@ internal class SignedUpdateInstaller(private val client: OkHttpClient) {
             abi in setOf("arm64-v8a", "x86_64") && asset.name.endsWith("-$abi.apk") &&
                 asset.name.matches(Regex("ZeroAgent-v[0-9]+\\.[0-9]+\\.[0-9]+-(arm64-v8a|x86_64)\\.apk"))
         }
+    }
+}
+
+/** Bind cancellation through the blocking response reads, not just until headers arrive. */
+internal suspend fun <T> Call.readUpdateResponse(read: (Response) -> T): T = coroutineScope {
+    val cancelOnExit = launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
+        try {
+            awaitCancellation()
+        } finally {
+            this@readUpdateResponse.cancel()
+        }
+    }
+    try {
+        ensureActive()
+        execute().use(read)
+    } catch (error: IOException) {
+        ensureActive()
+        throw error
+    } finally {
+        cancelOnExit.cancel()
     }
 }

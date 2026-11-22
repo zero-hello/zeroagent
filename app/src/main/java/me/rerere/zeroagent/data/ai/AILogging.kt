@@ -15,6 +15,7 @@ sealed class AILogging {
         val inputMessageCount: Int,
         val availableToolCount: Int,
         val stream: Boolean,
+        val timestampMillis: Long = System.currentTimeMillis(),
     ) : AILogging()
 }
 
@@ -44,8 +45,12 @@ class AILoggingManager(
     }
 
     fun addLog(log: AILogging) {
-        if (!settingsStore.settingsFlow.value.developerMode || logLevel.value == AiLogLevel.OFF) return
-        logs.update { entries -> (entries + log).takeLast(MAX_LOGS) }
+        logs.update { entries ->
+            val settings = settingsStore.settingsFlow.value
+            if (settings.developerMode && settings.aiLogLevel != AiLogLevel.OFF) {
+                (entries + log).takeLast(MAX_LOGS)
+            } else entries
+        }
     }
 
     fun clearLogs() {

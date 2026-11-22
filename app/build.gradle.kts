@@ -29,8 +29,8 @@ android {
         minSdk = 31
         // Package all existing translations for the language selector.
         targetSdk = 37
-        versionCode = 35
-        versionName = "2.2.0"
+        versionCode = 36
+        versionName = "2.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

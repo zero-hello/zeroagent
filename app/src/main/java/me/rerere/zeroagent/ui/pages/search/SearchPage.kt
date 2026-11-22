@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -42,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -55,13 +57,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import me.rerere.zeroagent.R
+import me.rerere.zeroagent.Screen
 import me.rerere.zeroagent.data.db.fts.MessageSearchResult
 import me.rerere.zeroagent.data.db.fts.MessageSearchSort
 import me.rerere.zeroagent.ui.components.ui.ChatPrivacy
 import me.rerere.zeroagent.ui.components.nav.BackButton
 import me.rerere.zeroagent.ui.context.LocalNavController
 import me.rerere.zeroagent.ui.theme.CustomColors
-import me.rerere.zeroagent.utils.navigateToChatPage
 import me.rerere.zeroagent.utils.plus
 import me.rerere.zeroagent.utils.toLocalDateTime
 import org.koin.androidx.compose.koinViewModel
@@ -82,8 +84,13 @@ fun SearchPage(vm: SearchVM = koinViewModel()) {
     var showRebuildDialog by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
+    val resultsListState = rememberLazyListState()
+    var hasFocusedSearch by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        if (!hasFocusedSearch) {
+            focusRequester.requestFocus()
+            hasFocusedSearch = true
+        }
     }
 
     if (showRebuildDialog) {
@@ -192,7 +199,6 @@ fun SearchPage(vm: SearchVM = koinViewModel()) {
                 }
 
                 when {
-                    vm.searchError != null -> Text(vm.searchError!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
                     vm.isRebuilding -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -210,6 +216,16 @@ fun SearchPage(vm: SearchVM = koinViewModel()) {
                             )
                         }
                     }
+                    vm.rebuildError != null -> Text(
+                        vm.rebuildError.orEmpty(),
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                    vm.searchError != null -> Text(
+                        vm.searchError.orEmpty(),
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp),
+                    )
                     vm.searchQuery.isBlank() -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -238,6 +254,7 @@ fun SearchPage(vm: SearchVM = koinViewModel()) {
 
                     else -> {
                         LazyColumn(
+                            state = resultsListState,
                             contentPadding = PaddingValues(horizontal = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxSize(),
@@ -246,11 +263,12 @@ fun SearchPage(vm: SearchVM = koinViewModel()) {
                                 SearchResultItem(
                                     result = result,
                                     onClick = {
-                                        navigateToChatPage(
-                                            navController,
-                                            chatId = Uuid.parse(result.conversationId),
-                                            nodeId = result.nodeId.takeIf { it.isNotBlank() }?.let { Uuid.parse(it) },
-                                        )
+                                        navController.navigate(Screen.Chat(
+                                            id = result.conversationId,
+                                            nodeId = result.nodeId.takeIf(String::isNotBlank),
+                                            // Distinguish this entry from the same chat deeper in the back stack.
+                                            importId = Uuid.random().toString(),
+                                        ))
                                     }
                                 )
                             }

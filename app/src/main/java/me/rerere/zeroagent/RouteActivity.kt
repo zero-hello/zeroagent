@@ -51,9 +51,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -155,6 +157,8 @@ import okhttp3.OkHttpClient
 import org.koin.android.ext.android.inject
 import org.koin.compose.koinInject
 import kotlin.uuid.Uuid
+
+private const val FULL_WIDTH_ROUTE = "zeroagent.fullWidthRoute"
 
 private const val TAG = "RouteActivity"
 private const val ACTION_TRANSLATE = "me.rerere.zeroagent.action.TRANSLATE"
@@ -326,8 +330,21 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
     @Composable
     fun AppRoutes() {
         val motionEnabled = me.rerere.zeroagent.ui.components.ui.rememberMotionEnabled()
+        val rightToLeft = LocalLayoutDirection.current == LayoutDirection.Rtl
         val motionDecorator = remember { NavEntryDecorator<NavKey> { entry ->
-            CompositionLocalProvider(LocalMotionRoute provides entry.contentKey.toString()) { entry.Content() }
+            CompositionLocalProvider(LocalMotionRoute provides entry.contentKey.toString()) {
+                // Keep the host viewport stable. Each destination keeps its own width while leaving.
+                Box(
+                    modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+                    contentAlignment = Alignment.TopCenter,
+                ) {
+                    Box(
+                        Modifier.widthIn(
+                            max = if (entry.metadata[FULL_WIDTH_ROUTE] == true) Dp.Infinity else AppLayout.settingsWidth,
+                        ).fillMaxSize(),
+                    ) { entry.Content() }
+                }
+            }
         } }
         val toastState = rememberToasterState()
         val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
@@ -372,7 +389,6 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
             while (pendingIntents.isNotEmpty()) {
                 handleIntent(pendingIntents.removeFirst())
             }
-            onDispose { if (navStack === backStack) navStack = null }
             onDispose {
                 if (navStack === backStack) {
                     lockedBackStack = backStack.toList()
@@ -433,21 +449,26 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                     ) {
                     NavDisplay(
                         backStack = backStack,
+                        sharedTransitionScope = this@SharedTransitionLayout,
                         entryDecorators = listOf(
                             rememberSaveableStateHolderNavEntryDecorator(),
                             rememberViewModelStoreNavEntryDecorator(),
                             motionDecorator,
                         ),
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .widthIn(max = if (backStack.lastOrNull() is Screen.Chat || backStack.lastOrNull() is Screen.WebView) Dp.Infinity else AppLayout.settingsWidth)
-                            .fillMaxSize(),
-                        onBack = { backStack.removeLastOrNull() },
-                        transitionSpec = { sharedAxisTransition(forward = true, enabled = motionEnabled) },
-                        popTransitionSpec = { sharedAxisTransition(forward = false, enabled = motionEnabled) },
-                        predictivePopTransitionSpec = { sharedAxisTransition(forward = false, enabled = motionEnabled) },
+                        modifier = Modifier.fillMaxSize(),
+                        onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
+                        transitionSpec = { routeTransition(forward = true, enabled = motionEnabled, rightToLeft = rightToLeft) },
+                        popTransitionSpec = { routeTransition(forward = false, enabled = motionEnabled, rightToLeft = rightToLeft) },
+                        predictivePopTransitionSpec = {
+                            routeTransition(
+                                forward = false,
+                                enabled = motionEnabled,
+                                rightToLeft = rightToLeft,
+                                predictiveBack = true,
+                            )
+                        },
                         entryProvider = entryProvider {
-                            entry<Screen.Chat> { key ->
+                            entry<Screen.Chat>(metadata = mapOf(FULL_WIDTH_ROUTE to true)) { key ->
                                 val conversationId = Uuid.parse(key.id)
                                 me.rerere.zeroagent.ui.components.ui.ChatPrivacyGate(
                                     me.rerere.zeroagent.ui.components.ui.rememberPrivacyLock(conversationId),
@@ -571,7 +592,7 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                 VideoGenPage()
                             }
 
-                            entry<Screen.WebView> { key ->
+                            entry<Screen.WebView>(metadata = mapOf(FULL_WIDTH_ROUTE to true)) { key ->
                                 WebViewPage(key.url, key.contentId)
                             }
 
