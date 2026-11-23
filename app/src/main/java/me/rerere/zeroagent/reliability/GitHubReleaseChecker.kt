@@ -53,10 +53,10 @@ class GitHubReleaseChecker(
         val tag_name: String = "",
         val name: String = "",
         val html_url: String = "",
-        val published_at: String = "",
+        val published_at: String? = null,
         val draft: Boolean = false,
         val prerelease: Boolean = false,
-        val body: String = "",
+        val body: String? = null,
         val assets: List<Asset> = emptyList(),
     )
 
@@ -74,6 +74,7 @@ class GitHubReleaseChecker(
             .url(latestUrl)
             .get()
             .addHeader("Accept", "application/vnd.github+json")
+            .addHeader("Cache-Control", "no-cache")
             .addHeader("X-GitHub-Api-Version", "2022-11-28")
             .addHeader("User-Agent", "ZeroAgent/${BuildConfig.VERSION_NAME}")
             .build()
@@ -168,8 +169,8 @@ class GitHubReleaseChecker(
  */
 fun GitHubReleaseChecker.Release.toUpdateInfo(): UpdateInfo = UpdateInfo(
     version = tag_name.removePrefix("v"),
-    publishedAt = published_at,
-    changelog = body,
+    publishedAt = published_at.orEmpty(),
+    changelog = body.orEmpty(),
     downloads = assets.map { asset ->
         UpdateDownload(
             name = asset.name,

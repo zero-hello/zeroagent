@@ -39,7 +39,6 @@ import me.rerere.zeroagent.ui.context.LocalToaster
 import me.rerere.zeroagent.utils.SignedUpdateInstaller
 import me.rerere.zeroagent.utils.UiState
 import me.rerere.zeroagent.utils.UpdateChecker
-import me.rerere.zeroagent.utils.Version
 import me.rerere.zeroagent.utils.localizedErrorMessage
 import org.koin.compose.koinInject
 
@@ -52,6 +51,7 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
     val scope = rememberCoroutineScope()
     val state by checker.updateState.collectAsStateWithLifecycle()
     val info = (state as? UiState.Success)?.data
+    var checksEnabled by remember(disabledUntil) { mutableStateOf(System.currentTimeMillis() >= disabledUntil) }
     val preferences = remember(context) { context.getSharedPreferences("version_notice", Context.MODE_PRIVATE) }
     val navigation = LocalNavController.current
     val installedVersion = BuildConfig.VERSION_NAME
@@ -73,16 +73,21 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
     LaunchedEffect(disabledUntil, lifecycle, checker) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) {
-                delay((disabledUntil - System.currentTimeMillis()).coerceAtLeast(0L))
-                checker.refresh()
-                delay(6 * 60 * 60 * 1000L)
+                val remainingPause = (disabledUntil - System.currentTimeMillis()).coerceAtLeast(0L)
+                checksEnabled = remainingPause == 0L
+                delay(if (remainingPause > 0L) remainingPause else checker.refresh())
             }
         }
     }
     LaunchedEffect(preferences, lastSeen) {
         if (lastSeen == null && !upgraded) preferences.edit().putString("seen_version", installedVersion).apply()
     }
-    if (showChanges) {
+    val asset = remember(info, installedVersion) {
+        info?.newerDownload(installedVersion, SignedUpdateInstaller::isCompatible)
+    }
+    val showUpdate = checksEnabled && info != null && dismissedVersion != info.version && asset != null
+    val waitingForInitialCheck = checksEnabled && state == UiState.Loading
+    if (showChanges && !showUpdate && !waitingForInitialCheck) {
         val close = {
             showChanges = false
             preferences.edit().putString("seen_version", installedVersion).apply()
@@ -102,9 +107,7 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
             },
             confirmButton = { TextButton(onClick = close) { Text(stringResource(android.R.string.ok)) } },
         )
-    } else if (info != null && dismissedVersion != info.version &&
-        System.currentTimeMillis() >= disabledUntil && Version(info.version) > Version(installedVersion)) {
-        val asset = info.downloads.firstOrNull { SignedUpdateInstaller.isCompatible(it) } ?: return
+    } else if (showUpdate && info != null && asset != null) {
         ZeroAgentAlertDialog(
             onDismissRequest = { if (!downloading) dismissedVersion = info.version },
             title = { Text(stringResource(R.string.update_card_new_version_found, info.version)) },

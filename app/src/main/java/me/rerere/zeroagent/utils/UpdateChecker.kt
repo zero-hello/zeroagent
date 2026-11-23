@@ -3,6 +3,7 @@ package me.rerere.zeroagent.utils
 import android.content.Context
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import me.rerere.zeroagent.R
 import me.rerere.zeroagent.ui.components.ui.DownloadProgress
@@ -32,26 +33,31 @@ class UpdateChecker(
     // card straight off GitHub Releases. Null keeps the pre-existing "report current version"
     // behaviour (card stays hidden); tests construct it that way.
     private val githubReleases: GitHubReleaseChecker? = null,
+    private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
     private val state = MutableStateFlow<UiState<UpdateInfo>>(UiState.Loading)
     val updateState: StateFlow<UiState<UpdateInfo>> = state.asStateFlow()
     private val refreshMutex = Mutex()
-    private var lastCheck = -1L
+    private var nextCheckAt: Long? = null
 
-    suspend fun refresh() = refreshMutex.withLock {
-        val now = android.os.SystemClock.elapsedRealtime()
-        if (lastCheck >= 0 && now - lastCheck < 15 * 60 * 1000L) return@withLock
-        try {
+    /** Returns the remaining time until another check is due, including after a failure. */
+    suspend fun refresh(): Long = refreshMutex.withLock {
+        val now = elapsedRealtime()
+        nextCheckAt?.let { if (it > now) return@withLock it - now }
+
+        val interval = try {
             state.value = UiState.Success(data = withContext(Dispatchers.IO) { fetchUpdateInfo() })
-            lastCheck = now
+            15 * 60 * 1000L
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             state.value = UiState.Error(e)
-            lastCheck = now
+            2 * 60 * 1000L
         }
+        nextCheckAt = elapsedRealtime() + interval
+        interval
     }
 
     /**
@@ -140,7 +146,10 @@ data class UpdateInfo(
     val publishedAt: String,
     val changelog: String,
     val downloads: List<UpdateDownload>
-)
+) {
+    internal fun newerDownload(installedVersion: String, isCompatible: (UpdateDownload) -> Boolean): UpdateDownload? =
+        if (Version(version) > Version(installedVersion)) downloads.firstOrNull(isCompatible) else null
+}
 
 /**
  * 版本号值类，封装版本号字符串并提供比较功能
