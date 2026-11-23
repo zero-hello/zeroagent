@@ -43,15 +43,12 @@ import me.rerere.zeroagent.data.chat.ComposerDraft
 import me.rerere.zeroagent.data.chat.ChatCommandHandler
 import me.rerere.zeroagent.data.datastore.Settings
 import me.rerere.zeroagent.data.datastore.SettingsStore
-import me.rerere.zeroagent.data.datastore.getCurrentAssistant
 import me.rerere.zeroagent.data.chat.ChatExtras
 import me.rerere.zeroagent.data.usage.TurnFooter
 import me.rerere.zeroagent.data.usage.TurnNode
 import me.rerere.zeroagent.data.usage.UsageLedger
 import me.rerere.zeroagent.data.usage.UsageTurnViewFactory
 import me.rerere.zeroagent.data.files.FilesManager
-import me.rerere.zeroagent.data.model.Assistant
-import me.rerere.zeroagent.data.model.Avatar
 import me.rerere.zeroagent.data.model.Conversation
 import me.rerere.zeroagent.data.model.MessageNode
 import me.rerere.zeroagent.data.model.NodeFavoriteTarget
@@ -242,11 +239,6 @@ class ChatVM(
     val settings: StateFlow<Settings> =
         settingsStore.settingsFlow.stateIn(viewModelScope, SharingStarted.Eagerly, Settings.dummy())
 
-    // 网络搜索(每个助手独立)
-    val enableWebSearch = settings.map {
-        it.getCurrentAssistant().enableWebSearch
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
-
     // 当前模型
     val currentChatModel = combine(settings, conversation, ChatExtras.tuningUpdates(context, _conversationId)) { config, chat, _ ->
         chatService.effectiveChatModel(config, chat)
@@ -276,28 +268,12 @@ class ChatVM(
     // MCP管理器
     val mcpManager = chatService.mcpManager
 
-    // 更新设置
-    fun updateSettings(newSettings: Settings): Job {
-        return viewModelScope.launch {
-            val oldSettings = settings.value
-            // 检查用户头像是否有变化，如果有则删除旧头像
-            checkUserAvatarDelete(oldSettings, newSettings)
-            settingsStore.update(newSettings)
-        }
-    }
-
-    // 检查用户头像删除
-    private fun checkUserAvatarDelete(oldSettings: Settings, newSettings: Settings) {
-        val oldAvatar = oldSettings.displaySetting.userAvatar
-        val newAvatar = newSettings.displaySetting.userAvatar
-
-        if (oldAvatar is Avatar.Image && oldAvatar != newAvatar) {
-            filesManager.deleteChatFiles(listOf(oldAvatar.url.toUri()))
-        }
+    fun updateSettings(transform: (Settings) -> Settings): Job = viewModelScope.launch {
+        settingsStore.update(transform)
     }
 
     // 设置聊天模型
-    fun setChatModel(assistant: Assistant, model: Model, updateDefault: Boolean = true) {
+    fun setChatModel(model: Model, updateDefault: Boolean = true) {
         // Update the live conversation before returning to the UI. A user can submit a
         // message immediately after choosing a model; deferring this state write allowed
         // ChatService to snapshot the previous model for that turn.
@@ -451,7 +427,7 @@ class ChatVM(
 
     fun saveConversationAsync() {
         viewModelScope.launch {
-            chatService.saveConversation(_conversationId, conversation.value)
+            chatService.persistCurrentConversation(_conversationId)
         }
     }
 
@@ -515,6 +491,25 @@ class ChatVM(
         chatService.updateConversationState(_conversationId) {
             newConversation
         }
+    }
+
+    fun updateMessageVersion(displayed: MessageNode, updated: MessageNode) {
+        val selected = updated.messages.getOrNull(updated.selectIndex) ?: return
+        val isNewVersion = displayed.messages.none { it.id == selected.id }
+        chatService.updateConversationState(_conversationId) { current ->
+            val index = current.messageNodes.indexOfFirst { it.id == displayed.id }
+            if (index < 0) return@updateConversationState current
+            val node = current.messageNodes[index]
+            val existingIndex = node.messages.indexOfFirst { it.id == selected.id }
+            val replacement = when {
+                existingIndex >= 0 -> node.copy(selectIndex = existingIndex)
+                isNewVersion && node.messages.any { it.id == displayed.currentMessage.id } ->
+                    node.copy(messages = node.messages + selected, selectIndex = node.messages.size)
+                else -> return@updateConversationState current
+            }
+            current.copy(messageNodes = current.messageNodes.toMutableList().apply { this[index] = replacement })
+        }
+        saveConversationAsync()
     }
 
     fun toggleMessageFavorite(node: MessageNode) {

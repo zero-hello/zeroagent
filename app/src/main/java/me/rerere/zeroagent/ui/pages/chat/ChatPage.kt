@@ -77,9 +77,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import me.rerere.ai.provider.BuiltInTools
 import me.rerere.ai.provider.Model
-import me.rerere.ai.provider.ProviderSetting
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.ai.ui.UIMessage
 import me.rerere.hugeicons.HugeIcons
@@ -94,7 +92,7 @@ import me.rerere.zeroagent.data.chat.ChatSlashCommand
 import me.rerere.zeroagent.data.datastore.Settings
 import me.rerere.zeroagent.data.datastore.findProvider
 import me.rerere.zeroagent.data.datastore.getCurrentAssistant
-import me.rerere.zeroagent.data.datastore.getCurrentChatModel
+import me.rerere.zeroagent.data.datastore.assistantForModel
 import me.rerere.zeroagent.data.files.FilesManager
 import me.rerere.zeroagent.data.files.importComposerAttachment
 import me.rerere.zeroagent.data.chat.ChatExtras
@@ -150,14 +148,13 @@ fun ChatPage(
     val loadingJob by vm.conversationJob.collectAsStateWithLifecycle()
     val processingStatus by vm.processingStatus.collectAsStateWithLifecycle()
     val currentChatModel by vm.currentChatModel.collectAsStateWithLifecycle()
-    val enableWebSearch by vm.enableWebSearch.collectAsStateWithLifecycle()
     val errors by vm.errors.collectAsStateWithLifecycle()
     // U4 — the sub-agent registry is not collected anywhere in the UI today, so a parent turn that
     // dispatched background work had no live signal at all. Fold it into the status line the chat
     // already shows instead of adding a second surface.
     val subAgentRegistry: SubAgentRegistry = koinInject()
     val subAgentRuns by subAgentRegistry.runs.collectAsStateWithLifecycle()
-    val subAgentStatus = subAgentStatusLine(subAgentRuns)
+    val subAgentStatus = subAgentStatusLine(id, subAgentRuns)
     val mergedStatus = listOfNotNull(processingStatus, subAgentStatus)
         .joinToString(separator = "  ·  ")
         .ifBlank { null }
@@ -227,7 +224,6 @@ fun ChatPage(
             chatListState = chatListState,
             searchHighlight = searchHighlight,
 
-            enableWebSearch = enableWebSearch,
             currentChatModel = currentChatModel,
             bigScreen = isBigScreen,
             errors = errors,
@@ -245,9 +241,11 @@ fun ChatPage(
  * active, so the status line is exactly as before on an install that never dispatches.
  */
 @Composable
-private fun subAgentStatusLine(runs: Map<String, SubAgentRun>): String? {
+private fun subAgentStatusLine(conversationId: Uuid, runs: Map<String, SubAgentRun>): String? {
+    val parentId = conversationId.toString()
     val active = runs.values.filter {
-        it.status == SubAgentStatus.RUNNING || it.status == SubAgentStatus.PENDING
+        it.parentChatId == parentId &&
+            (it.status == SubAgentStatus.RUNNING || it.status == SubAgentStatus.PENDING)
     }
     if (active.isEmpty()) return null
     var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -287,7 +285,6 @@ private fun ChatPageContent(
     vm: ChatVM,
     chatListState: LazyListState,
     searchHighlight: Uuid?,
-    enableWebSearch: Boolean,
     currentChatModel: Model?,
     errors: List<ChatError>,
     onDismissError: (Uuid) -> Unit,
@@ -300,15 +297,13 @@ private fun ChatPageContent(
     val workspaceRepository: WorkspaceRepository = koinInject()
     val turnFooters by vm.turnFooters.collectAsStateWithLifecycle()
     var previewMode by rememberSaveable { mutableStateOf(false) }
-    val assistant = setting.getCurrentAssistant()
+    val assistant = currentChatModel?.let { setting.assistantForModel(it) } ?: setting.getCurrentAssistant()
     var showFilesSheet by remember { mutableStateOf(false) }
     val attachmentPickerActions = rememberChatAttachmentPickerActions(
         inputState = inputState,
         setting = setting,
         onAttachmentAdded = { showFilesSheet = false },
     )
-    val allowAudioVideoAttachments =
-        setting.getCurrentChatModel()?.findProvider(setting.providers) is ProviderSetting.Google
 
     var slashCompress by remember { mutableStateOf(false) }
     var slashHelp by remember { mutableStateOf(false) }
@@ -350,40 +345,16 @@ private fun ChatPageContent(
     // Model / search-provider switching moved out of the input bar and into the attachments panel
     // (the bar's "+"), so the same handlers now feed that sheet instead.
     val onUpdateSearchMode: (SearchMode) -> Unit = { mode ->
-        val current = setting.getCurrentAssistant()
-        val model = setting.getCurrentChatModel()
-        vm.updateSettings(
-            setting.copy(
-                assistants = setting.assistants.map { assistant ->
-                    if (assistant.id == current.id) {
-                        assistant.copy(enableWebSearch = mode == SearchMode.LOCAL)
-                    } else {
-                        assistant
-                    }
-                },
-                providers = if (model == null) {
-                    setting.providers
-                } else {
-                    setting.providers.map { provider ->
-                        provider.editModel(
-                            model.copy(
-                                tools = if (mode == SearchMode.BUILT_IN) {
-                                    model.tools + BuiltInTools.Search
-                                } else {
-                                    model.tools - BuiltInTools.Search
-                                }
-                            )
-                        )
-                    }
-                },
-            )
-        )
+        val modelId = currentChatModel?.id
+        vm.updateSettings { current ->
+            current.withChatModelSearchMode(modelId, mode)
+        }
     }
     val onUpdateChatModel: (Model) -> Unit = { model ->
-        vm.setChatModel(assistant = setting.getCurrentAssistant(), model = model)
+        vm.setChatModel(model = model)
     }
     val onUpdateSearchService: (Int) -> Unit = { index ->
-        vm.updateSettings(setting.copy(searchServiceSelected = index))
+        vm.updateSettings { it.copy(searchServiceSelected = index) }
     }
 
     var sentCheck by remember(conversation.id) { mutableStateOf(false) }
@@ -484,6 +455,8 @@ private fun ChatPageContent(
                     onResumeMessageQueue = vm::resumeMessageQueue,
                     loading = loadingJob != null,
                     settings = setting,
+                    assistant = assistant,
+                    model = currentChatModel,
 
                     completionProviders = completionProviders,
                     onCancelClick = {
@@ -530,7 +503,9 @@ private fun ChatPageContent(
                         inputState.clearInput()
                     },
                     onUpdateReasoningLevel = { level ->
-                        vm.updateSettings(setting.withCurrentChatModelReasoning(level))
+                        currentChatModel?.id?.let { modelId ->
+                            vm.updateSettings { it.withChatModelReasoning(modelId, level) }
+                        }
                     },
                     onMoreClick = {
                         showFilesSheet = true
@@ -617,19 +592,7 @@ private fun ChatPageContent(
                             vm.deleteMessage(it)
                         }
                     },
-                    onUpdateMessage = { newNode ->
-                        vm.updateConversation(
-                            conversation.copy(
-                                messageNodes = conversation.messageNodes.map { node ->
-                                    if (node.id == newNode.id) {
-                                        newNode
-                                    } else {
-                                        node
-                                    }
-                                }
-                            ))
-                        vm.saveConversationAsync()
-                    },
+                    onUpdateMessage = vm::updateMessageVersion,
                     onClickSuggestion = { suggestion ->
                         if (inputState.isEditing()) inputState.clearInput()
                         inputState.setMessageText(suggestion)
@@ -685,6 +648,8 @@ private fun ChatPageContent(
                     )
                     TopBar(
                         settings = setting,
+                        assistant = assistant,
+                        model = currentChatModel,
                         conversation = conversation,
                         onTemporaryChat = if (privateChatEnabled == "true") ({ showTemporary = true }) else null,
                         onClearDraft = vm::clearSavedDraft,
@@ -714,7 +679,7 @@ private fun ChatPageContent(
                 assistant = assistant,
                 vm = vm,
                 attachmentPickerActions = attachmentPickerActions,
-                enableSearch = enableWebSearch,
+                currentChatModel = currentChatModel,
                 onUpdateSearchMode = onUpdateSearchMode,
                 onUpdateChatModel = onUpdateChatModel,
                 onUpdateSearchService = onUpdateSearchService,
@@ -733,7 +698,7 @@ private fun ChatFilesPickerSheet(
     assistant: Assistant,
     vm: ChatVM,
     attachmentPickerActions: ChatAttachmentPickerActions,
-    enableSearch: Boolean,
+    currentChatModel: Model?,
     onUpdateSearchMode: (SearchMode) -> Unit,
     onUpdateChatModel: (Model) -> Unit,
     onUpdateSearchService: (Int) -> Unit,
@@ -770,26 +735,28 @@ private fun ChatFilesPickerSheet(
             conversation = conversation,
             state = inputState,
             assistant = assistant,
+            currentModel = currentChatModel,
             mcpManager = vm.mcpManager,
-            enableSearch = enableSearch,
+            enableSearch = assistant.enableWebSearch,
             onUpdateSearchMode = onUpdateSearchMode,
             onUpdateChatModel = onUpdateChatModel,
             onUpdateSearchService = onUpdateSearchService,
             onCompressContext = { additionalPrompt, targetTokens, keepRecentMessages ->
                 vm.handleCompressContext(additionalPrompt, targetTokens, keepRecentMessages)
             },
-            onUpdateAssistant = {
-                vm.updateSettings(
-                    setting.copy(
-                        assistants = setting.assistants.map { assistant ->
-                            if (assistant.id == it.id) {
-                                it
-                            } else {
-                                assistant
-                            }
-                        }
-                    )
-                )
+            onUpdateAssistant = { updated ->
+                vm.updateSettings { current ->
+                    current.copy(assistants = current.assistants.map { profile ->
+                        if (profile.id != updated.id) profile else profile.copy(
+                            mcpServers = if (updated.mcpServers != assistant.mcpServers) updated.mcpServers else profile.mcpServers,
+                            workspaceId = if (updated.workspaceId != assistant.workspaceId) updated.workspaceId else profile.workspaceId,
+                            quickMessageIds = if (updated.quickMessageIds != assistant.quickMessageIds) updated.quickMessageIds else profile.quickMessageIds,
+                            modeInjectionIds = if (updated.modeInjectionIds != assistant.modeInjectionIds) updated.modeInjectionIds else profile.modeInjectionIds,
+                            lorebookIds = if (updated.lorebookIds != assistant.lorebookIds) updated.lorebookIds else profile.lorebookIds,
+                            enabledSkills = if (updated.enabledSkills != assistant.enabledSkills) updated.enabledSkills else profile.enabledSkills,
+                        )
+                    })
+                }
             },
             onUpdateConversation = {
                 vm.updateConversation(it)
@@ -813,6 +780,8 @@ private fun ChatFilesPickerSheet(
 @Composable
 private fun TopBar(
     settings: Settings,
+    assistant: Assistant,
+    model: Model?,
     conversation: Conversation,
     onOpenDrawer: () -> Unit,
     onOpenTerminal: () -> Unit,
@@ -854,8 +823,6 @@ private fun TopBar(
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column {
-                    val assistant = settings.getCurrentAssistant()
-                    val model = settings.getCurrentChatModel()
                     val provider = model?.findProvider(providers = settings.providers, checkOverwrite = false)
                     Text(
                         text = conversation.title.ifBlank { stringResource(R.string.chat_page_new_chat) },

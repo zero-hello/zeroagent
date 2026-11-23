@@ -138,7 +138,7 @@ fun ChatList(
     onForkMessage: ((UIMessage) -> Unit)? = null,
     onRetryWithoutContext: ((UIMessage, Set<String>) -> Unit)? = null,
     onDelete: (UIMessage) -> Unit = {},
-    onUpdateMessage: (MessageNode) -> Unit = {},
+    onUpdateMessage: (MessageNode, MessageNode) -> Unit = { _, _ -> },
     onClickSuggestion: (String) -> Unit = {},
     onTranslate: ((UIMessage, java.util.Locale) -> Unit)? = null,
     onClearTranslation: (UIMessage) -> Unit = {},
@@ -223,7 +223,7 @@ private fun ChatListNormal(
     onForkMessage: ((UIMessage) -> Unit)?,
     onRetryWithoutContext: ((UIMessage, Set<String>) -> Unit)?,
     onDelete: (UIMessage) -> Unit,
-    onUpdateMessage: (MessageNode) -> Unit,
+    onUpdateMessage: (MessageNode, MessageNode) -> Unit,
     onClickSuggestion: (String) -> Unit,
     onTranslate: ((UIMessage, java.util.Locale) -> Unit)?,
     onClearTranslation: (UIMessage) -> Unit,
@@ -410,7 +410,7 @@ private fun ChatListNormal(
                                     .subList(0, conversation.messageNodes.indexOf(node) + 1))
                             },
                             onUpdate = {
-                                onUpdateMessage(it)
+                                onUpdateMessage(node, it)
                             },
                             isFavorite = node.isFavorite,
                             onToggleFavorite = {

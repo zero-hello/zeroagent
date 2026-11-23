@@ -1753,17 +1753,17 @@ class ChatService(
             }.collect { chunk ->
                 when (chunk) {
                     is GenerationChunk.Messages -> {
-                        val currentConversation = getConversationFlow(conversationId).value
-                        val updatedConversation = if (compactedMessageView?.compaction != null) {
-                            ContextCompactionView.mergeGeneratedMessages(
-                                conversation = currentConversation,
-                                view = compactedMessageView,
-                                generatedMessages = chunk.messages,
-                            )
-                        } else {
-                            currentConversation.updateCurrentMessages(chunk.messages)
+                        updateConversationState(conversationId) { current ->
+                            if (compactedMessageView?.compaction != null) {
+                                ContextCompactionView.mergeGeneratedMessages(
+                                    conversation = current,
+                                    view = compactedMessageView,
+                                    generatedMessages = chunk.messages,
+                                )
+                            } else {
+                                current.updateCurrentMessages(chunk.messages)
+                            }
                         }
-                        updateConversation(conversationId, updatedConversation)
                         streamingPersistence.markDirty(conversationId)
                         streamingPersistence.persistIfDue(conversationId)
 
@@ -1875,10 +1875,7 @@ class ChatService(
                 // A failed turn is always "stalled" (see isStalledTurn) - surface the continue
                 // chip via the same chatSuggestions field generateSuggestion writes, so
                 // ChatSuggestionsRow shows it even when enableSuggestion is off.
-                val final = getConversationFlow(conversationId).value.copy(
-                    chatSuggestions = listOf(context.getString(R.string.chat_suggestion_continue))
-                )
-                saveConversation(conversationId, final)
+                setContinueSuggestionAndPersist(conversationId)
             }.onFailure { saveErr ->
                 Log.w(TAG, "handleMessageComplete: failure-path save failed", saveErr)
             }
@@ -1893,14 +1890,9 @@ class ChatService(
             if (isStalledTurn(succeeded = true, lastMessage = finalConversation.currentMessages.lastOrNull())) {
                 // A stalled success (reasoning/tool-only turn) needs a way forward, not topic
                 // suggestions - set the continue chip directly and skip generateSuggestion.
-                saveConversation(
-                    conversationId,
-                    finalConversation.copy(
-                        chatSuggestions = listOf(context.getString(R.string.chat_suggestion_continue))
-                    )
-                )
+                setContinueSuggestionAndPersist(conversationId)
             } else {
-                saveConversation(conversationId, finalConversation)
+                persistCurrentConversation(conversationId)
                 launchAuxJob(conversationId, AuxJobKind.SUGGESTION) {
                     generateSuggestion(conversationId, finalConversation)
                 }
@@ -2375,6 +2367,20 @@ class ChatService(
 
     private suspend fun flushStreamingPersistence() {
         streamingPersistence.flush(sessions.values.filter { it.isGenerating }.map { it.id })
+    }
+
+    private suspend fun setContinueSuggestionAndPersist(conversationId: Uuid) {
+        val suggestion = context.getString(R.string.chat_suggestion_continue)
+        updateConversationState(conversationId) { it.copy(chatSuggestions = listOf(suggestion)) }
+        persistCurrentConversation(conversationId)
+    }
+
+    /** Save the latest live state without replacing it with an older snapshot after the write. */
+    suspend fun persistCurrentConversation(conversationId: Uuid) {
+        streamingPersistence.withLock(conversationId) {
+            val session = sessions[conversationId] ?: return@withLock
+            persistConversationSnapshot(conversationId, session.state.value)
+        }
     }
 
     suspend fun saveConversation(conversationId: Uuid, conversation: Conversation) {

@@ -1,5 +1,7 @@
 package me.rerere.zeroagent.data.sync.importer
 
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.JsonArray
@@ -115,7 +117,15 @@ object ChatboxImporter {
                 return url
             }
 
-            parseSessionEntries(manifest).forEach { sessionEntry ->
+            val sessions = parseSessionEntries(manifest)
+            // Validate session files before importing any chat or its images. Read them one at a
+            // time so a large backup does not require keeping all parsed sessions in memory.
+            sessions.forEach { sessionEntry ->
+                currentCoroutineContext().ensureActive()
+                zip.readJsonObject(sessionEntry.path, required = true)
+            }
+            sessions.forEach { sessionEntry ->
+                currentCoroutineContext().ensureActive()
                 val session = zip.readJsonObject(sessionEntry.path, required = true)
                     ?: error("Invalid Chatbox backup: ${sessionEntry.path} not found")
                 val sessionId = session["id"]?.asString ?: sessionEntry.id

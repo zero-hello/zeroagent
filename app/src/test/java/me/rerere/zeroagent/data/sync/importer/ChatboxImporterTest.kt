@@ -6,6 +6,7 @@ import me.rerere.zeroagent.data.model.Conversation
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -127,6 +128,46 @@ class ChatboxImporterTest {
         assertEquals("Alternative answer", (assistantNode.messages[0].parts.single() as UIMessagePart.Text).text)
         assertEquals("Current answer", (assistantNode.currentMessage.parts.single() as UIMessagePart.Text).text)
         assertNotNull(assistantNode.currentMessage.modelId)
+    }
+
+    @Test
+    fun `invalid later session is rejected before saving earlier chat`() = runBlocking {
+        val backup = temporaryFolder.newFile("invalid-chatbox.zip")
+        ZipOutputStream(backup.outputStream()).use { zip ->
+            zip.writeEntry(
+                "manifest.json",
+                """
+                {
+                  "format": "chatbox-backup",
+                  "formatVersion": 2,
+                  "sessions": [
+                    {"id": "valid", "path": "sessions/valid/session.json"},
+                    {"id": "missing", "path": "sessions/missing/session.json"}
+                  ]
+                }
+                """.trimIndent().encodeToByteArray(),
+            )
+            zip.writeEntry(
+                "sessions/valid/session.json",
+                """
+                {"id": "valid", "messages": [
+                  {"id": "user", "role": "user", "contentParts": [{"type": "text", "text": "Hello"}]}
+                ]}
+                """.trimIndent().encodeToByteArray(),
+            )
+        }
+        var imported: Conversation? = null
+        val failure = runCatching {
+            ChatboxImporter.importStreaming(
+                file = backup,
+                assistantId = Uuid.random(),
+                providers = emptyList(),
+                onConversation = { imported = it },
+            )
+        }.exceptionOrNull()
+
+        assertTrue(failure?.message.orEmpty().contains("sessions/missing/session.json"))
+        assertNull(imported)
     }
 
     private fun ZipOutputStream.writeEntry(path: String, bytes: ByteArray) {

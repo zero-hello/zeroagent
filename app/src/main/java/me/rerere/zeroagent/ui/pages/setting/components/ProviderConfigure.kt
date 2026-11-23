@@ -5,7 +5,6 @@ import androidx.compose.material3.ButtonDefaults
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 import me.rerere.zeroagent.utils.localizedErrorMessage
-import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -888,19 +887,10 @@ private fun ColumnScope.ProviderConfigureLlamaCpp(
     val installedModelFiles by vm.installedModelFiles.collectAsStateWithLifecycle()
     val perfTelemetry by vm.perfTelemetry.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
     val filePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
     ) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        val fileName = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (nameIndex >= 0) cursor.getString(nameIndex) else null
-            } else null
-        } ?: uri.lastPathSegment ?: "model.gguf"
-        val inputStream = context.contentResolver.openInputStream(uri) ?: return@rememberLauncherForActivityResult
-        vm.installPickedFile(inputStream, fileName)
+        if (uri != null) vm.installPickedFile(uri)
     }
 
     provider.description()

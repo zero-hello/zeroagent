@@ -52,6 +52,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -77,8 +78,13 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.net.toUri
 import com.dokar.sonner.ToastType
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.collectLatest
 import me.rerere.ai.provider.ModelAbility
 import me.rerere.ai.provider.Model
@@ -99,7 +105,6 @@ import me.rerere.zeroagent.utils.localizedErrorMessage
 import me.rerere.zeroagent.R
 import me.rerere.zeroagent.data.datastore.Settings
 import me.rerere.zeroagent.data.datastore.getCurrentAssistant
-import me.rerere.zeroagent.data.datastore.getCurrentChatModel
 import me.rerere.zeroagent.data.datastore.getQuickMessagesOfAssistant
 import me.rerere.zeroagent.data.files.FilesManager
 import me.rerere.zeroagent.data.files.importComposerAttachment
@@ -127,6 +132,8 @@ fun ChatInput(
     state: ChatInputState,
     loading: Boolean,
     settings: Settings,
+    assistant: Assistant,
+    model: Model?,
 
     onUpdateReasoningLevel: (me.rerere.ai.core.ReasoningLevel) -> Unit,
     onMoreClick: () -> Unit,
@@ -146,7 +153,6 @@ fun ChatInput(
 ) {
     val errorContext = androidx.compose.ui.platform.LocalContext.current
     val toaster = LocalToaster.current
-    val assistant = settings.getCurrentAssistant()
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -165,7 +171,6 @@ fun ChatInput(
         if (loading && state.isEmpty()) onCancelClick() else onLongSendClick()
     }
 
-    val model = settings.getCurrentChatModel()
     val showReasoning = model?.abilities?.contains(ModelAbility.REASONING) == true
     // Keep the composer multiline and stable while typing.
     val containerShape = MaterialTheme.shapes.large
@@ -232,7 +237,7 @@ fun ChatInput(
                         MediaFileInputRow(state = state)
                     }
 
-                    val quickPrompts = settings.getQuickMessagesOfAssistant(settings.getCurrentAssistant())
+                    val quickPrompts = settings.getQuickMessagesOfAssistant(assistant)
                     if (quickPrompts.isNotEmpty() && !state.isEditing()) {
                         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -441,24 +446,51 @@ private fun rememberPasteLongTextAsFileListener(state: ChatInputState): ReceiveC
     val settings = LocalSettings.current
     val filesManager: FilesManager = koinInject()
     val toaster = LocalToaster.current
-    return remember(state, filesManager, toaster, settings.displaySetting.pasteLongTextAsFile,
+    val scope = rememberCoroutineScope()
+    val error = stringResource(R.string.attachment_open_failed)
+    return remember(state, filesManager, toaster, scope, error, settings.displaySetting.pasteLongTextAsFile,
         settings.displaySetting.pasteLongTextThreshold) {
         ReceiveContentListener { content ->
             content.consume { item ->
-                val part = item.uri?.takeIf { it.scheme == "content" }?.let { uri ->
-                    filesManager.importComposerAttachment(uri, onRejected = { toaster.show(it, type = ToastType.Error) })
+                val uri = item.uri?.takeIf { it.scheme == "content" }
+                val text = item.text?.toString()
+                val attachText = settings.displaySetting.pasteLongTextAsFile && content.hasMediaType(MediaType.Text) &&
+                    text != null && text.length > settings.displaySetting.pasteLongTextThreshold
+                if (uri == null && !attachText) return@consume false
+                scope.launch {
+                    var part: UIMessagePart? = null
+                    var issue: String? = null
+                    try {
+                        withContext(Dispatchers.IO) {
+                            part = uri?.let { filesManager.importComposerAttachment(it) { message -> issue = message } }
+                            if (part == null && attachText && text != null) {
+                                part = filesManager.createChatTextFile(text)
+                                issue = null
+                            }
+                        }
+                    } catch (cancelled: CancellationException) {
+                        val copiedPath = when (val copied = part) {
+                            is UIMessagePart.Image -> copied.url
+                            is UIMessagePart.Audio -> copied.url
+                            is UIMessagePart.Video -> copied.url
+                            is UIMessagePart.Document -> copied.url
+                            else -> null
+                        }
+                        if (copiedPath != null) withContext(NonCancellable + Dispatchers.IO) {
+                            filesManager.deleteChatFiles(listOf(copiedPath.toUri()))
+                        }
+                        throw cancelled
+                    } catch (_: Exception) {
+                        issue = error
+                    }
+                    val attachment = part
+                    if (attachment != null) state.messageContent += attachment
+                    else {
+                        if (!text.isNullOrEmpty()) state.appendText(text)
+                        toaster.show(issue ?: error, type = ToastType.Error)
+                    }
                 }
-                if (part != null) {
-                    state.messageContent += part
-                    true
-                } else {
-                    val text = item.text?.toString()
-                    if (settings.displaySetting.pasteLongTextAsFile && content.hasMediaType(MediaType.Text) &&
-                        text != null && text.length > settings.displaySetting.pasteLongTextThreshold) {
-                        state.addFiles(listOf(filesManager.createChatTextFile(text)))
-                        true
-                    } else false
-                }
+                true
             }
         }
     }

@@ -1,9 +1,14 @@
 package me.rerere.zeroagent.automation
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Test
 import java.util.Base64
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /**
  * Pure-logic tests for the External Automation dispatcher's prompt-extraction helper.
@@ -17,6 +22,32 @@ import java.util.Base64
  * so they execute in the standard `:app:testDebugUnitTest` task without Robolectric.
  */
 class ExternalAutomationDispatcherTest {
+
+    @Test fun `a request ID expires at the window boundary and is scoped to the caller`() {
+        val requests = RecentAutomationRequests(60_000)
+        assertTrue(requests.claim("caller.one", "request", 1_000))
+        assertFalse(requests.claim("caller.one", "request", 60_999))
+        assertTrue(requests.claim("caller.two", "request", 60_999))
+        assertTrue(requests.claim("caller.one", "request", 61_000))
+    }
+
+    @Test fun `simultaneous automation retries reserve only one run`() {
+        val requests = RecentAutomationRequests(60_000)
+        val start = CountDownLatch(1)
+        val worker = Executors.newFixedThreadPool(4)
+        try {
+            val results = (1..4).map {
+                worker.submit<Boolean> {
+                    start.await()
+                    requests.claim("caller", "request", 1_000)
+                }
+            }
+            start.countDown()
+            assertEquals(1, results.count { it.get(5, TimeUnit.SECONDS) })
+        } finally {
+            worker.shutdownNow()
+        }
+    }
 
     @Test fun `extractPromptStrings prefers raw string when both keys present`() {
         val out = ExternalAutomationDispatcher.extractPromptStrings(

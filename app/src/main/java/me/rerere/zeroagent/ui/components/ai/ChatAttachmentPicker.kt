@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
@@ -94,8 +95,8 @@ internal fun rememberChatAttachmentPickerActions(
     val cameraPermission = rememberPermissionState(PermissionCamera)
     PermissionManager(permissionState = cameraPermission)
 
-    var cameraOutputUri by remember { mutableStateOf<Uri?>(null) }
-    var cameraOutputFile by remember { mutableStateOf<File?>(null) }
+    var cameraOutputUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var cameraOutputFile by rememberSaveable { mutableStateOf<File?>(null) }
     val (_, launchCameraCrop) = useCropLauncher(
         onCroppedImageReady = { croppedUri ->
             addAttachments(listOf(croppedUri), "image")
@@ -141,7 +142,7 @@ internal fun rememberChatAttachmentPickerActions(
         }
     }
 
-    var preCropTempFile by remember { mutableStateOf<File?>(null) }
+    var preCropTempFile by rememberSaveable { mutableStateOf<File?>(null) }
     var preparingCrop by remember { mutableStateOf(false) }
     val (_, launchImageCrop) = useCropLauncher(
         onCroppedImageReady = { croppedUri ->

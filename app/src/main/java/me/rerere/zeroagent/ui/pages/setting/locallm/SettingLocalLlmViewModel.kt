@@ -1,6 +1,8 @@
 package me.rerere.zeroagent.ui.pages.setting.locallm
 
 import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -9,6 +11,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
@@ -70,7 +74,13 @@ class SettingLocalLlmViewModel(
     private val _downloadFile = MutableStateFlow<String?>(null)
     val downloadFile = _downloadFile.asStateFlow()
 
-    fun pauseDownload() { downloads.cancel(runtime) }
+    private var importJob: Job? = null
+    private val _importing = MutableStateFlow(false)
+    val importing = _importing.asStateFlow()
+
+    fun pauseDownload() {
+        if (_importing.value) importJob?.cancel() else downloads.cancel(runtime)
+    }
     fun resumeDownload() {
         _errorMessage.value = null
         viewModelScope.launch {
@@ -200,9 +210,11 @@ class SettingLocalLlmViewModel(
                 val work = infos.firstOrNull { !it.state.isFinished } ?: infos.firstOrNull()
                 _downloadPaused.value = work?.state == WorkInfo.State.CANCELLED || work?.state == WorkInfo.State.FAILED
                 _downloadFile.value = work?.progress?.getString("file") ?: work?.outputData?.getString("file")
-                _downloadProgress.value = if (work != null && !work.state.isFinished) Progress(
-                    work.progress.getInt("percent", 0), work.progress.getLong("bytes", 0),
-                    work.progress.getLong("total", -1).takeIf { it > 0 }) else null
+                if (!_importing.value) {
+                    _downloadProgress.value = if (work != null && !work.state.isFinished) Progress(
+                        work.progress.getInt("percent", 0), work.progress.getLong("bytes", 0),
+                        work.progress.getLong("total", -1).takeIf { it > 0 }) else null
+                }
                 if (work?.state == WorkInfo.State.FAILED) _errorMessage.value = work.outputData.getString("error")
                 if (work?.state == WorkInfo.State.SUCCEEDED) refreshFromDisk()
             }
@@ -550,7 +562,6 @@ class SettingLocalLlmViewModel(
                     _downloadProgress.value = Progress(pct, p.bytesRead, total)
                 }
                 is ModelInstall.Progress.Done -> {
-                    _downloadProgress.value = null
                     prefs.addInstalledModel(runtime, fileName, p.file.absolutePath)
                     val caps = deriveLocalModelCapabilities(runtime, fileName)
                     val model = Model(
@@ -565,55 +576,45 @@ class SettingLocalLlmViewModel(
                     refreshFromDisk()
                 }
                 is ModelInstall.Progress.Failed -> {
-                    _downloadProgress.value = null
                     _errorMessage.value = p.cause.message.orEmpty()
                 }
             }
         }
     }
 
-    /**
-     * Import a model file the user already has on-device, picked via the SAF file picker on
-     * the settings tile. Copies [inputStream] into [ModelInstall.targetFile] for [fileName],
-     * validating it against [expectedExtensionForRuntime] the same way a downloaded file is
-     * validated, then registers it exactly like the download worker does on success.
-     */
-    fun installPickedFile(inputStream: java.io.InputStream, fileName: String) {
+    /** Import a model from the system file picker without blocking the screen. */
+    fun installPickedFile(uri: Uri) {
+        if (_downloadProgress.value != null || _importing.value) return
         _errorMessage.value = null
-        viewModelScope.launch {
-            // The document provider's DISPLAY_NAME is untrusted input, so it gets reduced
-            // to a bare file name the same way extractFileNameFromUrl() does for downloads,
-            // before it ever reaches ModelInstall.targetFile()/prefs/Model.modelId. Without
-            // this, a crafted DISPLAY_NAME containing '/' or '..' segments could write
-            // outside local-models/llamacpp/ or store a path where a bare file name is
-            // required.
-            val safeFileName = fileName.substringAfterLast('/')
-            if (safeFileName.isBlank() || safeFileName == "." || safeFileName == ".." ||
-                safeFileName.contains('\\') || safeFileName.contains('\u0000')) {
-                runCatching { inputStream.close() }
-                _errorMessage.value = "Import failed: invalid file name from picker: $fileName"
-                return@launch
-            }
-            val baseDir = ModelInstall.localModelsDir(context)
-            val target = ModelInstall.targetFile(baseDir, runtime, safeFileName)
+        _importing.value = true
+        _downloadProgress.value = Progress(0, 0L, null)
+        importJob = viewModelScope.launch {
             try {
-                collectInstallProgress(
-                    safeFileName,
-                    ModelInstall.copyFromStream(
-                        input = inputStream,
-                        target = target,
-                        totalBytes = null,
-                        expectedExtension = expectedExtensionForRuntime(),
-                    ),
-                )
+                val (fileName, target) = withContext(Dispatchers.IO) {
+                    val resolver = context.contentResolver
+                    val reportedName = resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                        ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+                    val extension = expectedExtensionForRuntime()
+                    val safeName = (reportedName ?: uri.lastPathSegment ?: "model").substringAfterLast('/')
+                    val fileName = if (safeName.endsWith(".$extension", ignoreCase = true)) safeName else "$safeName.$extension"
+                    require(safeName.isNotBlank() && safeName != "." && safeName != "..") { "Invalid model file name" }
+                    val target = ModelInstall.targetFile(ModelInstall.localModelsDir(context), runtime, fileName)
+                    fileName to target
+                }
+                collectInstallProgress(fileName, flow {
+                    val resolver = context.contentResolver
+                    val input = resolver.openInputStream(uri) ?: throw java.io.IOException("Could not open the selected model file")
+                    input.use { stream ->
+                        ModelInstall.copyFromStream(stream, target, null, expectedExtensionForRuntime()).collect { emit(it) }
+                    }
+                }.flowOn(Dispatchers.IO))
             } catch (cancel: kotlinx.coroutines.CancellationException) {
-                // Cancellation is normal — user navigated away. Don't surface as an error.
-                _downloadProgress.value = null
                 throw cancel
-            } catch (t: Throwable) {
-                android.util.Log.w("LocalLlmVM", "Uncaught import failure", t)
+            } catch (error: Exception) {
+                _errorMessage.value = "Import failed: ${error.message ?: error.javaClass.simpleName}"
+            } finally {
                 _downloadProgress.value = null
-                _errorMessage.value = "Import failed: ${t::class.simpleName}: ${t.message ?: ""}"
+                _importing.value = false
             }
         }
     }

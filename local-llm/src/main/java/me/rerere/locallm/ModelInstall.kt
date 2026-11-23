@@ -144,7 +144,7 @@ object ModelInstall {
                 ?: error("Pause the active download before deleting this model")
             lock.use {
                 if (target.exists() && !target.delete()) throw java.io.IOException("Could not delete model")
-                listOf(".partial", ".partial.properties", ".download.properties", ".download.properties.tmp")
+                listOf(".partial", ".partial.properties", ".download.properties", ".download.properties.tmp", ".importing")
                     .forEach { File(target.absolutePath + it).delete() }
             }
         }
@@ -370,99 +370,107 @@ object ModelInstall {
                 return@flow
             }
             lock.use {
-                val partial = File(target.absolutePath + ".partial")
-                emit(Progress.Started(totalBytes))
+                // Keep a paused network download intact if this import is canceled.
+                val partial = File(target.absolutePath + ".importing")
+                try {
+                    emit(Progress.Started(totalBytes))
 
-                var invalidMagic = false
-                val ioFailure: Throwable? = try {
-                    input.use { source ->
-                        partial.outputStream().use { sink ->
-                            val buf = ByteArray(64 * 1024)
-                            // InputStream.read(ByteArray) is only guaranteed to return at least one
-                            // byte, not four — a network-backed SAF provider (Google Drive and
-                            // similar) can hand back 1-3 bytes on the very first read. Accumulate
-                            // across reads into a dedicated 4-byte buffer until either 4 bytes are
-                            // in hand or the stream hits EOF, then validate once. Every byte read
-                            // during accumulation is still written to sink below, so the copy stays
-                            // byte-exact regardless of how the reads happen to chunk.
-                            val sniffBuf = ByteArray(4)
-                            var sniffLen = 0
-                            var sniffed = false
-                            var totalRead = 0L
-                            while (true) {
-                                kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                                val n = source.read(buf)
-                                if (n <= 0) {
-                                    // EOF before 4 bytes accumulated (including a 0-byte file, where
-                                    // sniffLen stays 0): validate whatever was collected.
-                                    // isValidMagicForExtension rejects anything shorter than 4 bytes.
-                                    if (!sniffed) {
-                                        sniffed = true
-                                        if (!isValidMagicForExtension(expectedExtension, sniffBuf.copyOf(sniffLen))) {
-                                            invalidMagic = true
-                                        }
-                                    }
-                                    break
+                    var invalidMagic = false
+                    val ioFailure: Throwable? = try {
+                        input.use { source ->
+                            partial.outputStream().use { sink ->
+                                val buf = ByteArray(64 * 1024)
+                                // InputStream.read(ByteArray) is only guaranteed to return at least one
+                                // byte, not a complete header — a network-backed SAF provider (Google Drive and
+                                // similar) can hand back 1-3 bytes on the very first read. Accumulate
+                                // across reads until the complete format header is available or
+                                // the stream hits EOF, then validate once. Every byte read
+                                // during accumulation is still written to sink below, so the copy stays
+                                // byte-exact regardless of how the reads happen to chunk.
+                                val headerLength = when (expectedExtension.lowercase()) {
+                                    "litertlm", "tflite", "task" -> 8
+                                    else -> 4
                                 }
-                                sink.write(buf, 0, n)
-                                totalRead += n
-                                emit(Progress.Tick(totalRead, totalBytes))
-                                if (!sniffed) {
-                                    val need = (4 - sniffLen).coerceAtMost(n)
-                                    System.arraycopy(buf, 0, sniffBuf, sniffLen, need)
-                                    sniffLen += need
-                                    if (sniffLen >= 4) {
-                                        sniffed = true
-                                        if (!isValidMagicForExtension(expectedExtension, sniffBuf)) {
-                                            invalidMagic = true
-                                            break
+                                val sniffBuf = ByteArray(headerLength)
+                                var sniffLen = 0
+                                var sniffed = false
+                                var totalRead = 0L
+                                while (true) {
+                                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                                    val n = source.read(buf)
+                                    if (n <= 0) {
+                                        // At EOF, validate the bytes collected so far.
+                                        if (!sniffed) {
+                                            sniffed = true
+                                            if (!isValidMagicForExtension(expectedExtension, sniffBuf.copyOf(sniffLen))) {
+                                                invalidMagic = true
+                                            }
+                                        }
+                                        break
+                                    }
+                                    sink.write(buf, 0, n)
+                                    totalRead += n
+                                    emit(Progress.Tick(totalRead, totalBytes))
+                                    if (!sniffed) {
+                                        val need = (headerLength - sniffLen).coerceAtMost(n)
+                                        System.arraycopy(buf, 0, sniffBuf, sniffLen, need)
+                                        sniffLen += need
+                                        if (sniffLen >= headerLength) {
+                                            sniffed = true
+                                            if (!isValidMagicForExtension(expectedExtension, sniffBuf)) {
+                                                invalidMagic = true
+                                                break
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
+                        null
+                    } catch (e: java.io.IOException) {
+                        e
                     }
-                    null
-                } catch (e: java.io.IOException) {
-                    e
-                }
 
-                if (invalidMagic) {
-                    Log.w(TAG, "Import rejected: first bytes are not a valid .$expectedExtension file")
-                    runCatching { partial.delete() }
-                    emit(Progress.Failed(IllegalArgumentException(
-                        "Selected file does not look like a valid .$expectedExtension model " +
-                        "(unexpected magic bytes)."
-                    )))
-                    return@flow
-                }
-                if (ioFailure != null) {
-                    Log.w(TAG, "Import read interrupted: ${ioFailure::class.simpleName}: ${ioFailure.message}")
-                    runCatching { partial.delete() }
-                    emit(Progress.Failed(java.io.IOException(
-                        "Import interrupted (${ioFailure::class.simpleName}: ${ioFailure.message}).",
-                        ioFailure,
-                    )))
-                    return@flow
-                }
+                    if (invalidMagic) {
+                        Log.w(TAG, "Import rejected: first bytes are not a valid .$expectedExtension file")
+                        runCatching { partial.delete() }
+                        emit(Progress.Failed(IllegalArgumentException(
+                            "Selected file does not look like a valid .$expectedExtension model " +
+                            "(unexpected magic bytes)."
+                        )))
+                        return@flow
+                    }
+                    if (ioFailure != null) {
+                        Log.w(TAG, "Import read interrupted: ${ioFailure::class.simpleName}: ${ioFailure.message}")
+                        runCatching { partial.delete() }
+                        emit(Progress.Failed(java.io.IOException(
+                            "Import interrupted (${ioFailure::class.simpleName}: ${ioFailure.message}).",
+                            ioFailure,
+                        )))
+                        return@flow
+                    }
 
-                kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                val renamed = runCatching {
-                    java.nio.file.Files.move(partial.toPath(), target.toPath(),
-                        java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
-                }.isSuccess
-                if (!renamed) {
-                    Log.e(TAG, "Rename failed: ${partial.absolutePath} -> ${target.absolutePath}")
+                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                    val renamed = runCatching {
+                        java.nio.file.Files.move(partial.toPath(), target.toPath(),
+                            java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                    }.isSuccess
+                    if (!renamed) {
+                        Log.e(TAG, "Rename failed: ${partial.absolutePath} -> ${target.absolutePath}")
+                        runCatching { partial.delete() }
+                        emit(Progress.Failed(IllegalStateException(
+                            "Failed to move the imported file to its final location: ${target.absolutePath}."
+                        )))
+                        return@flow
+                    }
+                    Log.i(TAG, "Import complete: ${target.absolutePath}")
+                    File(target.absolutePath + ".download.properties").delete()
+                    File(target.absolutePath + ".partial").delete()
+                    File(target.absolutePath + ".partial.properties").delete()
+                    emit(Progress.Done(target))
+                } finally {
                     runCatching { partial.delete() }
-                    emit(Progress.Failed(IllegalStateException(
-                        "Failed to move the imported file to its final location: ${target.absolutePath}."
-                    )))
-                    return@flow
                 }
-                Log.i(TAG, "Import complete: ${target.absolutePath}")
-                File(target.absolutePath + ".download.properties").delete()
-                File(target.absolutePath + ".partial.properties").delete()
-                emit(Progress.Done(target))
             }
         }
     }.buffer(0).flowOn(Dispatchers.IO)

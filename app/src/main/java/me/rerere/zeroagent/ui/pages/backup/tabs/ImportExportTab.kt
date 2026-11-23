@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -61,7 +62,7 @@ fun ImportExportTab(
     var showImportConfirmDialog by remember { mutableStateOf(false) }
 
     // 导入类型：local 为本地备份，chatbox 为 Chatbox 导入，cherry 为 Cherry Studio 导入
-    var importType by remember { mutableStateOf("local") }
+    var importType by rememberSaveable { mutableStateOf("local") }
 
     // 创建文件保存的launcher
     val createDocumentLauncher = rememberLauncherForActivityResult(
@@ -136,7 +137,7 @@ fun ImportExportTab(
                         }
                     }
                     toaster.show(localizedResources.getString(R.string.backup_page_restore_success), type = ToastType.Success)
-                    onShowRestartDialog()
+                    if (selectedImportType == "local") onShowRestartDialog()
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

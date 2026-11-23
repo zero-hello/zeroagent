@@ -87,8 +87,8 @@ fun S3Tab(
     var restoringItemId by remember { mutableStateOf<String?>(null) }
     var isBackingUp by remember { mutableStateOf(false) }
 
-    fun updateS3Config(newConfig: S3Config) {
-        vm.updateSettings(settings.copy(s3Config = newConfig))
+    fun updateS3Config(transform: S3Config.() -> S3Config) {
+        vm.updateSettings { current -> current.copy(s3Config = current.s3Config.transform()) }
     }
 
     val lastBackupText = if (settings.backupReminderConfig.lastBackupTime == 0L) {
@@ -131,7 +131,7 @@ fun S3Tab(
                         OutlinedTextField(
                             modifier = Modifier.fillMaxWidth(),
                             value = s3Config.endpoint,
-                            onValueChange = { updateS3Config(s3Config.copy(endpoint = it.trim())) },
+                            onValueChange = { updateS3Config { copy(endpoint = it.trim()) } },
                             placeholder = { Text("https://s3.amazonaws.com") },
                             singleLine = true
                         )
@@ -143,7 +143,7 @@ fun S3Tab(
                         OutlinedTextField(
                             modifier = Modifier.fillMaxWidth(),
                             value = s3Config.accessKeyId,
-                            onValueChange = { updateS3Config(s3Config.copy(accessKeyId = it.trim())) },
+                            onValueChange = { updateS3Config { copy(accessKeyId = it.trim()) } },
                             singleLine = true
                         )
                     },
@@ -155,7 +155,7 @@ fun S3Tab(
                         OutlinedTextField(
                             modifier = Modifier.fillMaxWidth(),
                             value = s3Config.secretAccessKey,
-                            onValueChange = { updateS3Config(s3Config.copy(secretAccessKey = it.trim())) },
+                            onValueChange = { updateS3Config { copy(secretAccessKey = it.trim()) } },
                             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             trailingIcon = {
                                 val image = if (passwordVisible) {
@@ -177,7 +177,7 @@ fun S3Tab(
                         OutlinedTextField(
                             modifier = Modifier.fillMaxWidth(),
                             value = s3Config.bucket,
-                            onValueChange = { updateS3Config(s3Config.copy(bucket = it.trim())) },
+                            onValueChange = { updateS3Config { copy(bucket = it.trim()) } },
                             placeholder = { Text("my-bucket") },
                             singleLine = true
                         )
@@ -189,7 +189,7 @@ fun S3Tab(
                     trailingContent = {
                         Switch(
                             checked = s3Config.pathStyle,
-                            onCheckedChange = { updateS3Config(s3Config.copy(pathStyle = it)) },
+                            onCheckedChange = { updateS3Config { copy(pathStyle = it) } },
                         )
                     },
                 )
@@ -199,7 +199,7 @@ fun S3Tab(
                         OutlinedTextField(
                             modifier = Modifier.fillMaxWidth(),
                             value = s3Config.region,
-                            onValueChange = { updateS3Config(s3Config.copy(region = it.trim())) },
+                            onValueChange = { updateS3Config { copy(region = it.trim()) } },
                             placeholder = { Text("auto") },
                             singleLine = true
                         )
@@ -220,7 +220,7 @@ fun S3Tab(
                                 } else {
                                     current + item
                                 }
-                                updateS3Config(s3Config.copy(items = BackupItem.normalize(newItems)))
+                                updateS3Config { copy(items = BackupItem.normalize(newItems)) }
                             },
                         )
                     },

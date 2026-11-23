@@ -1,5 +1,6 @@
 package me.rerere.locallm
 
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
@@ -370,6 +371,34 @@ class ModelInstallTest {
         assertTrue(events.last() is ModelInstall.Progress.Done)
         assertArrayEquals(content, target.readBytes())
         assertFalse(File(target.absolutePath + ".partial").exists())
+    }
+
+    @Test fun `copyFromStream accepts an eight byte LiteRT header across short reads`() = runBlocking {
+        val content = "LITERTLM".encodeToByteArray() + byteArrayOf(1, 2, 3)
+        val target = File(tempFolder.newFolder(), "model.litertlm")
+        val source = ChunkedInputStream(content, chunkSizes = listOf(2, 3, 3))
+
+        val events = ModelInstall.copyFromStream(source, target, null, "litertlm").toList()
+
+        assertTrue(events.last() is ModelInstall.Progress.Done)
+        assertArrayEquals(content, target.readBytes())
+    }
+
+    @Test fun `stopping an import cleans its temporary file and preserves a paused download`() = runBlocking {
+        val target = File(tempFolder.newFolder(), "model.gguf")
+        val pausedDownload = File(target.absolutePath + ".partial")
+        val partialBytes = ggufBytes(10)
+        pausedDownload.writeBytes(partialBytes)
+
+        val source = ChunkedInputStream(ggufBytes(5000), chunkSizes = listOf(20, 20))
+
+        ModelInstall.copyFromStream(source, target, null, "gguf")
+            .takeWhile { it !is ModelInstall.Progress.Tick }
+            .toList()
+
+        assertFalse(target.exists())
+        assertFalse(File(target.absolutePath + ".importing").exists())
+        assertArrayEquals(partialBytes, pausedDownload.readBytes())
     }
 
     @Test fun `copyFromStream rejects a genuinely truncated file that never reaches 4 bytes across short reads`() = runBlocking {

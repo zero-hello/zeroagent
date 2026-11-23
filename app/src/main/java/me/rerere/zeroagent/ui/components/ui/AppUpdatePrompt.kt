@@ -93,7 +93,7 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
             text = {
                 Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
                     ReleaseNotes(info?.takeIf { it.version == installedVersion }?.changelog?.ifBlank { null }
-                        ?: stringResource(R.string.update_installed_changes_v200))
+                        ?: stringResource(R.string.update_installed_changes_unavailable))
                     PreviousApkExport(showInstallNote = true, onBackup = {
                         close()
                         navigation.navigate(Screen.Backup)

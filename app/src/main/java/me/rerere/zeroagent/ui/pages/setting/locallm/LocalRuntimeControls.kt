@@ -61,6 +61,7 @@ fun LocalRuntimeControls(vm: SettingLocalLlmViewModel) {
 fun LocalDownloadControls(vm: SettingLocalLlmViewModel) {
     val progress by vm.downloadProgress.collectAsStateWithLifecycle()
     val paused by vm.downloadPaused.collectAsStateWithLifecycle()
+    val importing by vm.importing.collectAsStateWithLifecycle()
     val file by vm.downloadFile.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var notificationAllowed by remember {
@@ -70,7 +71,11 @@ fun LocalDownloadControls(vm: SettingLocalLlmViewModel) {
     val requestNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         notificationAllowed = it
     }
-    if (progress != null || paused) Column(modifier = Modifier.fillMaxWidth()) {
+    if (importing) {
+        OutlinedButton(shapes = ButtonDefaults.shapes(), onClick = vm::pauseDownload) {
+            Text(stringResource(R.string.cancel))
+        }
+    } else if (progress != null || paused) Column(modifier = Modifier.fillMaxWidth()) {
         file?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         Text(stringResource(R.string.local_v11_background_download), style = MaterialTheme.typography.bodySmall)
         if (!notificationAllowed && Build.VERSION.SDK_INT >= 33) TextButton(shapes = ButtonDefaults.shapes(), onClick = {

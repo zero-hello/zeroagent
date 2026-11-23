@@ -76,7 +76,6 @@ import me.rerere.zeroagent.data.ai.mcp.McpManager
 import me.rerere.zeroagent.data.datastore.Settings
 import me.rerere.zeroagent.data.datastore.getCompactionContextLength
 import me.rerere.zeroagent.data.datastore.getContextCompactionTargetTokens
-import me.rerere.zeroagent.data.datastore.getCurrentChatModel
 import me.rerere.zeroagent.data.datastore.findProvider
 import me.rerere.zeroagent.data.db.entity.WorkspaceEntity
 import me.rerere.zeroagent.data.model.Assistant
@@ -97,6 +96,7 @@ import kotlin.uuid.Uuid
 internal fun FilesPicker(
     conversation: Conversation,
     assistant: Assistant,
+    currentModel: Model?,
     state: ChatInputState,
     mcpManager: McpManager,
     enableSearch: Boolean,
@@ -119,7 +119,6 @@ internal fun FilesPicker(
     onStartVoiceMode: (() -> Unit)? = null,
 ) {
     val settings = LocalSettings.current
-    val currentModel = settings.getCurrentChatModel()
     val provider = currentModel?.findProvider(providers = settings.providers)
     // D3 — the video/audio buttons used to appear only for Google, whose provider hard-codes
     // those two modalities. Now any model that DECLARES the modality gets them; Google stays
@@ -172,7 +171,7 @@ internal fun FilesPicker(
         // Model / web-search switching, moved out of the input bar: one row, two half-width cards,
         // each opening its own picker. Sits under the divider and above the workspace card.
         InputQuickConfigRow(
-            assistant = assistant,
+            model = currentModel,
             settings = settings,
             enableSearch = enableSearch,
             onUpdateChatModel = onUpdateChatModel,
@@ -313,7 +312,7 @@ internal fun FilesPicker(
     if (showCompressDialog) {
         CompressContextDialog(
             defaultTargetTokens = settings.getContextCompactionTargetTokens(
-                settings.getCompactionContextLength(settings.getCurrentChatModel()),
+                settings.getCompactionContextLength(currentModel),
             ),
             onDismiss = {
             onShowCompressDialogChange(false)
@@ -569,7 +568,7 @@ private fun BigIconTextButtonPreview() {
  */
 @Composable
 private fun InputQuickConfigRow(
-    assistant: Assistant,
+    model: Model?,
     settings: Settings,
     enableSearch: Boolean,
     onUpdateChatModel: (Model) -> Unit,
@@ -578,7 +577,7 @@ private fun InputQuickConfigRow(
     modifier: Modifier = Modifier,
 ) {
     val modelListState = rememberModelListState(
-        modelId = assistant.chatModelId ?: settings.chatModelId,
+        modelId = model?.id,
         providers = settings.providers,
         type = ModelType.CHAT,
     )
@@ -595,7 +594,7 @@ private fun InputQuickConfigRow(
         SearchServiceCard(
             enableSearch = enableSearch,
             settings = settings,
-            model = settings.getCurrentChatModel(),
+            model = model,
             onUpdateSearchMode = onUpdateSearchMode,
             onUpdateSearchService = onUpdateSearchService,
             modifier = Modifier.weight(1f),
