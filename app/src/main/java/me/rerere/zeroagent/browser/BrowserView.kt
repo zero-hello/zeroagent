@@ -8,6 +8,7 @@ import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
@@ -133,6 +134,7 @@ private fun WebViewHost(
     onCanGoForwardChange: (Boolean) -> Unit,
 ) {
     val ctx = LocalContext.current
+    val localPage = remember(initialUrl) { BrowserLocalPage.resolve(ctx, initialUrl) }
     // Construct the WebView ONCE — `remember` survives recomp + (with key=Unit) survives
     // configuration changes (the Activity declares `configChanges` so the system never
     // recreates us). Recreating per-recomp would reset history, scroll, and JS state.
@@ -172,14 +174,12 @@ private fun WebViewHost(
                     view: WebView?,
                     request: WebResourceRequest?,
                 ): Boolean {
-                    // Block page/JS-initiated navigation into file:// unless the current
-                    // document is already file:// (skill webview cards moving between
-                    // their own sub-pages). App-initiated loadUrl() bypasses this
-                    // callback, so opening a skill card stays unaffected. Without this,
-                    // a browsed page (or eval'd JS) could steer the WebView into
-                    // app-private files and exfiltrate them via browser_get_text.
-                    val toFile = request?.url?.scheme.equals("file", ignoreCase = true)
-                    return toFile && view?.url?.startsWith("file:", ignoreCase = true) != true
+                    return request?.url?.scheme !in setOf("http", "https", "about")
+                }
+
+                override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                    return localPage?.assetLoader?.shouldInterceptRequest(request.url)
+                        ?: super.shouldInterceptRequest(view, request)
                 }
 
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
@@ -252,7 +252,9 @@ private fun WebViewHost(
                 }
             }
 
-            loadUrl(initialUrl)
+            loadUrl(localPage?.url ?: initialUrl.takeIf {
+                android.net.Uri.parse(it).scheme in setOf("http", "https", "about")
+            } ?: "about:blank")
             onWebViewReady(this)
         }
     }

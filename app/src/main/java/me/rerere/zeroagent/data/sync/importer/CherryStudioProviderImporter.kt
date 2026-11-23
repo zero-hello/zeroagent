@@ -12,16 +12,32 @@ import me.rerere.ai.provider.ProviderSetting
 import me.rerere.ai.registry.ModelRegistry
 import me.rerere.common.http.jsonObjectOrNull
 import me.rerere.zeroagent.utils.JsonInstant
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.zip.ZipFile
 
 object CherryStudioProviderImporter {
-    fun importProviders(file: File): List<ProviderSetting> {
-        val dataJson = ZipFile(file).use { zip ->
-            val entry = zip.getEntry("data.json")
-                ?: throw IllegalArgumentException("Invalid Cherry Studio backup: data.json not found")
-            zip.getInputStream(entry).bufferedReader().use { it.readText() }
+    private const val MAX_DATA_BYTES = 32 * 1024 * 1024
+
+    internal fun readDataJson(file: File, maxBytes: Int = MAX_DATA_BYTES): String = ZipFile(file).use { zip ->
+        val entry = zip.getEntry("data.json")
+            ?: throw IllegalArgumentException("找不到 Cherry Studio 備份的 data.json。")
+        require(!entry.isDirectory && entry.size <= maxBytes) { "Cherry Studio 備份的資料檔過大或格式有誤。" }
+        val bytes = ByteArrayOutputStream()
+        zip.getInputStream(entry).use { input ->
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                require(count <= maxBytes - bytes.size()) { "Cherry Studio 備份的資料檔過大。" }
+                bytes.write(buffer, 0, count)
+            }
         }
+        bytes.toString(Charsets.UTF_8.name())
+    }
+
+    fun importProviders(file: File): List<ProviderSetting> {
+        val dataJson = readDataJson(file)
 
         val root = JsonInstant.parseToJsonElement(dataJson).jsonObject
         val persistedRaw = root["localStorage"]

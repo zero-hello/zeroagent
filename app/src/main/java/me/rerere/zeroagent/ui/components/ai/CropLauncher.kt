@@ -11,12 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toFile
 import com.dokar.sonner.ToastType
 import com.yalantis.ucrop.UCrop
 import com.yalantis.ucrop.UCropActivity
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
 import me.rerere.common.android.Logging
 import me.rerere.common.android.appTempFolder
 import me.rerere.zeroagent.ui.context.LocalToaster
@@ -24,22 +27,32 @@ import java.io.File
 
 @Composable
 internal fun useCropLauncher(
-    onCroppedImageReady: (Uri) -> Unit,
+    onCroppedImageReady: suspend (Uri) -> Unit,
     onCleanup: (() -> Unit)? = null,
     aspectRatio: Pair<Float, Float>? = null,
     freeStyleCropEnabled: Boolean = true
 ): Pair<ActivityResultLauncher<Intent>, (Uri) -> Unit> {
     val context = LocalContext.current
     val toaster = LocalToaster.current
+    val scope = rememberCoroutineScope()
     var cropOutputUri by remember { mutableStateOf<Uri?>(null) }
 
     val cropActivityLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        val output = cropOutputUri
+        cropOutputUri = null
         when (result.resultCode) {
             android.app.Activity.RESULT_OK -> {
-                cropOutputUri?.let { croppedUri ->
-                    onCroppedImageReady(croppedUri)
+                if (output != null) {
+                    // The receiver may copy on Dispatchers.IO. Keep its source alive until it returns.
+                    scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                        try {
+                            onCroppedImageReady(output)
+                        } finally {
+                            output.toFile().delete()
+                        }
+                    }
                 }
             }
 
@@ -55,8 +68,7 @@ internal fun useCropLauncher(
                 )
             }
         }
-        cropOutputUri?.toFile()?.delete()
-        cropOutputUri = null
+        if (result.resultCode != android.app.Activity.RESULT_OK) output?.toFile()?.delete()
         onCleanup?.invoke()
     }
 

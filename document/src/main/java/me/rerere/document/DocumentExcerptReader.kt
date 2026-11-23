@@ -9,7 +9,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.zip.ZipFile
 
-/** Bounded attachment extraction for chat. Full document views use the original parsers. */
+/** Bounded text extraction for chat attachments and project documents. */
 object DocumentExcerptReader {
     private const val MAX_PDF_PAGES = 24
     private const val MAX_ZIP_SECTIONS = 24
@@ -18,25 +18,47 @@ object DocumentExcerptReader {
     private const val MAX_ZIP_ENTRY_BYTES = 512 * 1024
     private val slidePattern = Regex("ppt/slides/slide(\\d+)\\.xml")
 
+    private data class Budget(val pages: Int, val sections: Int, val archiveBytes: Int, val entryBytes: Int)
+
+    private val excerptBudget = Budget(MAX_PDF_PAGES, MAX_ZIP_SECTIONS, MAX_ZIP_BYTES, MAX_ZIP_ENTRY_BYTES)
+    private val completeBudget = Budget(300, 2_000, 12 * 1024 * 1024, 4 * 1024 * 1024)
+
     data class Result(val text: String, val truncated: Boolean, val inspected: String? = null)
 
     /** A null result indicates missing, invalid, or unsupported text, including image-only pages. */
     fun read(file: File, mime: String, characterLimit: Int, checkCancellation: () -> Unit = {}): Result? {
         require(characterLimit in 1..24_000)
+        return readWithBudget(file, mime, characterLimit, excerptBudget, complete = false, checkCancellation = checkCancellation)
+    }
+
+    /** Returns all readable text, or fails if the document could only be read in part. */
+    fun readComplete(file: File, mime: String, characterLimit: Int, checkCancellation: () -> Unit = {}): String? {
+        require(characterLimit in 1..500_000)
+        return readWithBudget(file, mime, characterLimit, completeBudget, complete = true, checkCancellation = checkCancellation)?.text
+    }
+
+    private fun readWithBudget(
+        file: File,
+        mime: String,
+        characterLimit: Int,
+        budget: Budget,
+        complete: Boolean,
+        checkCancellation: () -> Unit,
+    ): Result? {
         if (!file.isFile) return null
         val out = ExcerptBuffer(characterLimit)
         val inspected = when (mime.substringBefore(';').trim().lowercase()) {
-            "application/pdf" -> readPdf(file, out, checkCancellation)
+            "application/pdf" -> readPdf(file, out, budget.pages, checkCancellation)
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ->
-                readZip(file, out) { archive ->
+                readZip(file, out, budget) { archive ->
                     archive.read("word/document.xml", allowLargeEntry = true) { input ->
                         readDocx(input, out, checkCancellation)
                     }
                     null
                 }
             "application/vnd.openxmlformats-officedocument.presentationml.presentation" ->
-                readZip(file, out) { readSlides(it, out, checkCancellation) }
-            "application/epub+zip" -> readZip(file, out) { readEpub(it, out, checkCancellation) }
+                readZip(file, out, budget) { readSlides(it, out, budget.sections, checkCancellation) }
+            "application/epub+zip" -> readZip(file, out, budget) { readEpub(it, out, budget.sections, checkCancellation) }
             else -> {
                 file.bufferedReader().use { reader ->
                     val buffer = CharArray(minOf(2048, characterLimit + 1))
@@ -50,16 +72,17 @@ object DocumentExcerptReader {
                 null
             }
         }
-        val text = out.text.toString().trimEnd()
+        require(!complete || !out.truncated) { "文件超出完整讀取上限，請先拆分再匯入。" }
+        val text = out.text.toString().let { if (complete) it else it.trimEnd() }
         return if (text.isBlank()) null else Result(text, out.truncated, inspected)
     }
 
-    private fun readPdf(file: File, out: ExcerptBuffer, checkCancellation: () -> Unit): String {
+    private fun readPdf(file: File, out: ExcerptBuffer, maxPages: Int, checkCancellation: () -> Unit): String {
         val document = PDFDocument.openDocument(file.absolutePath).asPDF()
         try {
             val pageCount = document.countPages()
             var inspected = 0
-            for (i in 0 until minOf(pageCount, MAX_PDF_PAGES)) {
+            for (i in 0 until minOf(pageCount, maxPages)) {
                 checkCancellation()
                 if (out.remaining == 0) break
                 val page = document.loadPage(i)
@@ -84,11 +107,11 @@ object DocumentExcerptReader {
         }
     }
 
-    private fun readZip(file: File, out: ExcerptBuffer, read: (BoundedArchive) -> String?): String? =
+    private fun readZip(file: File, out: ExcerptBuffer, budget: Budget, read: (BoundedArchive) -> String?): String? =
         ZipFile(file).use { zip ->
             require(zip.size() <= MAX_ZIP_ENTRIES) { "Too many archive entries" }
             try {
-                read(BoundedArchive(zip))
+                read(BoundedArchive(zip, budget))
             } catch (_: ExtractionLimit) {
                 out.truncated = true
                 null
@@ -114,6 +137,7 @@ object DocumentExcerptReader {
                 XmlPullParser.END_TAG -> {
                     if (parser.depth == textDepth) textDepth = -1
                     if (parser.name == "p" || parser.name == "tr") out.add("\n")
+                    if (parser.name == "tc") out.add("\t")
                 }
             }
             if (out.truncated) break
@@ -121,21 +145,21 @@ object DocumentExcerptReader {
         }
     }
 
-    private fun readSlides(archive: BoundedArchive, out: ExcerptBuffer, checkCancellation: () -> Unit): String {
+    private fun readSlides(archive: BoundedArchive, out: ExcerptBuffer, maxSections: Int, checkCancellation: () -> Unit): String {
         val slides = archive.zip.entries().asSequence().mapNotNull { entry ->
             slidePattern.matchEntire(entry.name)?.groupValues?.get(1)?.toIntOrNull()?.let { it to entry.name }
         }.sortedBy { it.first }.toList()
         var inspected = 0
-        for ((number, name) in slides.take(MAX_ZIP_SECTIONS)) {
+        for ((number, name) in slides.take(maxSections)) {
             checkCancellation()
             if (out.remaining == 0) break
-            val slide = archive.read(name, parse = PptxParser::parseSlideXml)
+            val slide = archive.read(name) { PptxParser.parseSlideXml(it, strict = true) }
             if (slide.isNotBlank()) {
                 out.add("第 $number 張投影片\n")
                 out.addParsed(slide)
             }
             val notes = "ppt/notesSlides/notesSlide$number.xml"
-            if (out.remaining > 0 && archive.zip.getEntry(notes) != null) {
+            if (archive.zip.getEntry(notes) != null) {
                 val text = archive.read(notes) { PptxParser.parseNotesXml(it, strict = true) }
                 if (text.isNotBlank()) {
                     out.add("講者備註\n")
@@ -149,7 +173,7 @@ object DocumentExcerptReader {
         return "已讀取 $inspected／${slides.size} 張投影片"
     }
 
-    private fun readEpub(archive: BoundedArchive, out: ExcerptBuffer, checkCancellation: () -> Unit): String {
+    private fun readEpub(archive: BoundedArchive, out: ExcerptBuffer, maxSections: Int, checkCancellation: () -> Unit): String {
         val packagePath = archive.read("META-INF/container.xml") { input ->
             val parser = XmlPullParserFactory.newInstance().newPullParser()
             parser.setInput(input, null)
@@ -168,7 +192,7 @@ object DocumentExcerptReader {
             manifest[id]?.takeIf { it.mediaType.contains("html", ignoreCase = true) }
         }
         var inspected = 0
-        for (section in sections.take(MAX_ZIP_SECTIONS)) {
+        for (section in sections.take(maxSections)) {
             checkCancellation()
             if (out.remaining == 0) break
             val path = java.net.URI(null, null, packagePath, null)
@@ -198,7 +222,6 @@ object DocumentExcerptReader {
         }
 
         fun addParsed(value: String) {
-            if (value.startsWith("Error parsing ")) throw IOException("Invalid document XML")
             if (value.isNotBlank()) {
                 add(value.trimEnd())
                 // Separators are presentation, not content trimmed by the budget.
@@ -209,12 +232,12 @@ object DocumentExcerptReader {
 
     private class ExtractionLimit : IOException("Document extraction limit reached")
 
-    private class BoundedArchive(val zip: ZipFile) {
-        private var totalRemaining = MAX_ZIP_BYTES
+    private class BoundedArchive(val zip: ZipFile, private val budget: Budget) {
+        private var totalRemaining = budget.archiveBytes
 
         fun <T> read(path: String, allowLargeEntry: Boolean = false, parse: (InputStream) -> T): T {
             val entry = zip.getEntry(path) ?: throw IOException("Missing required document section")
-            val limit = minOf(totalRemaining, MAX_ZIP_ENTRY_BYTES)
+            val limit = minOf(totalRemaining, budget.entryBytes)
             if (limit <= 0 || (!allowLargeEntry && entry.size > limit)) throw ExtractionLimit()
             var remaining = limit
             var hitLimit = false

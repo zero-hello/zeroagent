@@ -1,5 +1,17 @@
 package me.rerere.zeroagent.utils
 
+import kotlin.uuid.Uuid
+
+/** Converts a supplied conversation ID to the key used by the navigation stack. */
+internal fun validConversationId(value: String?): String? =
+    value?.takeIf { it.length == 36 || it.length == 32 }?.let {
+        try {
+            Uuid.parse(it).toString()
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+    }
+
 /**
  * Resolves the ordered conversation ids for RouteActivity's initial chat back stack.
  *

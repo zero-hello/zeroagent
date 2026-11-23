@@ -63,7 +63,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { nav.navigate(Screen.SettingsSearch) }) {
+                    IconButton(onClick = { nav.navigate(Screen.SettingsSearch) { launchSingleTop = true } }) {
                         Icon(HugeIcons.GlobalSearch, stringResource(R.string.accessibility_search))
                     }
                 },
@@ -84,7 +84,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
             if (!settings.hasConfiguredModel()) item("setup") {
                 CardGroup {
                     item(
-                        onClick = { nav.navigate(Screen.SettingProvider) },
+                        onClick = { nav.navigate(Screen.SettingProvider) { launchSingleTop = true } },
                         leadingContent = { Icon(HugeIcons.Brain02, null) },
                         headlineContent = { Text(stringResource(R.string.setting_page_providers)) },
                         supportingContent = { Text(stringResource(R.string.setting_page_providers_desc)) },
@@ -100,7 +100,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                         CardGroup(title = { Text(stringResource(group)) }) {
                             groupEntries.forEach { entry ->
                                 item(
-                                    onClick = { nav.navigate(entry.route) },
+                                    onClick = { nav.navigate(entry.route) { launchSingleTop = true } },
                                     modifier = motionModifiers.getValue(entry),
                                     stackTrailing = false,
                                     leadingContent = { Icon(settingsEntryIcon(entry.route), null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
@@ -140,7 +140,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
             if (settings.developerMode) item("developer-options") {
                 CardGroup {
                     item(
-                        onClick = { nav.navigate(Screen.Developer) },
+                        onClick = { nav.navigate(Screen.Developer) { launchSingleTop = true } },
                         leadingContent = { Icon(HugeIcons.Code, null) },
                         headlineContent = { Text(stringResource(R.string.accessibility_developer_options)) },
                         trailingContent = { Icon(HugeIcons.ArrowRight01, null) },

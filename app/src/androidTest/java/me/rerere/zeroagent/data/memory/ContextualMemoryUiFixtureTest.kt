@@ -4,11 +4,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import me.rerere.ai.core.MessageRole
 import me.rerere.ai.provider.Model
 import me.rerere.ai.provider.ProviderSetting
-import me.rerere.ai.ui.UIMessage
-import me.rerere.ai.ui.UIMessagePart
 import me.rerere.zeroagent.data.datastore.SettingsStore
 import me.rerere.zeroagent.data.datastore.getCurrentChatModel
 import me.rerere.zeroagent.data.datastore.getCurrentAssistant
@@ -47,10 +44,8 @@ class ContextualMemoryUiFixtureTest : KoinComponent {
         val manager = MemoryManager.get(context)
         manager.validateModel(); manager.setEnabled(true)
         try {
-            manager.remember(listOf(
-                UIMessage(role = MessageRole.USER, parts = listOf(UIMessagePart.Text("介面測試：我最喜歡喝無糖烏龍茶。"))),
-                UIMessage(role = MessageRole.ASSISTANT, parts = listOf(UIMessagePart.Text("介面測試：你偏好無糖烏龍茶。"))),
-            ), "ui-fixture")
+            seedLegacyMemory(manager, "ui-tea-user", "介面測試：我最喜歡喝無糖烏龍茶。", "ui-fixture", "USER")
+            seedLegacyMemory(manager, "ui-tea-assistant", "介面測試：你偏好無糖烏龍茶。", "ui-fixture", "ASSISTANT")
             manager.refresh()
             assertTrue(manager.state.value.records.size >= 2)
         } finally {

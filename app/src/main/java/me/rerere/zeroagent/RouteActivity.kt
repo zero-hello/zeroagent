@@ -153,6 +153,7 @@ import me.rerere.zeroagent.ui.theme.ZeroAgentTheme
 import me.rerere.zeroagent.utils.CrashHandler
 import me.rerere.zeroagent.utils.openUsageAccessSettings
 import me.rerere.zeroagent.utils.resolveInitialChatStack
+import me.rerere.zeroagent.utils.validConversationId
 import okhttp3.OkHttpClient
 import org.koin.android.ext.android.inject
 import org.koin.compose.koinInject
@@ -317,7 +318,7 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                 intent.getBooleanExtra("open_new_chat", false) -> Screen.Chat(Uuid.random().toString())
                 intent.getBooleanExtra("open_productivity", false) -> Screen.Productivity()
                 intent.getBooleanExtra("open_visual_assist", false) -> Screen.VisualAssist
-                else -> intent.getStringExtra("conversationId")?.let { Screen.Chat(it) }
+                else -> validConversationId(intent.getStringExtra("conversationId"))?.let { Screen.Chat(it) }
             }
         }
         listOf("open_new_chat", "open_productivity", "open_visual_assist").forEach { intent.removeExtra(it) }
@@ -364,12 +365,12 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
 
         // Resolve once per composition (not on every recomposition) so a later mutation of the
         // Intent's extras can't flip which rememberNavBackStack() branch below gets called.
-        val deepLinkConversationId = remember { intent?.getStringExtra("conversationId") }
+        val deepLinkConversationId = remember { validConversationId(intent?.getStringExtra("conversationId")) }
         val initialChatIds = remember {
             resolveInitialChatStack(
                 deepLinkConversationId = deepLinkConversationId,
                 createNewOnStart = readBooleanPreference("create_new_conversation_on_start", true),
-                lastConversationId = readStringPreference("lastConversationId", null),
+                lastConversationId = validConversationId(readStringPreference("lastConversationId", null)),
                 newId = { Uuid.random().toString() },
             )
         }

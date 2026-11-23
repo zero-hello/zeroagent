@@ -2,6 +2,7 @@ package me.rerere.zeroagent.utils
 
 import android.content.Context
 import android.os.SystemClock
+import android.util.Log
 import me.rerere.zeroagent.ui.components.ui.DownloadProgress
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -74,7 +75,13 @@ internal class SignedUpdateInstaller(private val client: OkHttpClient) {
                     check(checksum.equals(asset.sha256, ignoreCase = true)) { context.getString(R.string.update_invalid_apk) }
                 }
                 verifyIdentity(context, temporary)
-                retainInstalledApk(context)
+                try {
+                    retainInstalledApk(context)
+                } catch (error: IOException) {
+                    Log.w("SignedUpdateInstaller", "Could not retain the previous APK", error)
+                } catch (error: android.system.ErrnoException) {
+                    Log.w("SignedUpdateInstaller", "Could not retain the previous APK", error)
+                }
                 val verified = File(directory, asset.name)
                 check(temporary.renameTo(verified) || run {
                     temporary.copyTo(verified, overwrite = true)

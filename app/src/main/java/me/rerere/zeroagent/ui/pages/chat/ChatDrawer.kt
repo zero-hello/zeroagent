@@ -64,7 +64,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -130,8 +129,12 @@ fun ChatDrawerContent(
     navController: Navigator,
     settings: Settings,
     currentConversationId: Uuid?,
-
+    onNavigateFromDrawer: () -> Unit,
 ) {
+    fun navigateFromDrawer(screen: Screen) {
+        onNavigateFromDrawer()
+        navController.navigate(screen) { launchSingleTop = true }
+    }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val localizedResources = androidx.compose.ui.platform.LocalResources.current
@@ -211,9 +214,7 @@ fun ChatDrawerContent(
         }
     }
 
-    val drawerWidth = (LocalConfiguration.current.screenWidthDp.dp * 0.88f).coerceAtMost(320.dp)
     ModalDrawerSheet(
-        modifier = Modifier.width(drawerWidth),
         drawerShape = RoundedCornerShape(topEnd = 20.dp, bottomEnd = 20.dp),
         drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         drawerContentColor = MaterialTheme.colorScheme.onSurface,
@@ -230,14 +231,17 @@ fun ChatDrawerContent(
                 ) {
                     ZeroAgentWorkspaceHeader()
                     FilledTonalButton(
-                        onClick = { navigateToChatPage(navController) },
+                        onClick = {
+                            onNavigateFromDrawer()
+                            navigateToChatPage(navController)
+                        },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                         shape = MaterialTheme.shapes.small,
                     ) {
                         Icon(HugeIcons.Message01, null, Modifier.padding(end = 8.dp).size(20.dp))
                         Text(stringResource(R.string.chat_page_new_chat))
                     }
-                    DrawerActions(navController)
+                    DrawerActions(::navigateFromDrawer)
                     FolderBar(
                         protectedFolderId = protectedFolderId, folders = folders,
                         selectedFolderId = selectedFolderId,
@@ -247,18 +251,24 @@ fun ChatDrawerContent(
                         onDelete = { folderToDelete = it },
                     )
                     if (updateChecksEnabled && !settings.init && !isPlayStore) UpdateCard(updateChecker)
-                    BackupReminderCard(settings, onClick = { navController.navigate(Screen.Backup) })
+                    BackupReminderCard(settings, onClick = { navigateFromDrawer(Screen.Backup) })
                 }
                 ConversationList(
                     currentConversationId = currentConversationId,
                     conversations = conversations,
                     conversationJobs = conversationJobs.keys,
                     unsentNewChats = unsentNewChats,
-                    onOpenUnsentChat = { navigateToChatPage(navController, it) },
+                    onOpenUnsentChat = {
+                        onNavigateFromDrawer()
+                        navigateToChatPage(navController, it)
+                    },
                     listState = conversationListState,
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    onClick = { navigateToChatPage(navController, it.id) },
+                    onClick = {
+                        onNavigateFromDrawer()
+                        navigateToChatPage(navController, it.id)
+                    },
                     onRename = { drawerVm.requestRenameConversation(it) },
                     onDelete = {
                         scope.launch {
@@ -276,7 +286,7 @@ fun ChatDrawerContent(
                     modifier = Modifier.fillMaxWidth().heightIn(max = footerLimit),
                     settings = settings,
                     nicknameEditState = nicknameEditState,
-                    onNavigate = { navController.navigate(it) { launchSingleTop = true } },
+                    onNavigate = ::navigateFromDrawer,
                     onAvatarUpdate = { avatar ->
                         val oldAvatar = settings.displaySetting.userAvatar
                         if (oldAvatar is Avatar.Image && oldAvatar != avatar) {
@@ -640,17 +650,17 @@ fun ChatDrawerContent(
 }
 
 @Composable
-private fun DrawerActions(navController: Navigator) {
+private fun DrawerActions(onNavigate: (Screen) -> Unit) {
     FlowRow(
         maxItemsInEachRow = if (LocalDensity.current.fontScale > 1.15f) 1 else 2,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        TextButton(shapes = ButtonDefaults.shapes(), onClick = { navController.navigate(Screen.MessageSearch) }, modifier = Modifier.heightIn(min = 48.dp)) {
+        TextButton(shapes = ButtonDefaults.shapes(), onClick = { onNavigate(Screen.MessageSearch) }, modifier = Modifier.heightIn(min = 48.dp)) {
             Icon(HugeIcons.Search01, null, Modifier.padding(end = 8.dp).size(18.dp))
             Text(stringResource(R.string.chat_page_search_chats), style = MaterialTheme.typography.labelMedium)
         }
-        TextButton(shapes = ButtonDefaults.shapes(), onClick = { navController.navigate(Screen.History) }, modifier = Modifier.heightIn(min = 48.dp)) {
+        TextButton(shapes = ButtonDefaults.shapes(), onClick = { onNavigate(Screen.History) }, modifier = Modifier.heightIn(min = 48.dp)) {
             Icon(HugeIcons.TransactionHistory, null, Modifier.padding(end = 8.dp).size(18.dp))
             Text(stringResource(R.string.chat_page_history), style = MaterialTheme.typography.labelMedium)
         }

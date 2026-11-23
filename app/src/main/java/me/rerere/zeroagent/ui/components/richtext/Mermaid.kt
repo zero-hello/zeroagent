@@ -15,6 +15,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,37 +58,35 @@ fun Mermaid(
     val toaster = LocalToaster.current
     val navController = LocalNavController.current
 
-    val jsInterface = remember {
-        MermaidInterface(
-            onExportImage = { base64Image ->
-                runCatching {
-                    activity?.let {
+    val exportScope = rememberCoroutineScope()
+    val jsInterface = remember(activity, context, localizedResources, toaster, exportScope) {
+        MermaidInterface { base64Image ->
+            exportScope.launch {
+                val result = withContext(Dispatchers.IO) {
+                    runCatching {
+                        val host = checkNotNull(activity)
+                        check(base64Image.length in 1..MAX_MERMAID_EXPORT_CHARS)
+                        val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
+                        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                        BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size, bounds)
+                        check(bounds.outMimeType == "image/png" && bounds.outWidth > 0 &&
+                            bounds.outHeight > 0 && bounds.outWidth.toLong() * bounds.outHeight <= 16_000_000L)
+                        val bitmap = checkNotNull(BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size))
                         try {
-                            val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
-                            val bitmap =
-                                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                            context.exportImage(
-                                it,
-                                bitmap,
-                                "mermaid_${System.currentTimeMillis()}.png"
-                            )
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                            context.exportImage(host, bitmap, "mermaid_${System.currentTimeMillis()}.png")
+                        } finally {
+                            bitmap.recycle()
                         }
                     }
-                    toaster.show(
-                        localizedResources.getString(R.string.mermaid_export_success),
-                        type = ToastType.Success
-                    )
-                }.onFailure {
-                    it.printStackTrace()
-                    toaster.show(
-                        localizedResources.getString(R.string.mermaid_export_failed),
-                        type = ToastType.Error
-                    )
                 }
+                toaster.show(
+                    localizedResources.getString(
+                        if (result.isSuccess) R.string.mermaid_export_success else R.string.mermaid_export_failed
+                    ),
+                    type = if (result.isSuccess) ToastType.Success else ToastType.Error,
+                )
             }
-        )
+        }
     }
 
     val html = remember(code, colorScheme, darkMode) {
@@ -139,10 +142,12 @@ fun Mermaid(
                 }
                 IconButton(
                     onClick = {
-                        webViewState.webView?.evaluateJavascript(
-                            "exportSvgToPng();",
-                            null
-                        )
+                        val webView = webViewState.webView
+                        if (webView != null && !webViewState.isLoading && jsInterface.requestExport()) {
+                            webView.evaluateJavascript("typeof exportSvgToPng === 'function' && (exportSvgToPng(), true);") {
+                                if (it != "true") jsInterface.cancelExport()
+                            }
+                        }
                     },
                 ) {
                     Icon(
@@ -155,12 +160,22 @@ fun Mermaid(
     }
 }
 
+private const val MAX_MERMAID_EXPORT_CHARS = 16 * 1024 * 1024
+
 private class MermaidInterface(
     private val onExportImage: (String) -> Unit
 ) {
+    private val exportRequested = AtomicBoolean(false)
+
+    fun requestExport() = exportRequested.compareAndSet(false, true)
+
+    fun cancelExport() {
+        exportRequested.set(false)
+    }
+
     @JavascriptInterface
     fun exportImage(base64Image: String) {
-        onExportImage(base64Image)
+        if (exportRequested.compareAndSet(true, false)) onExportImage(base64Image)
     }
 }
 
@@ -212,6 +227,7 @@ private fun buildMermaidHtml(
             <script>
               mermaid.initialize({
                     startOnLoad: true,
+                    securityLevel: 'strict',
                     theme: 'base',
                     themeVariables: {
                         primaryColor: '${primaryColor}',

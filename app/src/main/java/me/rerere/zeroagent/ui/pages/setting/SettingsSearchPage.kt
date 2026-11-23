@@ -115,7 +115,7 @@ fun SettingsSearchPage(vm: SettingVM = koinViewModel()) {
                             CardGroup {
                                 filtered.forEach { entry ->
                                     item(
-                                        onClick = { navController.navigate(entry.route) },
+                                        onClick = { navController.navigate(entry.route) { launchSingleTop = true } },
                                         overlineContent = { Text(stringResource(entry.groupRes)) },
                                         headlineContent = { Text(stringResource(entry.titleRes)) },
                                         supportingContent = entry.descriptionRes?.takeUnless { it == R.string.setting_page_chat_storage_desc }?.let { desc ->

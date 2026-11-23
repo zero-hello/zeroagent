@@ -12,8 +12,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -24,12 +26,19 @@ import kotlin.uuid.Uuid
 
 /** One navigation-level drawer owner; pages only request that this drawer opens. */
 internal class AppDrawerController(
-    val state: DrawerState,
+    private val state: DrawerState,
     val isPermanent: Boolean,
-    private val enabled: Boolean,
+    private val canOpen: () -> Boolean,
     private val scope: CoroutineScope,
 ) {
-    fun open() { if (enabled && !isPermanent) scope.launch { state.open() } }
+    fun open() {
+        if (isPermanent || !canOpen()) return
+        scope.launch { if (canOpen()) state.open() }
+    }
+
+    fun close() {
+        if (!isPermanent && canOpen()) scope.launch { if (canOpen()) state.close() }
+    }
 }
 
 internal val LocalAppDrawer = compositionLocalOf<AppDrawerController> {
@@ -46,15 +55,20 @@ internal fun AppDrawerHost(
 ) {
     val state = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val permanent = currentWindowDpSize().width >= AppLayout.permanentDrawerBreakpoint
-    val controller = remember(state, permanent, enabled, scope) {
-        AppDrawerController(state, permanent, enabled, scope)
+    val windowWidth = currentWindowDpSize().width
+    val permanent = windowWidth >= AppLayout.permanentDrawerBreakpoint
+    val drawerWidth = (windowWidth * 0.88f).coerceIn(1.dp, 320.dp)
+    val drawerEnabled = rememberUpdatedState(enabled && !permanent)
+    val controller = remember(state, permanent, scope) {
+        AppDrawerController(state, permanent, { drawerEnabled.value }, scope)
     }
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val navigator = LocalNavController.current
 
-    LaunchedEffect(navigationKey, enabled) { state.close() }
+    LaunchedEffect(navigationKey, enabled, permanent) {
+        if (enabled && !permanent) state.close()
+    }
     LaunchedEffect(state.isOpen) {
         if (state.isOpen) {
             focusManager.clearFocus(force = true)
@@ -65,12 +79,14 @@ internal fun AppDrawerHost(
         ChatDrawerLayout(
             isBigScreen = permanent,
             drawerState = state,
+            drawerWidth = drawerWidth,
             enabled = enabled,
             drawerContent = {
                 ChatDrawerContent(
                     navController = navigator,
                     settings = settings,
                     currentConversationId = currentConversationId,
+                    onNavigateFromDrawer = controller::close,
                 )
             },
             content = { Box(Modifier.fillMaxSize()) { content() } },

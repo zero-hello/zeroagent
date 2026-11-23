@@ -185,13 +185,13 @@ fun Context.exportImage(
                 ?: error("MediaStore returned no URI for $fileName")
             outputStream = contentResolver.openOutputStream(uri)
                 ?: error("Could not open output stream for $fileName")
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)) { "PNG compression failed" }
         } else {
             // Android 9及以下直接写入文件
             val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
             val image = File(imagesDir, fileName)
             outputStream = FileOutputStream(image)
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)) { "PNG compression failed" }
 
             // 通知图库更新
             @Suppress("DEPRECATION")  // MediaStore is the modern path; this still works for gallery refresh

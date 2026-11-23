@@ -17,6 +17,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,9 +54,16 @@ internal class MyWebViewClient(private val state: WebViewState) : WebViewClient(
         view: WebView,
         request: WebResourceRequest
     ): WebResourceResponse? {
-        return WebViewLocalAssets.intercept(view.context.applicationContext, request.url)
-            ?: super.shouldInterceptRequest(view, request)
+        WebViewLocalAssets.intercept(view.context.applicationContext, request.url)?.let { return it }
+        if (state.interfaces.isNotEmpty()) {
+            // Pages with a native interface can load packaged resources only.
+            return WebResourceResponse("text/plain", "UTF-8", 403, "Blocked", emptyMap(), byteArrayOf().inputStream())
+        }
+        return super.shouldInterceptRequest(view, request)
     }
+
+    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean =
+        state.interfaces.isNotEmpty() || request.url.scheme !in setOf("http", "https", "about")
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
@@ -104,96 +112,81 @@ fun WebView(
     onUpdated: (WebView) -> Unit = {},
 ) {
     // Remember the clients based on the state
-    val webChromeClient = remember { MyWebChromeClient(state) }
-    val webViewClient = remember { MyWebViewClient(state) }
+    val webChromeClient = remember(state) { MyWebChromeClient(state) }
+    val webViewClient = remember(state) { MyWebViewClient(state) }
 
     Box(
         modifier = modifier
     ) {
-        AndroidView(
-            factory = { context ->
-                WebView(context).apply {
-                    layoutParams = LayoutParams(
-                        LayoutParams.MATCH_PARENT,
-                        LayoutParams.MATCH_PARENT
-                    )
+        key(state) {
+            AndroidView(
+                factory = { context ->
+                    WebView(context).apply {
+                        layoutParams = LayoutParams(
+                            LayoutParams.MATCH_PARENT,
+                            LayoutParams.MATCH_PARENT
+                        )
 
-                    state.webView = this // Assign the WebView instance to the state
+                        state.webView = this // Assign the WebView instance to the state
 
-                    onCreated(this)
+                        onCreated(this)
 
-                    settings.javaScriptEnabled = true // Enable JavaScript
-                    settings.domStorageEnabled = true
-                    settings.allowContentAccess = true
-                    settings.apply(state.settings)
+                        settings.javaScriptEnabled = true // Enable JavaScript
+                        settings.domStorageEnabled = true
+                        settings.allowFileAccess = false
+                        settings.allowContentAccess = false
+                        settings.apply(state.settings)
 
-                    // Use the created clients
-                    this.webChromeClient = webChromeClient
-                    this.webViewClient = webViewClient
+                        // Use the created clients
+                        this.webChromeClient = webChromeClient
+                        this.webViewClient = webViewClient
 
-                    state.interfaces.forEach { (name, obj) ->
-                        addJavascriptInterface(obj, name)
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth(), // Make WebView fill the width
-            onReset = {
-                it.resetState(state.interfaces)
-                Log.d(TAG, "AndroidView: Resetting WebView")
-            },
-            onRelease = {
-                if (state.webView === it) {
-                    state.webView = null
-                }
-                it.release(state.interfaces)
-                Log.d(TAG, "AndroidView: Releasing WebView")
-            },
-            update = { webView ->
-                state.webView = webView
-                state.interfaces.forEach { (name, obj) ->
-                    webView.addJavascriptInterface(obj, name)
-                }
-                Log.d(TAG, "AndroidView: Updating WebView")
-                // Ensure clients are updated if state changes (though unlikely here)
-                // webView.webChromeClient = webChromeClient
-                // webView.webViewClient = webViewClient
-
-                // Update settings that might change
-                webView.settings.javaScriptEnabled = state.javaScriptEnabled
-
-                when (val content = state.content) {
-                    is WebContent.Url -> {
-                        val url = content.url
-                        // Only load new URL if it's different from the current one or if the state forces reload
-                        // Also check if the webView's url is null or blank, which might happen initially
-                        val currentWebViewUrl = webView.url
-                        if (url.isNotEmpty() && (currentWebViewUrl.isNullOrBlank() || url != currentWebViewUrl || state.forceReload)) {
-                            webView.loadUrl(content.url, content.additionalHttpHeaders)
-                            state.forceReload = false // Reset force reload flag
+                        state.interfaces.forEach { (name, obj) ->
+                            addJavascriptInterface(obj, name)
                         }
                     }
+                },
+                modifier = Modifier.fillMaxWidth(), // Make WebView fill the width
+                onRelease = {
+                    if (state.webView === it) {
+                        state.webView = null
+                        state.lastRequestedContent = null
+                    }
+                    it.release(state.interfaces)
+                    Log.d(TAG, "AndroidView: Releasing WebView")
+                },
+                update = { webView ->
+                    state.webView = webView
+                    // Update settings that might change
+                    webView.settings.javaScriptEnabled = state.javaScriptEnabled
 
-                    is WebContent.Data -> {
-                        if (content != state.lastLoadedData || state.forceReload) {
-                            webView.loadDataWithBaseURL(
-                                content.baseUrl,
-                                content.data,
-                                content.mimeType,
-                                content.encoding,
-                                content.historyUrl
-                            )
-                            state.lastLoadedData = content
-                            state.forceReload = false
+                    when (val content = state.content) {
+                        is WebContent.Url -> {
+                            if (content.url.isNotEmpty() && state.shouldLoad(content)) {
+                                webView.loadUrl(content.url, content.additionalHttpHeaders)
+                            }
+                        }
+
+                        is WebContent.Data -> {
+                            if (state.shouldLoad(content)) {
+                                webView.loadDataWithBaseURL(
+                                    content.baseUrl,
+                                    content.data,
+                                    content.mimeType,
+                                    content.encoding,
+                                    content.historyUrl
+                                )
+                            }
+                        }
+
+                        WebContent.NavigatorOnly -> {
+                            // NO-OP: State changes related to navigation are handled by the methods in WebViewState
                         }
                     }
-
-                    WebContent.NavigatorOnly -> {
-                        // NO-OP: State changes related to navigation are handled by the methods in WebViewState
-                    }
+                    onUpdated(webView)
                 }
-                onUpdated(webView)
-            }
-        )
+            )
+        }
 
         // Loading Progress Indicator
         if (state.isLoading) {
@@ -233,7 +226,14 @@ class WebViewState(
     // --- Content State ---
     var content: WebContent by mutableStateOf(initialContent)
     internal var forceReload: Boolean by mutableStateOf(false) // Internal state to force URL reload if needed
-    internal var lastLoadedData: WebContent.Data? = null
+    internal var lastRequestedContent: WebContent? = null
+
+    internal fun shouldLoad(request: WebContent): Boolean {
+        if (request == lastRequestedContent && !forceReload) return false
+        lastRequestedContent = request
+        forceReload = false
+        return true
+    }
 
     // --- Loading State ---
     var isLoading: Boolean by mutableStateOf(false)
@@ -297,16 +297,10 @@ class WebViewState(
     }
 
     fun reload() {
-        // Set forceReload flag for URL content type to ensure `update` block reloads
-        forceReload = true
-        // Trigger recomposition/update by changing the content reference slightly,
-        // even if the URL is the same. Assigning the same Url object might not trigger update.
-        // Or simply call webView?.reload() directly.
-        webView?.reload()
-        // If content is Data, reloading might mean re-setting the data.
         if (content is WebContent.Data) {
-            // Re-assign to trigger update block if necessary
-            content = (content as WebContent.Data).copy()
+            forceReload = true
+        } else {
+            webView?.reload()
         }
     }
 

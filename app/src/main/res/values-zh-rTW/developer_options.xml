@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="developer_mode_enabled">使用開發者選項</string>
+    <string name="developer_mode_enabled_desc">關閉後會隱藏此頁並清除暫存紀錄。下次開啟時仍會保留偏好。</string>
+    <string name="developer_request_diagnostics">AI 請求診斷</string>
+    <string name="developer_record_requests">記錄請求摘要</string>
+    <string name="developer_record_requests_desc">記憶體最多保留 32 筆摘要，不含訊息內容或金鑰。</string>
+    <string name="developer_show_requests">顯示最近的請求</string>
+    <string name="developer_request_counts">共 %1$d 筆請求 · %2$d 筆串流</string>
+    <string name="developer_only_streaming">只顯示串流請求</string>
+    <string name="developer_show_request_time">顯示請求時間</string>
+    <string name="developer_clear_requests">清除請求摘要</string>
+    <string name="developer_request_stream">串流請求</string>
+    <string name="developer_request_regular">一般請求</string>
+    <string name="developer_request_details">輸入訊息 %1$d 則 · 可用工具 %2$d 個</string>
+    <string name="developer_device_info">裝置資訊</string>
+    <string name="developer_device_snapshot">裝置與 App 狀態</string>
+    <string name="developer_refresh_snapshot">重新讀取裝置狀態</string>
+    <string name="developer_copy_snapshot">複製診斷摘要</string>
+    <string name="developer_copy_snapshot_desc">包含裝置狀態、App 版本與請求筆數。</string>
+    <string name="developer_pending">正在讀取裝置狀態…</string>
+    <string name="developer_unknown">無法取得</string>
+    <string name="developer_memory_storage">可用記憶體：%1$s · 剩餘儲存空間：%2$s</string>
+    <string name="developer_network">網路狀態：%1$s</string>
+    <string name="developer_network_validated">Android 已確認可連上網際網路</string>
+    <string name="developer_network_not_validated">Android 尚未確認可連上網際網路</string>
+    <string name="developer_animation_scale">系統動畫播放倍率：%1$s</string>
+    <string name="developer_debuggable">App 偵錯：開啟</string>
+    <string name="developer_not_debuggable">App 偵錯：關閉</string>
+    <string name="developer_system_tools">疑難排解</string>
+    <string name="developer_android_app_settings">開啟 Android 應用程式資訊</string>
+    <string name="developer_settings_unavailable">無法開啟 Android 應用程式資訊。</string>
+    <string name="developer_copied">已複製</string>
+    <string name="developer_save_failed">無法儲存這次變更，請再試一次。</string>
+    <string name="developer_enabled_confirmation">已開啟開發者選項</string>
+</resources>

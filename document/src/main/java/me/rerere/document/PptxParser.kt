@@ -74,7 +74,7 @@ object PptxParser {
         return result.toString().trim()
     }
 
-    internal fun parseSlideXml(inputStream: InputStream): String {
+    internal fun parseSlideXml(inputStream: InputStream, strict: Boolean = false): String {
         return try {
             val factory = XmlPullParserFactory.newInstance()
             factory.isNamespaceAware = true
@@ -97,6 +97,7 @@ object PptxParser {
 
             result.toString()
         } catch (e: Exception) {
+            if (strict) throw e
             "Error parsing slide XML: ${e.message}\n"
         }
     }
@@ -174,6 +175,7 @@ object PptxParser {
         val text = paragraphText.toString().trim()
         if (text.isNotBlank()) {
             if (hasBullet) {
+                require(bulletLevel in 0..32) { "Invalid slide bullet level" }
                 val indent = "  ".repeat(bulletLevel)
                 val marker = if (isNumbered) "1. " else "- "
                 result.append("$indent$marker$text\n")
@@ -292,6 +294,9 @@ object PptxParser {
         // Convert to markdown table
         if (rows.isNotEmpty()) {
             val maxCols = rows.maxOfOrNull { it.size } ?: 0
+            val separatorLength = rows.size.toLong() * (3L * maxCols + 3L) + 6L * maxCols + 3L
+            val cellLength = rows.sumOf { row -> row.sumOf { it.length.toLong() } }
+            require(result.length + separatorLength + cellLength <= 500_000) { "Slide table is too large to read" }
 
             for ((index, row) in rows.withIndex()) {
                 result.append("| ")

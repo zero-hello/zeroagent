@@ -139,7 +139,7 @@ private fun ModelSettingsPage(settings: Settings, vm: SettingVM, contentPadding:
                 description = stringResource(R.string.setting_model_page_chat_model_desc),
                 modelId = settings.chatModelId,
                 providers = settings.providers,
-                onSelect = { vm.updateSettings(settings.copy(chatModelId = it.id)) },
+                onSelect = { vm.updateSettings { current -> current.copy(chatModelId = it.id) } },
             )
         }
         if (selectedModel != null) item {
@@ -158,10 +158,10 @@ private fun ModelSettingsPage(settings: Settings, vm: SettingVM, contentPadding:
                 description = stringResource(R.string.setting_model_page_fast_model_desc),
                 modelId = settings.fastModelId,
                 providers = settings.providers,
-                onSelect = { vm.updateSettings(settings.copy(fastModelId = it.id)) },
+                onSelect = { vm.updateSettings { current -> current.copy(fastModelId = it.id) } },
                 reasoningLevel = settings.fastModelReasoningLevel,
                 onUpdateReasoningLevel = {
-                    vm.updateSettings(settings.copy(fastModelReasoningLevel = it))
+                    vm.updateSettings { current -> current.copy(fastModelReasoningLevel = it) }
                 },
             )
         }
@@ -177,7 +177,7 @@ private fun ModelSettingsPage(settings: Settings, vm: SettingVM, contentPadding:
                 description = stringResource(R.string.setting_model_page_translate_model_desc),
                 modelId = settings.translateModeId,
                 providers = settings.providers,
-                onSelect = { vm.updateSettings(settings.copy(translateModeId = it.id)) },
+                onSelect = { vm.updateSettings { current -> current.copy(translateModeId = it.id) } },
             )
         }
         item {
@@ -186,7 +186,7 @@ private fun ModelSettingsPage(settings: Settings, vm: SettingVM, contentPadding:
                 description = stringResource(R.string.setting_model_page_ocr_model_desc),
                 modelId = settings.ocrModelId,
                 providers = settings.providers,
-                onSelect = { vm.updateSettings(settings.copy(ocrModelId = it.id)) },
+                onSelect = { vm.updateSettings { current -> current.copy(ocrModelId = it.id) } },
             )
         }
         item {
@@ -195,7 +195,7 @@ private fun ModelSettingsPage(settings: Settings, vm: SettingVM, contentPadding:
                 description = stringResource(R.string.setting_model_page_compress_model_desc),
                 modelId = settings.compressModelId,
                 providers = settings.providers,
-                onSelect = { vm.updateSettings(settings.copy(compressModelId = it.id)) },
+                onSelect = { vm.updateSettings { current -> current.copy(compressModelId = it.id) } },
             )
         }
         item {
@@ -574,7 +574,7 @@ private fun SuggestionSettingItem(
                 Switch(
                     checked = settings.enableSuggestion,
                     onCheckedChange = {
-                        vm.updateSettings(settings.copy(enableSuggestion = it))
+                        vm.updateSettings { current -> current.copy(enableSuggestion = it) }
                     }
                 )
             },

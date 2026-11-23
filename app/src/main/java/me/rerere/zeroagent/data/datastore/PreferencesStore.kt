@@ -18,6 +18,7 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import io.pebbletemplates.pebble.PebbleEngine
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
@@ -802,23 +803,24 @@ class SettingsStore(
 
     suspend fun update(fn: (Settings) -> Settings) {
         transformLock.withLock {
-            updateInternal(fn(settingsFlow.value))
+            // The public flow can still contain its startup placeholder or an older emission.
+            val current = settingsFlowRaw.first()
+            updateInternal(fn(current))
         }
     }
 
-    // 只原子地修改单个 key, 不能用 update() 写回整份快照
-    suspend fun incrementLaunchCount(): Int {
-        var count = 0
-        dataStore.edit { preferences ->
-            count = (preferences[LAUNCH_COUNT] ?: 0) + 1
-            preferences[LAUNCH_COUNT] = count
+    suspend fun incrementLaunchCount(): Int = transformLock.withLock {
+        val updated = dataStore.edit { preferences ->
+            preferences[LAUNCH_COUNT] = (preferences[LAUNCH_COUNT] ?: 0) + 1
         }
-        return count
+        updated[LAUNCH_COUNT] ?: 0
     }
 
     suspend fun updateAssistant(assistantId: Uuid) {
-        dataStore.edit { preferences ->
-            preferences[SELECT_ASSISTANT] = assistantId.toString()
+        transformLock.withLock {
+            dataStore.edit { preferences ->
+                preferences[SELECT_ASSISTANT] = assistantId.toString()
+            }
         }
     }
 

@@ -16,12 +16,16 @@ class ToolApprovalPolicyTest {
         yolo: Boolean = false,
         headless: Boolean = false,
         allowedForChat: Boolean = false,
+        accessMode: ConversationAccessMode? = null,
+        rootAccessGranted: Boolean = false,
     ): Boolean = ToolApprovalPolicy.shouldAutoApprove(
         toolName = toolName,
         blacklist = blacklist,
         yolo = yolo,
         headless = headless,
         allowedForChat = allowedForChat,
+        accessMode = accessMode,
+        rootAccessGranted = rootAccessGranted,
     )
 
     // --- default: nothing asks ---
@@ -62,10 +66,25 @@ class ToolApprovalPolicyTest {
     // --- "allow for this chat" ---
 
     @Test
-    fun `a chat grant suppresses a blacklisted tool's prompt`() {
-        assertTrue(
-            decide("termux_run_command", blacklist = setOf("termux_run_command"), allowedForChat = true)
-        )
+    fun `per-tool confirmation overrides an earlier chat grant`() {
+        assertTrue(decide("read_file", allowedForChat = true, accessMode = ConversationAccessMode.ASK))
+        assertFalse(decide(
+            "read_file", blacklist = setOf("read_file"),
+            allowedForChat = true, accessMode = ConversationAccessMode.ASK,
+        ))
+    }
+
+    @Test
+    fun `per-tool confirmation overrides full access only for that tool`() {
+        val blacklist = setOf("read_file")
+        assertFalse(decide("read_file", blacklist = blacklist, accessMode = ConversationAccessMode.FULL))
+        assertTrue(decide("web_fetch", blacklist = blacklist, accessMode = ConversationAccessMode.FULL))
+    }
+
+    @Test
+    fun `per-tool confirmation overrides Root auto approval`() {
+        assertTrue(decide("termux_run_command", rootAccessGranted = true))
+        assertFalse(decide("termux_run_command", blacklist = setOf("termux_run_command"), rootAccessGranted = true))
     }
 
     @Test
@@ -77,8 +96,8 @@ class ToolApprovalPolicyTest {
     // --- yolo ---
 
     @Test
-    fun `yolo auto-approves the blacklist and the floor`() {
-        assertTrue(decide("termux_run_command", blacklist = setOf("termux_run_command"), yolo = true))
+    fun `yolo respects a saved foreground confirmation rule`() {
+        assertFalse(decide("termux_run_command", blacklist = setOf("termux_run_command"), yolo = true))
         assertTrue(decide("eval_javascript", yolo = true))
         assertTrue(decide("mcp__server__tool", yolo = true))
     }

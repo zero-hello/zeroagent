@@ -24,9 +24,11 @@ object ToolApprovalPolicy {
         accessMode: ConversationAccessMode? = null,
         rootAccessGranted: Boolean = false,
     ): Boolean {
+        if (toolName == ASK_USER_TOOL_NAME) return headless
+        // A saved per-tool confirmation rule takes precedence over attended auto-approval.
+        if (!headless && toolName in blacklist) return false
         if (toolName == "run_root_command") return rootAccessGranted && !headless
         if (toolName == "termux_run_command" && rootAccessGranted) return !headless
-        if (toolName == ASK_USER_TOOL_NAME) return headless
         if (!headless && accessMode != null) return when (accessMode) {
             ConversationAccessMode.ASK -> allowedForChat && !isMcpRelayed && toolName !in hardFloor
             // A tool name, YOLO toggle, or previous grant is never a review verdict.
@@ -37,7 +39,6 @@ object ToolApprovalPolicy {
         if (yolo) return true
         if (headless) return true
         if (isMcpRelayed || toolName in hardFloor) return false
-        if (allowedForChat) return true
-        return toolName !in blacklist
+        return true
     }
 }

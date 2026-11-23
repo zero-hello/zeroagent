@@ -1,9 +1,21 @@
 package me.rerere.zeroagent.utils
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ChatStackResolverTest {
+
+    @Test
+    fun `external conversation id must be a UUID`() {
+        assertNull(validConversationId(null))
+        assertNull(validConversationId("not-a-conversation"))
+        assertNull(validConversationId("01234567-89ab-cdef-0123-456789abcdeg"))
+        assertEquals(
+            "01234567-89ab-cdef-0123-456789abcdef",
+            validConversationId("01234567-89AB-CDEF-0123-456789ABCDEF"),
+        )
+    }
 
     @Test
     fun `deep link present and differs from default pushes deep link on top`() {

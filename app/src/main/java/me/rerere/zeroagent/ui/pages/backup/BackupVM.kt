@@ -93,12 +93,12 @@ class BackupVM(
         webDavSync.deleteBackupFile(settings.value.webDavConfig, item)
     }
 
-    suspend fun exportToFile(): File {
-        val file = webDavSync.prepareBackupFile(
-            settings.value.webDavConfig.copy(items = localBackupItems.value)
-        )
+    suspend fun exportToFile(): File = webDavSync.prepareBackupFile(
+        settings.value.webDavConfig.copy(items = localBackupItems.value),
+    )
+
+    suspend fun recordLocalExportSuccess() {
         recordBackupTime()
-        return file
     }
 
     suspend fun restoreFromLocalFile(file: File) {
@@ -170,7 +170,7 @@ class BackupVM(
         )
     }
 
-    fun restoreFromCherryStudio(file: File) {
+    suspend fun restoreFromCherryStudio(file: File) = withContext(Dispatchers.IO) {
         val importProviders = CherryStudioProviderImporter.importProviders(file)
 
         if (importProviders.isEmpty()) {
@@ -179,11 +179,9 @@ class BackupVM(
 
         Log.i(TAG, "restoreFromCherryStudio: import ${importProviders.size} providers")
 
-        updateSettings(
-            settings.value.copy(
-                providers = importProviders + settings.value.providers,
-            )
-        )
+        settingsStore.update { current ->
+            current.copy(providers = importProviders + current.providers)
+        }
     }
 
     // S3 Backup methods

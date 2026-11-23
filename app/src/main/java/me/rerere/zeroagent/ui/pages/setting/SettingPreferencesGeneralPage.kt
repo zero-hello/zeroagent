@@ -48,9 +48,9 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
         mutableFloatStateOf(settings.defaultTTSPlaybackSpeed)
     }
 
-    fun updateDisplaySetting(setting: DisplaySetting) {
-        displaySetting = setting
-        vm.updateSettings(settings.copy(displaySetting = setting))
+    fun updateDisplaySetting(change: DisplaySetting.() -> DisplaySetting) {
+        displaySetting = displaySetting.change()
+        vm.updateSettings { current -> current.copy(displaySetting = current.displaySetting.change()) }
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -102,7 +102,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                             Switch(
                                 checked = displaySetting.sendOnEnter,
                                 onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(sendOnEnter = it))
+                                    updateDisplaySetting { copy(sendOnEnter = it) }
                                 }
                             )
                         },
@@ -114,7 +114,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                             Switch(
                                 checked = displaySetting.showMessageJumper,
                                 onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(showMessageJumper = it))
+                                    updateDisplaySetting { copy(showMessageJumper = it) }
                                 }
                             )
                         },
@@ -127,7 +127,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                                 Switch(
                                     checked = displaySetting.messageJumperOnLeft,
                                     onCheckedChange = {
-                                        updateDisplaySetting(displaySetting.copy(messageJumperOnLeft = it))
+                                        updateDisplaySetting { copy(messageJumperOnLeft = it) }
                                     }
                                 )
                             },
@@ -140,7 +140,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                             Switch(
                                 checked = displaySetting.enableAutoScroll,
                                 onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(enableAutoScroll = it))
+                                    updateDisplaySetting { copy(enableAutoScroll = it) }
                                 }
                             )
                         },
@@ -152,7 +152,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                             Switch(
                                 checked = displaySetting.enableMessageGenerationHapticEffect,
                                 onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(enableMessageGenerationHapticEffect = it))
+                                    updateDisplaySetting { copy(enableMessageGenerationHapticEffect = it) }
                                 }
                             )
                         },
@@ -164,7 +164,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                             Switch(
                                 checked = displaySetting.skipCropImage,
                                 onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(skipCropImage = it))
+                                    updateDisplaySetting { copy(skipCropImage = it) }
                                 }
                             )
                         },
@@ -176,7 +176,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                             Switch(
                                 checked = displaySetting.pasteLongTextAsFile,
                                 onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(pasteLongTextAsFile = it))
+                                    updateDisplaySetting { copy(pasteLongTextAsFile = it) }
                                 }
                             )
                         },
@@ -198,7 +198,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                                         onValueChange = { value ->
                                             thresholdText = value.filter { it.isDigit() }
                                             parsePasteLongTextThreshold(thresholdText)?.let { threshold ->
-                                                updateDisplaySetting(displaySetting.copy(pasteLongTextThreshold = threshold))
+                                                updateDisplaySetting { copy(pasteLongTextThreshold = threshold) }
                                             }
                                         },
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -217,7 +217,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                             Switch(
                                 checked = displaySetting.enableVolumeKeyScroll,
                                 onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(enableVolumeKeyScroll = it))
+                                    updateDisplaySetting { copy(enableVolumeKeyScroll = it) }
                                 }
                             )
                         },
@@ -234,7 +234,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                                     Slider(
                                         value = displaySetting.volumeKeyScrollRatio,
                                         onValueChange = {
-                                            updateDisplaySetting(displaySetting.copy(volumeKeyScrollRatio = it))
+                                            updateDisplaySetting { copy(volumeKeyScrollRatio = it) }
                                         },
                                         valueRange = 0.25f..1.0f,
                                         steps = 2,
@@ -283,9 +283,8 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                                             ttsPlaybackSpeed = (it * 10).roundToInt() / 10f
                                         },
                                         onValueChangeFinished = {
-                                            vm.updateSettings(
-                                                settings.copy(defaultTTSPlaybackSpeed = ttsPlaybackSpeed)
-                                            )
+                                            val speed = ttsPlaybackSpeed
+                                            vm.updateSettings { it.copy(defaultTTSPlaybackSpeed = speed) }
                                         },
                                         valueRange = 0.5f..2.0f,
                                         steps = 14,
@@ -303,7 +302,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                             Switch(
                                 checked = displaySetting.ttsOnlyReadQuoted,
                                 onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(ttsOnlyReadQuoted = it))
+                                    updateDisplaySetting { copy(ttsOnlyReadQuoted = it) }
                                 }
                             )
                         },
@@ -315,7 +314,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                             Switch(
                                 checked = displaySetting.ttsOnlyReadOutsideBrackets,
                                 onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(ttsOnlyReadOutsideBrackets = it))
+                                    updateDisplaySetting { copy(ttsOnlyReadOutsideBrackets = it) }
                                 }
                             )
                         },
@@ -327,7 +326,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                             Switch(
                                 checked = displaySetting.autoPlayTTSAfterGeneration,
                                 onCheckedChange = {
-                                    updateDisplaySetting(displaySetting.copy(autoPlayTTSAfterGeneration = it))
+                                    updateDisplaySetting { copy(autoPlayTTSAfterGeneration = it) }
                                 }
                             )
                         },

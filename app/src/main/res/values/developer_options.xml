@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="developer_mode_enabled">Enable developer options</string>
+    <string name="developer_mode_enabled_desc">Turning this off hides this page and clears temporary logs. Your preferences stay saved.</string>
+    <string name="developer_request_diagnostics">AI request diagnostics</string>
+    <string name="developer_record_requests">Record request summaries</string>
+    <string name="developer_record_requests_desc">Keeps up to 32 summaries in memory. Message contents and keys are excluded.</string>
+    <string name="developer_show_requests">Show recent requests</string>
+    <string name="developer_request_counts">%1$d requests · %2$d streamed</string>
+    <string name="developer_only_streaming">Show streaming requests only</string>
+    <string name="developer_show_request_time">Show request times</string>
+    <string name="developer_clear_requests">Clear request summaries</string>
+    <string name="developer_request_stream">Streaming request</string>
+    <string name="developer_request_regular">Standard request</string>
+    <string name="developer_request_details">%1$d input messages · %2$d available tools</string>
+    <string name="developer_device_info">Device information</string>
+    <string name="developer_device_snapshot">Device and app status</string>
+    <string name="developer_refresh_snapshot">Refresh device status</string>
+    <string name="developer_copy_snapshot">Copy diagnostic summary</string>
+    <string name="developer_copy_snapshot_desc">Includes app and device status and request counts.</string>
+    <string name="developer_pending">Reading device status…</string>
+    <string name="developer_unknown">Unavailable</string>
+    <string name="developer_memory_storage">Available memory: %1$s · Free storage: %2$s</string>
+    <string name="developer_network">Internet connectivity: %1$s</string>
+    <string name="developer_network_validated">Verified by Android</string>
+    <string name="developer_network_not_validated">Unverified by Android</string>
+    <string name="developer_animation_scale">System animator scale: %1$s</string>
+    <string name="developer_debuggable">App debugging: enabled</string>
+    <string name="developer_not_debuggable">App debugging: disabled</string>
+    <string name="developer_system_tools">Troubleshooting</string>
+    <string name="developer_android_app_settings">Open Android app info</string>
+    <string name="developer_settings_unavailable">Unable to open Android app info.</string>
+    <string name="developer_copied">Copied</string>
+    <string name="developer_save_failed">Unable to save this change. Please try again.</string>
+    <string name="developer_enabled_confirmation">Developer options enabled</string>
+</resources>

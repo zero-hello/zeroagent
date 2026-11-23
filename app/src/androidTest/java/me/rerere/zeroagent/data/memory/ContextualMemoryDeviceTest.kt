@@ -27,7 +27,7 @@ class ContextualMemoryDeviceTest {
             assertTrue(MemoryNative.recent(h, 10).decodeToString().contains("電腦"))
         } finally { MemoryNative.close(h); file.delete() }
     }
-    @Test fun realPinnedModelEmbedsAndRecallsChinese() = runBlocking {
+    @Test fun realPinnedModelEmbedsChineseAndKeepsLegacyRecordsOutOfPrompt() = runBlocking {
         check(context.packageName == "app.zeroagent.debug") { "Memory fixtures require the isolated debug package" }
         assertTrue("Device test model must be provisioned by test harness", MemoryManager.get(context).modelFile.isFile)
         val manager = MemoryManager.get(context)
@@ -46,15 +46,14 @@ class ContextualMemoryDeviceTest {
                 assertTrue("Related Chinese text must rank above an unrelated topic", related > other + .02)
             }
             manager.setEnabled(true)
-            val user = UIMessage(role = MessageRole.USER, parts = listOf(UIMessagePart.Text("我最喜歡喝烏龍茶，不喜歡加糖。")))
-            val answer = UIMessage(role = MessageRole.ASSISTANT, parts = listOf(UIMessagePart.Text("你偏好無糖烏龍茶。")))
-            manager.remember(listOf(user, answer), "memory-device-fixture")
+            val legacyText = "舊索引測試資料：偏好無糖烏龍茶"
+            seedLegacyMemory(manager, "device-tea", legacyText, "memory-device-fixture", "USER")
+            manager.refresh()
+            assertEquals(legacyText, manager.state.value.records.single().text)
             val query = UIMessage(role = MessageRole.USER, parts = listOf(UIMessagePart.Text("我喜歡喝什麼茶？")))
             val recall = manager.prepare(listOf(query), "new-device-fixture")
-            assertTrue(recall.prompt.contains("烏龍茶"))
-            val alreadyInContext = manager.prepare(listOf(user, answer, query), "same-context-device-fixture")
-            assertFalse(alreadyInContext.prompt.contains("烏龍茶"))
-            manager.refresh(); assertTrue(manager.state.value.records.isNotEmpty())
+            assertTrue(recall.active)
+            assertFalse(recall.prompt.contains(legacyText))
             manager.setEnabled(false)
             val stopped = manager.prepare(listOf(query), "disabled-device-fixture")
             assertFalse(stopped.active); assertTrue(stopped.prompt.isEmpty())

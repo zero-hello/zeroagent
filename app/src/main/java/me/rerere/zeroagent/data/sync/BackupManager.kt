@@ -44,7 +44,9 @@ class BackupManager(
                 if (BackupItem.CONFIG in selected) {
                     val settings = settingsStore.settingsFlowRaw.first()
                     zip.putNextEntry(ZipEntry("settings.json"))
-                    zip.write(stripBackupCredentials(json.parseToJsonElement(json.encodeToString(settings))).toString().toByteArray(Charsets.UTF_8))
+                    val safeSettings = stripBackupCredentials(json.parseToJsonElement(json.encodeToString(settings))).toString().toByteArray(Charsets.UTF_8)
+                    requireSettingsSize(safeSettings.size.toLong())
+                    zip.write(safeSettings)
                     zip.closeEntry()
                 }
                 if (BackupItem.DATABASE in selected) {
@@ -167,12 +169,19 @@ class BackupManager(
                             check(target.parentFile!!.isDirectory || target.parentFile!!.mkdirs()) {
                                 "Cannot create backup staging directory"
                             }
+                            val isSettings = entry.name == "settings.json"
+                            if (isSettings) requireSettingsSize(entry.size)
+                            var entryBytes = 0L
                             zip.getInputStream(entry).use { input ->
                                 FileOutputStream(target).use { output ->
                                     while (true) {
                                         currentCoroutineContext().ensureActive()
                                         val count = input.read(buffer)
                                         if (count < 0) break
+                                        if (isSettings) {
+                                            entryBytes += count
+                                            requireSettingsSize(entryBytes)
+                                        }
                                         extractedBytes += count
                                         require(extractedBytes <= extractionBudget) { "備份解壓後超出可用儲存空間。" }
                                         output.write(buffer, 0, count)
@@ -208,7 +217,9 @@ class BackupManager(
                         val settings = json.decodeFromString<Settings>(SettingsJsonMigrator.migrate(settingsFile.readText()))
                         require(!settings.init) { "Backup contains uninitialized settings" }
                         // Persist the migrated value once, including generated IDs, for restart/retry consistency.
-                        PendingRestore.writeDurably(settingsFile, json.encodeToString(settings))
+                        val migrated = json.encodeToString(settings)
+                        requireSettingsSize(migrated.toByteArray(Charsets.UTF_8).size.toLong())
+                        PendingRestore.writeDurably(settingsFile, migrated)
                     }
                     currentCoroutineContext().ensureActive()
                     restore.publish(staging)
@@ -225,6 +236,10 @@ class BackupManager(
     }
 
     companion object {
+        private fun requireSettingsSize(size: Long) {
+            require(size in 0..(16L * 1024 * 1024)) { "備份中的設定檔超過 16 MB 或檔案大小無效。" }
+        }
+
         private fun pendingRestore(context: Context) = PendingRestore(
             root = File(context.noBackupFilesDir, "backup-restore"),
             databaseFile = context.getDatabasePath(SQLiteConfiguration.DATABASE_NAME),

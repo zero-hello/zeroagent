@@ -19,6 +19,20 @@ class ConversationTransferValidationTest {
     @get:Rule val temp = TemporaryFolder()
 
     @Test
+    fun writesManifestWithUtf8ByteBudget() {
+        val manifest = ConversationTransferArchive(format = "zeroagent-conversations-1", labPreferences = mapOf("example" to "測試"))
+        val expected = me.rerere.zeroagent.utils.JsonInstant.encodeToString(ConversationTransferArchive.serializer(), manifest).encodeToByteArray()
+        val exact = ByteArrayOutputStream()
+        assertEquals(expected.size.toLong(), writePortableManifest(exact, manifest, expected.size.toLong()))
+        assertArrayEquals(expected, exact.toByteArray())
+
+        val short = ByteArrayOutputStream()
+        assertThrows(IllegalArgumentException::class.java) {
+            writePortableManifest(short, manifest, expected.size.toLong() - 1)
+        }
+    }
+
+    @Test
     fun validatesAndStagesExactBytes() {
         val bytes = "可攜對話資料".encodeToByteArray()
         val file = temp.newFile()

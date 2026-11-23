@@ -4,15 +4,14 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.AtomicFile
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import me.rerere.document.DocxParser
-import me.rerere.document.EpubParser
-import me.rerere.document.PdfParser
-import me.rerere.document.PptxParser
+import me.rerere.document.DocumentExcerptReader
 import me.rerere.zeroagent.data.model.Assistant
 import me.rerere.zeroagent.data.model.Conversation
 import me.rerere.zeroagent.utils.JsonInstant
@@ -192,6 +191,7 @@ class ProjectStore private constructor(private val context: Context) {
                     val buffer = ByteArray(8192)
                     var total = 0L
                     while (true) {
+                        ensureActive()
                         val n = input.read(buffer)
                         if (n < 0) break
                         total += n
@@ -200,16 +200,24 @@ class ProjectStore private constructor(private val context: Context) {
                     }
                 }
             } ?: error("無法讀取文件。")
-            val text = when (name.substringAfterLast('.', "").lowercase()) {
-                "pdf" -> PdfParser.parserPdf(temp)
-                "docx" -> DocxParser.parse(temp)
-                "pptx" -> PptxParser.parse(temp)
-                "epub" -> EpubParser.parse(temp)
-                "txt", "md", "csv", "json", "html", "log" -> temp.readText()
-                else -> error("此格式尚未支援；請轉成 PDF、DOCX、PPTX、EPUB 或文字檔。")
+            val mime = when (name.substringAfterLast('.', "").lowercase()) {
+                "pdf" -> "application/pdf"
+                "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                "pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                "epub" -> "application/epub+zip"
+                "txt", "md", "csv", "json", "html", "log" -> "text/plain"
+                else -> error("此格式尚未支援，請轉成 PDF、DOCX、PPTX、EPUB 或文字檔。")
             }
-            require(text.isNotBlank()) { "沒有可讀取的文字；掃描文件請先使用 OCR。" }
-            require(text.length <= 500_000) { "文字超過 50 萬字元，請先拆分。" }
+            val text = try {
+                DocumentExcerptReader.readComplete(temp, mime, 500_000) { ensureActive() }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: IllegalArgumentException) {
+                throw e
+            } catch (e: Exception) {
+                throw IllegalArgumentException("無法完整讀取文件，請確認格式與內容。", e)
+            }
+            requireNotNull(text) { "沒有可讀取的文字。掃描文件請先使用 OCR。" }
             KnowledgeDocument(name = name, text = text)
         } finally { temp.delete() }
     }

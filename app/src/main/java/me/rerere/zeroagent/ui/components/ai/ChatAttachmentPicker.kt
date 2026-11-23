@@ -8,13 +8,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.dokar.sonner.ToastType
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import me.rerere.ai.ui.UIMessagePart
 import me.rerere.common.android.appTempFolder
-import me.rerere.zeroagent.R
 import me.rerere.zeroagent.data.datastore.Settings
 import me.rerere.zeroagent.data.files.FilesManager
 import me.rerere.zeroagent.data.files.importComposerAttachment
@@ -45,16 +53,42 @@ internal fun rememberChatAttachmentPickerActions(
     val context = LocalContext.current
     val toaster = LocalToaster.current
     val filesManager: FilesManager = koinInject()
-    fun addAttachments(uris: List<Uri>, expectedType: String? = null) {
-        val parts = uris.mapNotNull { uri ->
-            filesManager.importComposerAttachment(uri, expectedType) { reason ->
-                toaster.show(reason, type = ToastType.Error)
+    val scope = rememberCoroutineScope()
+    suspend fun addAttachments(uris: List<Uri>, expectedType: String? = null) {
+        val issues = mutableListOf<String>()
+        val parts = mutableListOf<UIMessagePart>()
+        try {
+            withContext(Dispatchers.IO) {
+                uris.forEach { uri ->
+                    ensureActive()
+                    filesManager.importComposerAttachment(uri, expectedType) { issues.add(it) }
+                        ?.let(parts::add)
+                }
             }
+        } catch (e: CancellationException) {
+            withContext(NonCancellable + Dispatchers.IO) {
+                val localUris = parts.mapNotNull {
+                    when (it) {
+                        is UIMessagePart.Image -> it.url.toUri()
+                        is UIMessagePart.Audio -> it.url.toUri()
+                        is UIMessagePart.Video -> it.url.toUri()
+                        is UIMessagePart.Document -> it.url.toUri()
+                        else -> null
+                    }
+                }
+                filesManager.deleteChatFiles(localUris)
+            }
+            throw e
         }
+        issues.forEach { toaster.show(it, type = ToastType.Error) }
         if (parts.isNotEmpty()) {
             inputState.messageContent += parts
             onAttachmentAdded()
         }
+    }
+
+    fun enqueueAttachments(uris: List<Uri>, expectedType: String? = null) {
+        if (uris.isNotEmpty()) scope.launch { addAttachments(uris, expectedType) }
     }
 
     val cameraPermission = rememberPermissionState(PermissionCamera)
@@ -75,10 +109,17 @@ internal fun rememberChatAttachmentPickerActions(
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { captureSuccessful ->
         if (captureSuccessful && cameraOutputUri != null) {
             if (setting.displaySetting.skipCropImage) {
-                addAttachments(listOf(cameraOutputUri!!), "image")
-                cameraOutputFile?.delete()
+                val uri = requireNotNull(cameraOutputUri)
+                val file = cameraOutputFile
                 cameraOutputFile = null
                 cameraOutputUri = null
+                scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                    try {
+                        addAttachments(listOf(uri), "image")
+                    } finally {
+                        file?.delete()
+                    }
+                }
             } else {
                 launchCameraCrop(cameraOutputUri!!)
             }
@@ -101,6 +142,7 @@ internal fun rememberChatAttachmentPickerActions(
     }
 
     var preCropTempFile by remember { mutableStateOf<File?>(null) }
+    var preparingCrop by remember { mutableStateOf(false) }
     val (_, launchImageCrop) = useCropLauncher(
         onCroppedImageReady = { croppedUri ->
             addAttachments(listOf(croppedUri), "image")
@@ -112,76 +154,88 @@ internal fun rememberChatAttachmentPickerActions(
     )
     val imagePickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { selectedUris ->
-            if (selectedUris.isNotEmpty()) {
-                Log.d("ImagePickButton", "Selected URIs: $selectedUris")
-                if (setting.displaySetting.skipCropImage) {
-                    addAttachments(selectedUris, "image")
-                } else if (selectedUris.size == 1) {
-                    val tempFile = File(context.appTempFolder, "pick_temp_${System.currentTimeMillis()}.jpg")
-                    val source = selectedUris.first()
-                    if (runCatching { filesManager.getFileMimeType(source)?.startsWith("image/") }.getOrNull() != true) {
-                        toaster.show("不支援這個圖片格式", type = ToastType.Error)
-                        return@rememberLauncherForActivityResult
-                    }
-                    val limitBytes = 50L * 1024 * 1024
-                    if ((filesManager.getFileSize(source) ?: 0L) > limitBytes) {
-                        toaster.show("圖片超過 50 MB 上限", type = ToastType.Error)
-                        return@rememberLauncherForActivityResult
-                    }
-                    runCatching {
-                        // HEIF/HEIC（尤其 HDR HEIF）交给 UCrop 前先解码转为 JPEG，规避裁剪解码失败
-                        val converted = ImageUtils.isHeifImage(context, source) &&
-                            ImageUtils.convertHeifToJpeg(context, source, tempFile)
-                        if (!converted) {
-                            val sourceStream = context.contentResolver.openInputStream(source) ?: error("Unreadable image")
-                            sourceStream.use { input ->
-                                tempFile.outputStream().use { output ->
-                                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                                    var total = 0L
-                                    while (true) {
-                                        val count = input.read(buffer)
-                                        if (count < 0) break
-                                        total += count
-                                        check(total <= limitBytes) { "圖片超過 50 MB 上限" }
-                                        output.write(buffer, 0, count)
-                                    }
-                                }
-                            }
-                        }
-                        check(tempFile.isFile && tempFile.length() > 0L) { "空白圖片" }
+            val source = selectedUris.singleOrNull()
+            if (source == null || setting.displaySetting.skipCropImage) {
+                enqueueAttachments(selectedUris, "image")
+            } else if (!preparingCrop && preCropTempFile == null) {
+                preparingCrop = true
+                scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                    val tempFile = File(context.appTempFolder, "pick_temp_${Uuid.random()}.jpg")
+                    try {
+                        withContext(Dispatchers.IO) { prepareImageForCrop(context, filesManager, source, tempFile) }
                         preCropTempFile = tempFile
                         launchImageCrop(tempFile.toUri())
-                    }.onFailure {
-                        Log.e("ImagePickButton", "Failed to prepare cropped image", it)
-                        tempFile.delete()
-                        toaster.show(it.message?.takeIf { message -> message == "圖片超過 50 MB 上限" } ?: "無法讀取圖片，請重新選擇", type = ToastType.Error)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        if (preCropTempFile == tempFile) preCropTempFile = null
+                        Log.w("ChatAttachmentPicker", "Image preparation failed", e)
+                        val message = if (e is CropPreparationException) e.message else null
+                        toaster.show(message ?: "無法讀取圖片，請重新選擇", type = ToastType.Error)
+                    } finally {
+                        if (preCropTempFile != tempFile) tempFile.delete()
+                        preparingCrop = false
                     }
-                } else {
-                    addAttachments(selectedUris, "image")
                 }
-            } else {
-                Log.d("ImagePickButton", "No images selected")
             }
         }
 
     val videoPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { selectedUris ->
-            addAttachments(selectedUris, "video")
+            enqueueAttachments(selectedUris, "video")
         }
     val audioPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { selectedUris ->
-            addAttachments(selectedUris, "audio")
+            enqueueAttachments(selectedUris, "audio")
         }
     val filePickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { selectedUris ->
-            addAttachments(selectedUris)
+            enqueueAttachments(selectedUris)
         }
 
     return ChatAttachmentPickerActions(
         onTakePicture = onTakePicture,
-        onPickImage = { imagePickerLauncher.launch("image/*") },
+        onPickImage = { if (!preparingCrop && preCropTempFile == null) imagePickerLauncher.launch("image/*") },
         onPickVideo = { videoPickerLauncher.launch("video/*") },
         onPickAudio = { audioPickerLauncher.launch("audio/*") },
         onPickFile = { filePickerLauncher.launch(arrayOf("*/*")) },
     )
+}
+
+private class CropPreparationException(message: String) : java.io.IOException(message)
+
+private fun prepareImageForCrop(context: android.content.Context, filesManager: FilesManager, source: Uri, target: File) {
+    if (filesManager.getFileMimeType(source)?.startsWith("image/") != true) {
+        throw CropPreparationException("不支援這個圖片格式")
+    }
+    val limit = 50L * 1024 * 1024
+    fun tooLarge(): Nothing = throw CropPreparationException("圖片超過 50 MB 上限")
+    val input = context.contentResolver.openInputStream(source) ?: error("無法讀取圖片")
+    input.use {
+        target.outputStream().use { output ->
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            var total = 0L
+            while (true) {
+                val count = it.read(buffer)
+                if (count < 0) break
+                total += count
+                if (total > limit) tooLarge()
+                output.write(buffer, 0, count)
+            }
+        }
+    }
+    if (target.length() == 0L) throw CropPreparationException("圖片是空的")
+    // Decode the bounded local copy, so HEIF preparation reads the same input that was checked.
+    val localSource = target.toUri()
+    if (ImageUtils.isHeifImage(context, localSource)) {
+        val converted = File(target.parentFile, "${target.nameWithoutExtension}_converted.jpg")
+        try {
+            if (ImageUtils.convertHeifToJpeg(context, localSource, converted)) {
+                if (converted.length() > limit) tooLarge()
+                converted.copyTo(target, overwrite = true)
+            }
+        } finally {
+            converted.delete()
+        }
+    }
 }

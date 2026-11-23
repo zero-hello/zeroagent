@@ -102,23 +102,24 @@ fun SettingPreferencesNetworkPage(vm: SettingVM = koinViewModel()) {
 
     fun updateUserAgent(value: String) {
         userAgent = value
-        vm.updateSettings(
-            settings.copy(
-                networkSetting = settings.networkSetting.copy(userAgent = value),
-            )
-        )
+        vm.updateSettings { current ->
+            current.copy(networkSetting = current.networkSetting.copy(userAgent = value))
+        }
     }
 
     fun saveProxy() {
-        vm.updateSettings(
-            settings.copy(
-                networkSetting = settings.networkSetting.copy(
-                    proxyUrl = proxyUrlDraft,
-                    proxyUsername = proxyUsernameDraft,
-                    proxyPassword = proxyPasswordDraft,
+        val url = proxyUrlDraft
+        val username = proxyUsernameDraft
+        val password = proxyPasswordDraft
+        vm.updateSettings { current ->
+            current.copy(
+                networkSetting = current.networkSetting.copy(
+                    proxyUrl = url,
+                    proxyUsername = username,
+                    proxyPassword = password,
                 ),
             )
-        )
+        }
     }
 
     fun resetProxy() {

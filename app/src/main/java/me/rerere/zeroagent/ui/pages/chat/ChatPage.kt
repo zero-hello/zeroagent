@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -164,7 +163,6 @@ fun ChatPage(
         .ifBlank { null }
 
     val appDrawer = LocalAppDrawer.current
-    val drawerState = appDrawer.state
     val isBigScreen = appDrawer.isPermanent
 
     val startVoiceMode = rememberVoiceModeStarter(vm, setting)
@@ -223,7 +221,7 @@ fun ChatPage(
             processingStatus = mergedStatus,
             setting = setting,
             conversation = conversation,
-            drawerState = drawerState,
+            onOpenDrawer = appDrawer::open,
             navController = navController,
             vm = vm,
             chatListState = chatListState,
@@ -283,7 +281,7 @@ private fun ChatPageContent(
     setting: Settings,
     bigScreen: Boolean,
     conversation: Conversation,
-    drawerState: DrawerState,
+    onOpenDrawer: () -> Unit,
 
     navController: Navigator,
     vm: ChatVM,
@@ -691,7 +689,7 @@ private fun ChatPageContent(
                         onTemporaryChat = if (privateChatEnabled == "true") ({ showTemporary = true }) else null,
                         onClearDraft = vm::clearSavedDraft,
                         bigScreen = bigScreen,
-                        drawerState = drawerState,
+                        onOpenDrawer = onOpenDrawer,
                         onOpenTerminal = {
                             navController.navigate(Screen.WorkspaceTerminal("android-shell"))
                         },
@@ -816,7 +814,7 @@ private fun ChatFilesPickerSheet(
 private fun TopBar(
     settings: Settings,
     conversation: Conversation,
-    drawerState: DrawerState,
+    onOpenDrawer: () -> Unit,
     onOpenTerminal: () -> Unit,
     onTemporaryChat: (() -> Unit)?,
     onClearDraft: () -> Unit,
@@ -826,7 +824,6 @@ private fun TopBar(
     onClickMenu: () -> Unit,
     onNewChat: () -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
     // 与抽屉的 Rename 菜单项共享同一个重命名对话框状态，见 ChatDrawerVM.conversationToRename
     val activity = LocalActivity.current as ComponentActivity
@@ -837,10 +834,7 @@ private fun TopBar(
         navigationIcon = {
             if (!bigScreen) {
                 ChatTopBarButton(
-                    onClick = {
-                        scope.launch { drawerState.open() }
-                    },
-
+                    onClick = onOpenDrawer,
                 ) {
                     Icon(HugeIcons.Menu03, stringResource(R.string.menu))
                 }

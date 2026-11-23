@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -31,6 +32,7 @@ class NavigationDrawerTransitionsTest {
                 ChatDrawerLayout(
                     isBigScreen = isBigScreen,
                     drawerState = rememberDrawerState(DrawerValue.Closed),
+                    drawerWidth = 120.dp,
                     enabled = drawerEnabled.value,
                     drawerContent = { Text("Conversation list") },
                 ) {

@@ -11,7 +11,9 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.encodeToStream
 import me.rerere.ai.core.MessageRole
 import me.rerere.zeroagent.data.model.Avatar
 import me.rerere.ai.ui.ToolApprovalState
@@ -125,15 +127,19 @@ internal class ConversationTransfer(
         val configuration = settings.settingsFlow.first()
         val display = if (includeDisplay) configuration.displaySetting.copy(userAvatar = Avatar.Dummy, chatCustomFontPath = "", chatCustomFontName = "") else null
         val preferences = if (includePreferences) settingsKeys.associateWith { LabPreferences.get(context, it) }.filterValues { it.isNotBlank() } else emptyMap()
-        val json = JsonInstant.encodeToString(ConversationTransferArchive(format = "zeroagent-conversations-1", conversations = conversations, display = display, labPreferences = preferences, featureData = featureData)).toByteArray()
-        require(json.size <= maximumManifestBytes && assets.values.sumOf { it.length() } <= maximumArchiveBytes - json.size) { "所選聊天或附件超出單次匯出上限。" }
+        val manifest = ConversationTransferArchive(
+            format = "zeroagent-conversations-1", conversations = conversations, display = display,
+            labPreferences = preferences, featureData = featureData,
+        )
+        val assetBytes = assets.values.sumOf { it.length() }
+        require(assetBytes <= maximumArchiveBytes) { "所選聊天或附件超出單次匯出上限。" }
         val temp = File.createTempFile("portable-chat-", ".zip", context.cacheDir)
         try {
             ZipOutputStream(temp.outputStream().buffered()).use { zip ->
                 zip.putNextEntry(ZipEntry("manifest.json"))
-                zip.write(json)
+                val manifestBytes = writePortableManifest(zip, manifest, minOf(maximumManifestBytes, maximumArchiveBytes - assetBytes))
                 zip.closeEntry()
-                var remaining = maximumArchiveBytes - json.size
+                var remaining = maximumArchiveBytes - manifestBytes
                 for ((name, file) in assets) {
                     zip.putNextEntry(ZipEntry(name))
                     remaining -= file.inputStream().use { it.copyBounded(zip, remaining) }
@@ -163,8 +169,9 @@ internal class ConversationTransfer(
             val source = requireNotNull(context.contentResolver.openInputStream(uri)) { "無法讀取匯入檔案。" }
             source.use { input -> file.outputStream().use { input.copyBounded(it, maximumArchiveBytes + maximumManifestBytes) } }
             ZipFile(file).use { zip ->
+                require(zip.size() in 1..2001) { "備份項目過多或沒有可用項目。" }
                 val entries = zip.entries().asSequence().toList()
-                require(entries.size in 1..2001 && entries.distinctBy { it.name }.size == entries.size) { "備份內有重複項目或項目過多。" }
+                require(entries.distinctBy { it.name }.size == entries.size) { "備份內有重複項目或項目過多。" }
                 val manifest = requireNotNull(zip.getEntry("manifest.json")) { "找不到匯入清單。" }
                 val bytes = java.io.ByteArrayOutputStream()
                 verifyPortableEntry(zip, manifest, maximumManifestBytes, bytes)
@@ -419,6 +426,29 @@ internal class ConversationTransfer(
 }
 
 /** Stream validation happens both before preview and while staging the exact bytes to restore. */
+@OptIn(ExperimentalSerializationApi::class)
+internal fun writePortableManifest(output: OutputStream, manifest: ConversationTransferArchive, limit: Long): Long {
+    var written = 0L
+    fun checkLimit(count: Int) {
+        require(count <= limit - written) { "所選聊天或附件超出單次匯出上限。" }
+    }
+    val bounded = object : OutputStream() {
+        override fun write(value: Int) {
+            checkLimit(1)
+            output.write(value)
+            written++
+        }
+
+        override fun write(bytes: ByteArray, offset: Int, length: Int) {
+            checkLimit(length)
+            output.write(bytes, offset, length)
+            written += length
+        }
+    }
+    JsonInstant.encodeToStream(ConversationTransferArchive.serializer(), manifest, bounded)
+    return written
+}
+
 internal suspend fun verifyPortableEntry(zip: ZipFile, entry: ZipEntry, limit: Long, output: OutputStream? = null): Long {
     require(entry.size in 0..limit && entry.crc >= 0) { "備份附件超出大小限制或缺少校驗資料。" }
     val checksum = CRC32()
