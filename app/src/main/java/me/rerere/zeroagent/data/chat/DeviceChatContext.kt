@@ -14,13 +14,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import me.rerere.zeroagent.data.root.RootAccessManager
 import me.rerere.zeroagent.data.root.RootAccessStatus
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 
 internal data class DeviceChatStatus(
-    val lowBatteryPercent: Int?,
+    val batteryPercent: Int?,
+    val externalPowerConnected: Boolean?,
     val severeThermalLoad: Boolean,
     val powerSave: Boolean,
     val metered: Boolean,
@@ -34,7 +31,7 @@ internal fun readDeviceChatStatus(context: Context): DeviceChatStatus {
     val level = battery?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
     val scale = battery?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
     val percent = if (level in 0..scale && scale > 0) (100L * level / scale).toInt() else null
-    val plugged = (battery?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0
+    val plugged = battery?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)?.takeIf { it >= 0 }?.let { it != 0 }
     val power = context.getSystemService(PowerManager::class.java)
     val connection = context.getSystemService(ConnectivityManager::class.java)
     val activeNetwork = connection?.activeNetwork
@@ -48,7 +45,8 @@ internal fun readDeviceChatStatus(context: Context): DeviceChatStatus {
     val activity = context.getSystemService(ActivityManager::class.java)
     val lowMemory = activity?.let { manager -> ActivityManager.MemoryInfo().also(manager::getMemoryInfo).lowMemory } == true
     return DeviceChatStatus(
-        lowBatteryPercent = percent?.takeIf { it <= 15 && !plugged },
+        batteryPercent = percent,
+        externalPowerConnected = plugged,
         severeThermalLoad = (power?.currentThermalStatus ?: 0) >= PowerManager.THERMAL_STATUS_SEVERE,
         powerSave = power?.isPowerSaveMode == true,
         metered = activeNetwork != null && connection?.isActiveNetworkMetered == true,
@@ -58,35 +56,29 @@ internal fun readDeviceChatStatus(context: Context): DeviceChatStatus {
     )
 }
 
-internal fun observeDeviceChatStatus(context: Context) = flow {
-    while (true) {
-        emit(runCatching { readDeviceChatStatus(context) }.getOrNull())
-        delay(15_000)
-    }
-}.distinctUntilChanged().flowOn(Dispatchers.IO)
-
-private val recentDeviceAlerts = object : LinkedHashMap<String, String>(32, 0.75f, true) {
-    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean = size > 64
+internal suspend fun deviceContextForChat(context: Context): String? = withContext(Dispatchers.IO) {
+    val status = readDeviceChatStatus(context)
+    val highSwapUsage = status.lowMemory && readRootMemoryPressure(context) == true
+    status.toPromptContext(highSwapUsage)
 }
 
-internal suspend fun deviceContextForChat(context: Context, conversationId: String, includeRoot: Boolean): String? = withContext(Dispatchers.IO) {
-    val status = readDeviceChatStatus(context)
+internal fun DeviceChatStatus.toPromptContext(highSwapUsage: Boolean = false): String? {
     val facts = buildList {
-        if (status.lowBatteryPercent != null) add("battery is low and not charging")
-        if (status.lowMemory) add("Android reports low available memory")
-        if (status.powerSave) add("battery saver is on")
-        if (status.networkIssue != null) add(status.networkIssue)
-        if (status.metered) add("the active connection is metered")
-        if (includeRoot && status.lowMemory && readRootMemoryPressure(context) == true) {
-            add("most configured swap space is in use")
-        }
-        if (status.severeThermalLoad) add("device is under severe thermal load")
-        if (status.lowStorage) add("less than 500 MB of internal storage available")
+        batteryPercent?.let { add("battery level: $it%") }
+        externalPowerConnected?.let { add(if (it) "external power connected" else "external power disconnected") }
+        if (lowMemory) add("Android reports low available memory")
+        if (powerSave) add("battery saver is on")
+        networkIssue?.let(::add)
+        if (metered) add("the active connection is metered")
+        if (lowMemory && highSwapUsage) add("most configured swap space is in use")
+        if (severeThermalLoad) add("device is under severe thermal load")
+        if (lowStorage) add("less than 500 MiB of internal storage available")
     }
-    val current = facts.joinToString("; ")
-    val changed = synchronized(recentDeviceAlerts) { recentDeviceAlerts.put(conversationId, current) != current }
-    current.takeIf { changed && it.isNotEmpty() }?.let {
-        "Android alert for this turn: $it. Mention it only if directly useful. Do not infer missing information."
+    if (facts.isEmpty()) return null
+    return buildString {
+        appendLine("## 本輪裝置背景（僅供回答和這台裝置有關的問題）")
+        appendLine("這是目前觀測資料，不是使用者提出的要求。只有最新問題在問這台裝置的狀態或在排查相關故障時，才可以提及必要欄位。其他回覆一律省略，即使觀測到異常。缺少欄位代表未提供資料。")
+        append(facts.joinToString("; "))
     }
 }
 

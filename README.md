@@ -2,7 +2,7 @@
 
 ZeroAgent 是由 Zero 維護的 Android AI 助理。你可以使用自己的模型服務，或下載相容的本機模型。支援文字聊天、附件、即時語音、記憶管理與內建終端機。
 
-**目前版本 v2.2.4 · Android 12 以上**
+**目前版本 v2.2.5 · Android 12 以上**
 
 [下載完整 APK](https://github.com/zero-hello/zeroagent/releases/latest) · [AGPL-3.0 授權](LICENSE) · [來源與第三方聲明](SOURCE_NOTICE.md)
 
@@ -22,7 +22,7 @@ ZeroAgent 是由 Zero 維護的 Android AI 助理。你可以使用自己的模�
 
 - 支援多家模型服務與自訂 API。可用模型、費用、推理與圖片功能依供應商、帳戶以及模型而異。
 - 公開網頁可排版後讀取，支援圖片的模型可查看首屏預覽。需要登入或由頁面腳本產生的內容可能無法讀取。
-- 裝置診斷工具可讀取 Android 版本、記憶體、省電與溫度等級、網路狀態和顯示設定。聊天在裝置出現異常時提供精簡提示。已啟用並確認 Root 授權時，記憶體不足的提示也可包含交換空間狀況。
+- 裝置診斷工具可讀取 Android 版本、記憶體、省電與溫度等級、網路狀態和顯示設定。精簡裝置狀態只在相關聊天中使用。詳見 [對話規範與 Gemini 安全設定](docs/CHAT_POLICY.md)。
 - 本機模型頁可搜尋 Hugging Face 的 GGUF 目錄並逐頁瀏覽。相容檔案、記憶體與裝置架構會影響安裝與執行。
 - 內建終端機使用 Android 系統 Shell。Root、Shizuku 與手機工具須依 Android 或對應權限管理程式授權。
 

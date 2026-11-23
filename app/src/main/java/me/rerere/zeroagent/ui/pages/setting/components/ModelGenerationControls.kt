@@ -52,26 +52,41 @@ private fun NumericModelParameter(owner: String, key: String, label: String, val
 }
 
 @Composable
-fun GeminiSafetyControls(value: GeminiSafetySettings, onChange: (GeminiSafetySettings) -> Unit, includeCivic: Boolean = false) {
+fun GeminiSafetyControls(value: GeminiSafetySettings, onChange: (GeminiSafetySettings) -> Unit) {
     Text(stringResource(R.string.zeroagent11_safety_title), style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(R.string.gemini_safety_scope), style = MaterialTheme.typography.bodySmall)
     val categories = listOf(
-        "HARM_CATEGORY_HARASSMENT" to R.string.zeroagent11_safety_harassment,
-        "HARM_CATEGORY_HATE_SPEECH" to R.string.zeroagent11_safety_hate,
-        "HARM_CATEGORY_SEXUALLY_EXPLICIT" to R.string.zeroagent11_safety_sexual,
-        "HARM_CATEGORY_DANGEROUS_CONTENT" to R.string.zeroagent11_safety_dangerous,
-    ) + if (includeCivic) listOf("HARM_CATEGORY_CIVIC_INTEGRITY" to R.string.zeroagent11_safety_civic) else emptyList()
+        Triple("HARM_CATEGORY_HARASSMENT", R.string.zeroagent11_safety_harassment, R.string.gemini_safety_harassment_help),
+        Triple("HARM_CATEGORY_HATE_SPEECH", R.string.zeroagent11_safety_hate, R.string.gemini_safety_hate_help),
+        Triple("HARM_CATEGORY_SEXUALLY_EXPLICIT", R.string.zeroagent11_safety_sexual, R.string.gemini_safety_sexual_help),
+        Triple("HARM_CATEGORY_DANGEROUS_CONTENT", R.string.zeroagent11_safety_dangerous, R.string.gemini_safety_dangerous_help),
+    )
     val labels = mapOf(
         GeminiSafetyThreshold.HARM_BLOCK_THRESHOLD_UNSPECIFIED to stringResource(R.string.zeroagent11_server_default),
-        GeminiSafetyThreshold.BLOCK_LOW_AND_ABOVE to stringResource(R.string.zeroagent11_safety_strict),
-        GeminiSafetyThreshold.BLOCK_MEDIUM_AND_ABOVE to stringResource(R.string.zeroagent11_safety_balanced),
-        GeminiSafetyThreshold.BLOCK_ONLY_HIGH to stringResource(R.string.zeroagent11_safety_high),
-        GeminiSafetyThreshold.BLOCK_NONE to stringResource(R.string.zeroagent11_safety_none),
-        GeminiSafetyThreshold.OFF to stringResource(R.string.zeroagent11_safety_off),
+        GeminiSafetyThreshold.BLOCK_LOW_AND_ABOVE to stringResource(R.string.gemini_safety_block_low),
+        GeminiSafetyThreshold.BLOCK_MEDIUM_AND_ABOVE to stringResource(R.string.gemini_safety_block_medium),
+        GeminiSafetyThreshold.BLOCK_ONLY_HIGH to stringResource(R.string.gemini_safety_block_high),
+        GeminiSafetyThreshold.BLOCK_NONE to stringResource(R.string.gemini_safety_block_none),
+        GeminiSafetyThreshold.OFF to stringResource(R.string.gemini_safety_off),
     )
-    categories.forEach { (category, label) ->
+    categories.forEach { (category, label, description) ->
         val selected = value.thresholds[category] ?: GeminiSafetyThreshold.OFF
-        SelectTextField(value = labels.getValue(selected), options = GeminiSafetyThreshold.entries, readOnly = true,
-            onOptionSelected = { threshold -> onChange(value.copy(thresholds = value.thresholds + (category to threshold))) },
-            optionToString = { labels.getValue(it) }, label = { Text(stringResource(label)) }, modifier = Modifier.fillMaxWidth())
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            SelectTextField(
+                value = labels.getValue(selected),
+                options = GeminiSafetyThreshold.entries,
+                readOnly = true,
+                onOptionSelected = { threshold -> onChange(value.copy(thresholds = value.thresholds + (category to threshold))) },
+                optionToString = { labels.getValue(it) },
+                label = { Text(stringResource(label)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(stringResource(description), style = MaterialTheme.typography.bodySmall)
+        }
     }
+    var showThresholds by remember { mutableStateOf(false) }
+    TextButton(onClick = { showThresholds = !showThresholds }) {
+        Text(stringResource(if (showThresholds) R.string.gemini_safety_hide_help else R.string.gemini_safety_show_help))
+    }
+    if (showThresholds) Text(stringResource(R.string.gemini_safety_threshold_help), style = MaterialTheme.typography.bodySmall)
 }

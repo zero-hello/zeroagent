@@ -33,4 +33,17 @@
     <string name="zeroagent11_save">儲存</string>
     <string name="zeroagent11_notification_no_title">無標題</string>
     <string name="zeroagent11_notification_no_text">無文字內容</string>
+    <string name="gemini_safety_scope">這些篩選適用於模型支援的輸入與回覆。Google 仍會執行額外保護，例如兒少安全。ZeroAgent 的內建規範也會繼續生效。</string>
+    <string name="gemini_safety_harassment_help">針對個人的惡意辱罵、霸凌或威脅。</string>
+    <string name="gemini_safety_hate_help">因身分或群體特徵而攻擊、貶抑或鼓吹傷害。</string>
+    <string name="gemini_safety_sexual_help">露骨的性描述或性行為描寫。</string>
+    <string name="gemini_safety_dangerous_help">鼓吹或助長現實傷害的內容。防護與教育內容仍可能因用詞及模型而被分類。</string>
+    <string name="gemini_safety_block_low">攔截低、中、高機率</string>
+    <string name="gemini_safety_block_medium">攔截中、高機率</string>
+    <string name="gemini_safety_block_high">只攔截高機率</string>
+    <string name="gemini_safety_block_none">不依這類評分攔截</string>
+    <string name="gemini_safety_off">關閉此類篩選</string>
+    <string name="gemini_safety_show_help">查看攔截門檻說明</string>
+    <string name="gemini_safety_hide_help">收起攔截門檻說明</string>
+    <string name="gemini_safety_threshold_help">供應商預設會採用模型或端點的預設。一般 Gemini API 會判定內容屬於某類的機率。低於所選門檻的內容可通過這一類的篩選。「不依這類評分攔截」仍可能回傳評分。「關閉此類篩選」在支援的端點通常也不回傳此類評分。可用選項依模型或端點而異。其他分類與強制保護仍可能攔截輸入或回覆。ZeroAgent 新增的供應商設定會先使用「關閉此類篩選」，你可以逐類調整。</string>
 </resources>

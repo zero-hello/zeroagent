@@ -51,9 +51,6 @@
     <string name="memory_mood_enable">Analyze chat mood</string>
     <string name="memory_mood_privacy">Mood is analyzed on your device. Existing excerpts are no longer used for chat. Saved long-term memories remain available.</string>
     <string name="memory_mood_consent">Download and verify the 132 MB multilingual model for on-device mood analysis? This does not grant tool access.</string>
-    <string name="chat_device_low_battery">Battery is at %1$d%%. Consider plugging in.</string>
-    <string name="chat_device_hot">Android reports that the device is very hot.</string>
-    <string name="chat_device_low_storage">Less than 500 MB of internal storage is available.</string>
     <string name="update_installed_changes_v200">Search and organize conversations, adjust chat models without leaving the conversation, and keep drafts per chat. This update adds private sessions, privacy locks, shortcut actions, optional screenshot suggestions, and a fix for launching the terminal in Root mode.</string>
     <string name="update_open_backup">Open backup</string>
     <string name="fun_features_description">Make AI replies a little more playful.</string>

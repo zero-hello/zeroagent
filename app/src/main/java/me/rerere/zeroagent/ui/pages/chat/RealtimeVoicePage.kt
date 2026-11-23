@@ -71,6 +71,7 @@ fun RealtimeVoicePage(model: Model, provider: ProviderSetting, assistant: Assist
     LaunchedEffect(Unit) { if (!permission) { permissionPending = true; request.launch(Manifest.permission.RECORD_AUDIO) } }
     LaunchedEffect(permission, lifecycleState) {
         if (permission && lifecycleState.isAtLeast(Lifecycle.State.STARTED)) session.start(nativeModel, provider, listOf(
+            me.rerere.zeroagent.data.ai.ZeroAgentSystemPolicy.prompt,
             model.generation.systemPrompt,
             "This is a live native-audio conversation. Respond naturally and briefly in the user's language. No phone tools are exposed in this voice session; never claim to have operated the device or searched without actual tool results."
         ).filter { it.isNotBlank() }.joinToString("\n\n"))

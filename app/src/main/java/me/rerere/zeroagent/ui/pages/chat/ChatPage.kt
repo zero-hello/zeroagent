@@ -96,7 +96,6 @@ import me.rerere.zeroagent.data.datastore.assistantForModel
 import me.rerere.zeroagent.data.files.FilesManager
 import me.rerere.zeroagent.data.files.importComposerAttachment
 import me.rerere.zeroagent.data.chat.ChatExtras
-import me.rerere.zeroagent.data.chat.observeDeviceChatStatus
 import me.rerere.zeroagent.ui.theme.LocalDarkMode
 import me.rerere.zeroagent.ui.theme.PresetThemes
 import me.rerere.zeroagent.data.model.Assistant
@@ -440,7 +439,6 @@ private fun ChatPageContent(
                         Column {
                             if (conversation.customSystemPrompt?.contains("[zeroagent:plan]") == true) Text(stringResource(R.string.zeroagent8_plan_active), style = MaterialTheme.typography.labelSmall)
                             if (conversation.customSystemPrompt?.contains("[zeroagent:goal]") == true) Text(stringResource(R.string.zeroagent8_goal_active), style = MaterialTheme.typography.labelSmall)
-                            ChatDeviceStatusHint()
                             me.rerere.zeroagent.ui.components.ai.ConversationAccessControl(
                                 conversation.id, accessRequest,
                                 modelName = currentChatModel?.let { it.displayName.ifBlank { it.modelId } }.orEmpty(),
@@ -875,25 +873,5 @@ private fun ChatTopBarButton(onClick: () -> Unit, content: @Composable () -> Uni
             contentColor = MaterialTheme.colorScheme.onSurface,
         ),
         content = content,
-    )
-}
-
-@Composable
-private fun ChatDeviceStatusHint() {
-    val context = LocalContext.current.applicationContext
-    val flow = remember(context) { observeDeviceChatStatus(context) }
-    val status by flow.collectAsStateWithLifecycle(initialValue = null)
-    val battery = status?.lowBatteryPercent
-    val message = when {
-        status?.severeThermalLoad == true -> stringResource(R.string.chat_device_hot)
-        battery != null -> stringResource(R.string.chat_device_low_battery, battery)
-        status?.lowStorage == true -> stringResource(R.string.chat_device_low_storage)
-        else -> return
-    }
-    Text(
-        text = message,
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-        color = MaterialTheme.colorScheme.error,
-        style = MaterialTheme.typography.labelMedium,
     )
 }

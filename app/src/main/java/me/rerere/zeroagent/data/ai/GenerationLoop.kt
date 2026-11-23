@@ -166,7 +166,7 @@ class GenerationLoop(
         ) {
             try {
                 me.rerere.zeroagent.data.chat.deviceContextForChat(
-                    context, conversationId.toString(), includeRoot = true,
+                    context,
                 )
             } catch (error: CancellationException) {
                 throw error

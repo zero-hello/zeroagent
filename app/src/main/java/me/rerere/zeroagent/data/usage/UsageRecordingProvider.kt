@@ -10,6 +10,7 @@ import me.rerere.ai.provider.TextGenerationParams
 import me.rerere.ai.provider.TextGenerationResult
 import me.rerere.ai.ui.StreamChunk
 import me.rerere.ai.ui.UIMessage
+import me.rerere.zeroagent.data.ai.ZeroAgentSystemPolicy
 
 private const val TAG = "UsageLedger"
 
@@ -37,7 +38,7 @@ internal class UsageRecordingProvider<T : ProviderSetting>(
     ): TextGenerationResult {
         val startedAt = System.currentTimeMillis()
         val effective = params.copy(reasoningLevel = me.rerere.ai.core.ReasoningCapabilities.effective(params.model, providerSetting, params.reasoningLevel))
-        val result = try { delegate.generateText(providerSetting, messages, effective) } catch (error: Exception) {
+        val result = try { delegate.generateText(providerSetting, ZeroAgentSystemPolicy.enforce(messages), effective) } catch (error: Exception) {
             me.rerere.ai.core.ReasoningCapabilities.learnFromError(params.model, providerSetting, error)
             throw error
         }
@@ -73,7 +74,7 @@ internal class UsageRecordingProvider<T : ProviderSetting>(
         val startedAt = System.currentTimeMillis()
         val context = currentUsageCallContext() ?: UsageCallContext()
         val effective = params.copy(reasoningLevel = me.rerere.ai.core.ReasoningCapabilities.effective(params.model, providerSetting, params.reasoningLevel))
-        val stream = try { delegate.streamText(providerSetting, messages, effective) } catch (error: Exception) {
+        val stream = try { delegate.streamText(providerSetting, ZeroAgentSystemPolicy.enforce(messages), effective) } catch (error: Exception) {
             me.rerere.ai.core.ReasoningCapabilities.learnFromError(params.model, providerSetting, error)
             throw error
         }

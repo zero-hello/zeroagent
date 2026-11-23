@@ -33,4 +33,17 @@
     <string name="zeroagent11_save">Save</string>
     <string name="zeroagent11_notification_no_title">No title</string>
     <string name="zeroagent11_notification_no_text">No text</string>
+    <string name="gemini_safety_scope">These filters apply to requests and replies supported by the model. Google can enforce additional safeguards, including child safety. ZeroAgent\'s built-in rules also apply.</string>
+    <string name="gemini_safety_harassment_help">Insults, abusive bullying, or threats directed at people.</string>
+    <string name="gemini_safety_hate_help">Hostility or dehumanization targeting people based on identity or group characteristics.</string>
+    <string name="gemini_safety_sexual_help">Graphic sexual descriptions or depictions of sexual acts.</string>
+    <string name="gemini_safety_dangerous_help">Material that promotes or enables real-world harm. Prevention and educational content can still be classified based on wording and model.</string>
+    <string name="gemini_safety_block_low">Block low, medium, and high probability</string>
+    <string name="gemini_safety_block_medium">Block medium and high probability</string>
+    <string name="gemini_safety_block_high">Block high probability only</string>
+    <string name="gemini_safety_block_none">No block by category rating</string>
+    <string name="gemini_safety_off">Turn this category filter off</string>
+    <string name="gemini_safety_show_help">How do these thresholds work?</string>
+    <string name="gemini_safety_hide_help">Hide threshold explanations</string>
+    <string name="gemini_safety_threshold_help">Server default uses the model or endpoint default. The standard Gemini API rates the probability that content belongs to a category. Below the selected threshold, this category does not block the content. No block by category rating can still return ratings when supported. With the filter off, supported endpoints typically omit these ratings. Availability varies by model or endpoint. A different category or a mandatory safeguard can still block a request or reply. New ZeroAgent provider configurations use Off until you choose another setting.</string>
 </resources>

@@ -1,5 +1,8 @@
 package me.rerere.zeroagent.data.ai
 
+import me.rerere.ai.core.MessageRole
+import me.rerere.ai.ui.UIMessage
+import me.rerere.ai.ui.UIMessagePart
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -18,7 +21,7 @@ class SystemPromptBuilderTest {
             systemAddendum = "Surface addendum",
         )
 
-        assertTrue(prompt.startsWith("Assistant prompt"))
+        assertTrue(prompt.startsWith(ZeroAgentSystemPolicy.prompt))
         assertTrue(prompt.contains("Tool cost guidance: prefer low-cost text tools"))
         assertTrue(prompt.endsWith("Surface addendum"))
 
@@ -68,5 +71,22 @@ class SystemPromptBuilderTest {
             listOf(stable, volatile).filter { it.isNotBlank() }.joinToString("\n"),
             builder.build(assistantPrompt = "A", memoryPrompt = "M"),
         )
+    }
+
+    @Test
+    fun `fixed policy is present without an assistant and is not duplicated at the provider`() {
+        val (stable, volatile) = builder.buildSections(assistantPrompt = "", systemAddendum = "device background")
+        assertEquals(ZeroAgentSystemPolicy.prompt, stable)
+        assertEquals("device background", volatile)
+        val assembled = listOf(UIMessage(role = MessageRole.SYSTEM, parts = listOf(UIMessagePart.Text(stable), UIMessagePart.Text(volatile)), isSynthetic = true))
+        assertEquals(assembled, ZeroAgentSystemPolicy.enforce(assembled))
+    }
+
+    @Test
+    fun `auxiliary requests receive the policy before their existing instructions`() {
+        val original = listOf(UIMessage(role = MessageRole.SYSTEM, parts = listOf(UIMessagePart.Text("Return JSON only"))))
+        val enforced = ZeroAgentSystemPolicy.enforce(original)
+        assertEquals(listOf(UIMessagePart.Text(ZeroAgentSystemPolicy.prompt), UIMessagePart.Text("Return JSON only")), enforced.single().parts)
+        assertEquals(enforced, ZeroAgentSystemPolicy.enforce(enforced))
     }
 }

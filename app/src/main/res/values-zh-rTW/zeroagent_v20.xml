@@ -51,9 +51,6 @@
     <string name="memory_mood_enable">分析聊天情緒</string>
     <string name="memory_mood_privacy">情緒在裝置上分析。舊的對話片段已停止用於聊天，保存的長期記憶仍可使用。</string>
     <string name="memory_mood_consent">要下載並驗證約 132 MB 的多語言模型，在裝置上分析情緒嗎？這不會增加工具的存取權限。</string>
-    <string name="chat_device_low_battery">電量剩 %1$d%%，可以接上充電器。</string>
-    <string name="chat_device_hot">Android 偵測到裝置溫度過高。</string>
-    <string name="chat_device_low_storage">內部儲存空間剩不到 500 MB。</string>
     <string name="update_installed_changes_v200">可以搜尋與分類對話、在聊天室內快速調整模型，並依對話保存草稿。本版也加入無痕對話、隱私鎖、系統捷徑和可選用的截圖提示，並修正 Root 模式下的終端機啟動問題。</string>
     <string name="update_open_backup">前往備份</string>
     <string name="fun_features_description">讓等候回覆的片刻多一點趣味。</string>

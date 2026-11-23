@@ -6,7 +6,7 @@ package me.rerere.zeroagent.data.ai
  * Callers provide pre-rendered sections so the ordering and formatting live in one spot
  * rather than being reimplemented in GenerationHandler and the provider adapters.
  *
- * Ordering is **stable-first**: the assistant prompt and tool prompts (byte-identical turn
+ * Ordering is **stable-first**: app policy, the assistant prompt and tool prompts (byte-identical turn
  * to turn) come first, then the volatile sections (memory, recent chats, per-call
  * addendum) that change between turns. This lets prompt caching work: auto-caching
  * providers (OpenAI/DeepSeek/Grok/Gemini) reuse the stable byte-prefix, and OpenRouter's
@@ -18,9 +18,9 @@ class SystemPromptBuilder {
 
     /**
      * Returns the system prompt split into `(stable, volatile)`.
-     * - stable: assistant prompt + tool cost guidance + tool prompts.
+     * - stable: app policy + assistant prompt + tool cost guidance + tool prompts.
      * - volatile: memory + recent chats + per-call addendum.
-     * Either may be blank.
+     * The volatile section may be blank.
      */
     fun buildSections(
         assistantPrompt: String,
@@ -32,7 +32,13 @@ class SystemPromptBuilder {
         phoneGuidance: String = "",
     ): Pair<String, String> {
         val stable = buildString {
-            if (assistantPrompt.isNotBlank()) append(assistantPrompt)
+            append(ZeroAgentSystemPolicy.prompt)
+            if (assistantPrompt.isNotBlank()) {
+                appendLine()
+                appendLine()
+                appendLine("## Configurable assistant instructions (subject to ZeroAgent policy)")
+                append(assistantPrompt)
+            }
             listOf(identityPrompt, phoneGuidance).filter { it.isNotBlank() }.forEach { section ->
                 if (isNotEmpty()) appendLine()
                 append(section)

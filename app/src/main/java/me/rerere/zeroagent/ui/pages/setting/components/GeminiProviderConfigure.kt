@@ -96,7 +96,7 @@ fun GeminiProviderConfigure(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        GeminiSafetyControls(provider.safetySettings, { onEdit(provider.copy(safetySettings = it)) }, includeCivic = false)
+        GeminiSafetyControls(provider.safetySettings, { onEdit(provider.copy(safetySettings = it)) })
 
         Text(
             text = provider.name,
