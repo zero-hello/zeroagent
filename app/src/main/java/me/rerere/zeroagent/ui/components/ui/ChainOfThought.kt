@@ -77,6 +77,7 @@ fun <T> ChainOfThought(
     collapsedVisibleCount: Int = 2,
     collapsedAdaptiveWidth: Boolean = false,
     forceExpanded: Boolean = false,
+    collapsedSummary: String? = null,
     content: @Composable ChainOfThoughtScope.(T) -> Unit
 ) {
     var userExpanded by remember { mutableStateOf(false) }
@@ -142,7 +143,7 @@ fun <T> ChainOfThought(
                             text = if (expanded) {
                                 stringResource(R.string.chain_of_thought_collapse)
                             } else {
-                                stringResource(
+                                collapsedSummary ?: stringResource(
                                     R.string.chain_of_thought_show_more_steps,
                                     steps.size - collapsedVisibleCount
                                 )
@@ -155,7 +156,7 @@ fun <T> ChainOfThought(
 
                 val lineColor = MaterialTheme.colorScheme.outlineVariant
                 val scope = remember { ChainOfThoughtScopeImpl() }
-                Box(
+                if (visibleSteps.isNotEmpty()) Box(
                     modifier = Modifier.drawBehind {
                         val x = 12.dp.toPx()
                         val offsetPx = 18.dp.toPx()

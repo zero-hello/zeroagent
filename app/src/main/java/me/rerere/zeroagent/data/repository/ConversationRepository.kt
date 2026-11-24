@@ -1,8 +1,6 @@
 package me.rerere.zeroagent.data.repository
 
 import android.content.Context
-import android.database.sqlite.SQLiteBlobTooBigException
-import android.util.Log
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -16,6 +14,7 @@ import me.rerere.ai.ui.UIMessage
 import me.rerere.common.android.Logging
 import me.rerere.zeroagent.data.chat.ChatDraftStore
 import me.rerere.zeroagent.data.db.AppDatabase
+import me.rerere.zeroagent.data.db.ChatPayloadStore
 import me.rerere.zeroagent.data.db.fts.MessageFtsManager
 import me.rerere.zeroagent.data.db.fts.MessageSearchSort
 import me.rerere.zeroagent.data.db.dao.ConversationDAO
@@ -44,9 +43,9 @@ class ConversationRepository(
     context: Context,
 ) {
     private val drafts = ChatDraftStore(context)
+    private val payloads = ChatPayloadStore(context, database)
 
     companion object {
-        private const val TAG = "ConversationRepository"
         private const val PAGE_SIZE = 20
         private const val INITIAL_LOAD_SIZE = 40
     }
@@ -307,23 +306,29 @@ class ConversationRepository(
         return conversationDAO.existsById(uuid.toString())
     }
 
+    internal suspend fun hasMessageNodes(uuid: Uuid): Boolean = messageNodeDAO.hasNodes(uuid.toString())
+
     suspend fun countConversations(): Int {
         return conversationDAO.countAll()
     }
 
     suspend fun getCompaction(conversationId: Uuid): ConversationCompaction? =
-        conversationCompactionDAO.getByConversationId(conversationId.toString())?.let { entity ->
-            ConversationCompaction(
-                conversationId = Uuid.parse(entity.conversationId),
-                summary = entity.summary,
-                tailStartNodeId = entity.tailStartNodeId?.let(Uuid::parse),
-                sourceEndNodeId = Uuid.parse(entity.sourceEndNodeId),
-                summaryModelId = Uuid.parse(entity.summaryModelId),
-                isAuto = entity.isAuto,
-                sourceTokenEstimate = entity.sourceTokenEstimate,
-                createdAt = Instant.ofEpochMilli(entity.createdAt),
-            )
-        }
+        conversationCompactionDAO.getByConversationId(conversationId.toString())?.toDomainCompaction()
+
+    fun observeCompaction(conversationId: Uuid): Flow<ConversationCompaction?> =
+        conversationCompactionDAO.observeByConversationId(conversationId.toString())
+            .map { it?.toDomainCompaction() }
+
+    private fun ConversationCompactionEntity.toDomainCompaction() = ConversationCompaction(
+        conversationId = Uuid.parse(conversationId),
+        summary = summary,
+        tailStartNodeId = tailStartNodeId?.let(Uuid::parse),
+        sourceEndNodeId = Uuid.parse(sourceEndNodeId),
+        summaryModelId = Uuid.parse(summaryModelId),
+        isAuto = isAuto,
+        sourceTokenEstimate = sourceTokenEstimate,
+        createdAt = Instant.ofEpochMilli(createdAt),
+    )
 
     suspend fun upsertCompaction(compaction: ConversationCompaction) {
         conversationCompactionDAO.upsert(
@@ -369,16 +374,18 @@ class ConversationRepository(
         conversation: Conversation,
         updateSearchIndex: Boolean = true,
     ) {
-        database.withTransaction {
-            conversationDAO.update(
-                conversationToConversationEntity(conversation)
-            )
-            // 删除旧的节点，插入新的节点
-            messageNodeDAO.deleteByConversation(conversation.id.toString())
-            saveMessageNodes(conversation.id.toString(), conversation.messageNodes)
+        val conversationId = conversation.id.toString()
+        val obsolete = database.withTransaction {
+            val previous = messageNodeDAO.getPayloadReferences(conversationId)
+            conversationDAO.update(conversationToConversationEntity(conversation))
+            messageNodeDAO.deleteByConversation(conversationId)
+            saveMessageNodes(conversationId, conversation.messageNodes)
+            if (previous.isEmpty()) emptySet()
+            else previous.toSet() - messageNodeDAO.getPayloadReferences(conversationId).toSet()
         }
         if (updateSearchIndex) {
             messageFtsManager.indexConversation(conversation)
+            payloads.pruneUnreferenced(obsolete)
         }
     }
 
@@ -393,12 +400,15 @@ class ConversationRepository(
         } else {
             conversation
         }
-        database.withTransaction {
+        val obsolete = database.withTransaction {
+            val previous = messageNodeDAO.getPayloadReferences(conversation.id.toString())
             // message_node 会通过 CASCADE 自动删除
             conversationDAO.delete(
                 conversationToConversationEntity(conversation)
             )
+            previous
         }
+        payloads.pruneUnreferenced(obsolete)
         // message_fts is a derived index over the same rows: only touch it after the
         // authoritative delete has committed, so a failed/rolled-back transaction can't
         // leave the conversation still present but unsearchable (matches insert/update,
@@ -558,62 +568,25 @@ class ConversationRepository(
 
         return database.withTransaction {
             val nodes = mutableListOf<MessageNode>()
-
-            fun toMessageNode(entity: MessageNodeEntity): MessageNode {
-                val messages = JsonInstant.decodeFromString<List<UIMessage>>(entity.messages)
-                val nodeId = Uuid.parse(entity.id)
-                return MessageNode(
-                    id = nodeId,
-                    messages = messages,
-                    selectIndex = entity.selectIndex,
-                    isFavorite = favoriteNodeIds.contains(nodeId)
-                )
-            }
-
-            // Fallback for when a whole pageSize-row page fails to decode (a corrupt blob or
-            // bad cursor state somewhere in the window): retry one row at a time so only the
-            // row(s) that actually can't be read are dropped, instead of silently discarding
-            // the entire page like the old `offset += pageSize; continue` did. Returns the
-            // number of node_index positions consumed, always pageSize unless the
-            // conversation's data ends inside the window, which the caller MUST use to
-            // advance its OFFSET-based pagination; advancing by the recovered count instead
-            // would re-read rows already added to `nodes` on the next iteration.
-            suspend fun recoverPageRowByRow(offset: Int, pageSize: Int): Int {
-                for (i in 0 until pageSize) {
-                    val rowOffset = offset + i
-                    val row = try {
-                        messageNodeDAO.getNodesOfConversationPaged(conversationId, 1, rowOffset)
-                    } catch (e: SQLiteBlobTooBigException) {
-                        Log.e(TAG, "loadMessageNodes: dropping unreadable node (conversationId=$conversationId, position=$rowOffset)", e)
-                        continue
-                    } catch (e: IllegalStateException) {
-                        Log.e(TAG, "loadMessageNodes: dropping unreadable node (conversationId=$conversationId, position=$rowOffset)", e)
-                        continue
-                    }
-                    if (row.isEmpty()) return i
-                    nodes.add(toMessageNode(row.single()))
-                }
-                return pageSize
-            }
-
             var offset = 0
             val pageSize = 64
             while (true) {
-                val page = try {
-                    messageNodeDAO.getNodesOfConversationPaged(conversationId, pageSize, offset)
-                } catch (e: SQLiteBlobTooBigException) {
-                    Log.e(TAG, "loadMessageNodes: page failed to decode (conversationId=$conversationId, offset=$offset, pageSize=$pageSize); retrying row-by-row", e)
-                    val consumed = recoverPageRowByRow(offset, pageSize)
-                    offset += consumed
-                    if (consumed < pageSize) break else continue
-                } catch (e: IllegalStateException) {
-                    Log.e(TAG, "loadMessageNodes: page failed to decode (conversationId=$conversationId, offset=$offset, pageSize=$pageSize); retrying row-by-row", e)
-                    val consumed = recoverPageRowByRow(offset, pageSize)
-                    offset += consumed
-                    if (consumed < pageSize) break else continue
+                val page = messageNodeDAO.getBoundedNodes(conversationId, pageSize, offset)
+                for (node in page) {
+                    val messages = JsonInstant.decodeFromString<List<UIMessage>>(
+                        payloads.load(node)
+                    )
+                    val nodeId = Uuid.parse(node.id)
+                    nodes.add(
+                        MessageNode(
+                            id = nodeId,
+                            messages = messages,
+                            selectIndex = node.selectIndex,
+                            isFavorite = nodeId in favoriteNodeIds,
+                        )
+                    )
                 }
-                if (page.isEmpty()) break
-                page.forEach { entity -> nodes.add(toMessageNode(entity)) }
+                if (page.size < pageSize) break
                 offset += page.size
             }
             nodes
@@ -621,16 +594,16 @@ class ConversationRepository(
     }
 
     private suspend fun saveMessageNodes(conversationId: String, nodes: List<MessageNode>) {
-        val entities = nodes.mapIndexed { index, node ->
-            MessageNodeEntity(
+        nodes.forEachIndexed { index, node ->
+            val entity = MessageNodeEntity(
                 id = node.id.toString(),
                 conversationId = conversationId,
                 nodeIndex = index,
                 messages = JsonInstant.encodeToString(node.messages),
                 selectIndex = node.selectIndex
             )
+            messageNodeDAO.insert(payloads.encode(entity))
         }
-        messageNodeDAO.insertAll(entities)
     }
 }
 

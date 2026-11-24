@@ -290,7 +290,6 @@
   <string name="chat_page_export_share_via">分享方式</string>
   <string name="chat_page_export_success">已匯出為%1$s</string>
   <string name="chat_page_history">聊天歷史</string>
-  <string name="chat_page_menu_ai_translator">AI 翻譯</string>
   <string name="chat_page_menu_image_generation">圖像生成</string>
   <string name="chat_page_message_count">%d 則訊息</string>
   <string name="chat_page_move_to_assistant">移至助理</string>
@@ -1067,11 +1066,6 @@
   <string name="translation_clear">清空翻譯</string>
   <string name="translation_language_selection_title">選擇翻譯語言</string>
   <string name="translation_text">譯文</string>
-  <string name="translator_page_cancel">取消</string>
-  <string name="translator_page_input_placeholder">請輸入要翻譯的文字...</string>
-  <string name="translator_page_result_placeholder">翻譯結果將顯示在這裡</string>
-  <string name="translator_page_title">翻譯</string>
-  <string name="translator_page_translate">翻譯</string>
   <string name="tts">語音</string>
   <string name="unpin_chat">取消釘選聊天</string>
   <string name="update_card_check_failed">檢查更新失敗</string>
@@ -1606,9 +1600,6 @@
   <string name="skill_webview_card_direct">直接檢視器</string>
   <string name="skill_webview_card_embedded">內嵌檢視器</string>
   <string name="skill_webview_card_open">在瀏覽器中開啟</string>
-  <string name="translator_copy_result">複製翻譯結果</string>
-  <string name="translator_error_generic">錯誤</string>
-  <string name="translator_paste_text">貼上文字</string>
   <string name="update_download_description">正在下載更新套件…</string>
   <string name="assistant_page_gradient_background">動態背景</string>
   <string name="assistant_page_gradient_background_desc">在對話背景顯示緩慢流動的色彩波帶；關閉後恢復一般背景</string>
@@ -2302,4 +2293,7 @@
   <string name="setting_ssh_page_error_credential_missing">請填寫密碼或私鑰</string>
   <string name="chat_page_continuing">連線中斷，正在續寫回覆（%1$d/%2$d）</string>
   <string name="chat_page_subagents_running">子 agent %1$d 個執行中 · %2$s</string>
+  <string name="adaptive_settings_choose_option">選擇要查看的設定。</string>
+  <string name="adaptive_settings_choose_provider">選擇供應商以查看連線設定與模型。</string>
+  <string name="adaptive_memory_choose_entry">選擇一筆記憶或待確認的變更。</string>
 </resources>

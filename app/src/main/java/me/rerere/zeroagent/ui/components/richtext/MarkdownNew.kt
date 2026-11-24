@@ -13,15 +13,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
@@ -48,7 +43,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
@@ -61,7 +55,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
@@ -79,7 +72,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Tick01
-import me.rerere.zeroagent.ui.components.table.DataTable
 import me.rerere.zeroagent.ui.context.LocalSettings
 import me.rerere.zeroagent.ui.theme.JetbrainsMono
 import me.rerere.zeroagent.utils.toDp
@@ -267,13 +259,9 @@ private fun HtmlBlockElement(
             val alt = element.attr("alt")
             if (src.isNotEmpty()) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    ZoomableAsyncImage(
+                    MarkdownImage(
                         model = src,
                         contentDescription = alt.takeIf { it.isNotEmpty() },
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .widthIn(min = 120.dp)
-                            .heightIn(min = 120.dp),
                     )
                 }
             }
@@ -565,9 +553,7 @@ private fun HtmlCodeBlock(element: Element) {
     HighlightCodeBlock(
         code = code,
         language = language,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 4.dp),
+        modifier = MarkdownCodeBlockLayout,
         completeCodeBlock = true,
     )
 }
@@ -649,12 +635,10 @@ private fun HtmlTable(element: Element, onClickCitation: (String) -> Unit) {
         }
     }
 
-    DataTable(
+    MarkdownTable(
         headers = headers,
         rows = rows,
         modifier = Modifier.padding(vertical = 8.dp),
-        columnMinWidths = List(columnCount) { 80.dp },
-        columnMaxWidths = List(columnCount) { 200.dp },
     )
 }
 
@@ -790,13 +774,9 @@ private fun HtmlInlineAsComposable(node: Node, onClickCitation: (String) -> Unit
                     val src = node.attr("src")
                     val alt = node.attr("alt")
                     if (src.isNotEmpty()) {
-                        ZoomableAsyncImage(
+                        MarkdownImage(
                             model = src,
                             contentDescription = alt.takeIf { it.isNotEmpty() },
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .widthIn(min = 120.dp)
-                                .heightIn(min = 120.dp),
                         )
                     }
                 }
@@ -937,55 +917,19 @@ private fun AnnotatedString.Builder.appendHtmlInlineElement(
             val text = element.text()
             when {
                 text.startsWith("citation,") -> {
-                    // Citation link: [citation,domain](id)
-                    val domain = text.substringAfter("citation,")
-                    val id = href
-                    if (id.length == 6) {
-                        inlineContents.putIfAbsent(
-                            "citation:$id",
-                            InlineTextContent(
-                                placeholder = Placeholder(
-                                    width = (domain.length * 7).sp,
-                                    height = 1.em,
-                                    placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
-                                ),
-                                children = {
-                                    Box(
-                                        modifier = Modifier
-                                            .clickable { onClickCitation(id.trim()) }
-                                            .fillMaxSize()
-                                            .clip(CircleShape)
-                                            .background(colorScheme.tertiaryContainer.copy(0.2f)),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Text(
-                                            text = domain,
-                                            modifier = Modifier.wrapContentSize(),
-                                            style = TextStyle(
-                                                fontSize = 10.sp,
-                                                lineHeight = 10.sp,
-                                                fontFamily = JetbrainsMono,
-                                                color = colorScheme.onTertiaryContainer,
-                                                fontWeight = FontWeight.Thin,
-                                            ),
-                                        )
-                                    }
-                                },
-                            ),
-                        )
-                        appendInlineContent("citation:$id")
-                    }
+                    appendMarkdownCitation(
+                        domain = text.substringAfter("citation,"),
+                        id = href,
+                        inlineContents = inlineContents,
+                        colorScheme = colorScheme,
+                        onClickCitation = onClickCitation,
+                    )
                 }
 
                 href.isNotEmpty() -> {
-                    val linkStyle = SpanStyle(
-                        color = colorScheme.primary,
-                        textDecoration = TextDecoration.Underline,
-                    ).merge(cssStyle ?: SpanStyle())
-                    withLink(LinkAnnotation.Url(href)) {
-                        withStyle(linkStyle) {
-                            recurseChildren(element, style.merge(linkStyle.asTextStyle()))
-                        }
+                    val linkStyle = markdownLinkStyle(colorScheme).merge(cssStyle ?: SpanStyle())
+                    withMarkdownLink(href, linkStyle) {
+                        recurseChildren(element, style.merge(linkStyle.asTextStyle()))
                     }
                 }
 

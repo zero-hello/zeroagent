@@ -36,8 +36,6 @@
     <string name="setting_termux_verify_other_error">検証失敗：%s</string>
     <string name="setting_termux_verify_timeout">簡易検証の制限時間</string>
     <string name="setting_termux_verify_timeout_desc">allow-external-apps の echo 簡易テストの制限時間です。範囲は3〜30秒です。</string>
-    <string name="videogen_page_delete_videos_failed">削除済み：%1$d件。失敗：%2$d件。再試行してください。</string>
-    <string name="videogen_page_save_failed">保存失敗：%1$s</string>
     <string name="workspace_cwd_new_folder_invalid">スラッシュを含まないフォルダー名を1つ入力してください。</string>
     <string name="zeroagent6s_root_denied">許可されていません。スーパーユーザー管理アプリを確認して再試行してください。</string>
     <string name="zeroagent6s_root_error">Root権限を確認できませんでした。再試行してください。</string>

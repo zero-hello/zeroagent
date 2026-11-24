@@ -29,8 +29,8 @@ android {
         minSdk = 31
         // Package all existing translations for the language selector.
         targetSdk = 37
-        versionCode = 41
-        versionName = "2.2.6"
+        versionCode = 42
+        versionName = "2.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -234,6 +234,7 @@ dependencies {
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
+    implementation("com.google.crypto.tink:tink-android:1.24.0")
 
     // Image metadata extractor
     // https://github.com/drewnoakes/metadata-extractor

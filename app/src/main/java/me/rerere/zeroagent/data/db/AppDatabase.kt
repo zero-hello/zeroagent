@@ -61,8 +61,10 @@ import me.rerere.zeroagent.workflow.db.WorkflowRunEntity
         WorkspaceEntity::class,
         FolderEntity::class,
     ],
-    version = 32,
+    version = 34,
     autoMigrations = [
+        // Oversized messages retain their full content in private payload files.
+        AutoMigration(from = 33, to = 34),
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),

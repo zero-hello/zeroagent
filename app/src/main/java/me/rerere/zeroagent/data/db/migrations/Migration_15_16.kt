@@ -31,7 +31,7 @@ val Migration_15_16 = object : Migration(15, 16) {
             for (conversationId in conversationIds) {
                 // Load all nodes for this conversation ordered by node_index
                 val nodeCursor = db.query(
-                    "SELECT id, messages, node_index, select_index FROM message_node WHERE conversation_id = ? ORDER BY node_index ASC",
+                    "SELECT id, select_index FROM message_node WHERE conversation_id = ? ORDER BY node_index ASC",
                     arrayOf(conversationId)
                 )
 
@@ -39,8 +39,8 @@ val Migration_15_16 = object : Migration(15, 16) {
                 var hasUnparsableRow = false
                 while (nodeCursor.moveToNext()) {
                     val id = nodeCursor.getString(0)
-                    val messagesJson = nodeCursor.getString(1)
-                    val selectIndex = nodeCursor.getInt(3)
+                    val messagesJson = db.readLegacyMessage(LegacyMessageColumn.NODE_MESSAGES, id)
+                    val selectIndex = nodeCursor.getInt(1)
                     runCatching {
                         val messages = JsonInstant.decodeFromString<List<UIMessage>>(migrateNamespaceJson(messagesJson))
                         rows.add(ToolNodeMigrationRow(id, messages, selectIndex))

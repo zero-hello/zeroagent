@@ -36,18 +36,18 @@ val Migration_6_7 = object : Migration(6, 7) {
 
             // 获取所有对话记录并转换数据
             val cursor =
-                db.query("SELECT id, assistant_id, title, messages, usage, create_at, update_at, truncate_index FROM ConversationEntity")
+                db.query("SELECT id, assistant_id, title, usage, create_at, update_at, truncate_index FROM ConversationEntity")
             val updates = mutableListOf<Array<Any?>>()
 
             while (cursor.moveToNext()) {
                 val id = cursor.getString(0)
                 val assistantId = cursor.getString(1)
                 val title = cursor.getString(2)
-                val messagesJson = cursor.getString(3)
-                val usage = cursor.getString(4)
-                val createAt = cursor.getLong(5)
-                val updateAt = cursor.getLong(6)
-                val truncateIndex = cursor.getInt(7)
+                val messagesJson = db.readLegacyMessage(LegacyMessageColumn.CONVERSATION_MESSAGES, id)
+                val usage = cursor.getString(3)
+                val createAt = cursor.getLong(4)
+                val updateAt = cursor.getLong(5)
+                val truncateIndex = cursor.getInt(6)
 
                 try {
                     // 尝试解析旧格式的消息列表 List<UIMessage>

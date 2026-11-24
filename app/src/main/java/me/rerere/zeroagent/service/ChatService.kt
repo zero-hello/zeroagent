@@ -6,7 +6,6 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.core.net.toUri
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -105,9 +104,7 @@ import me.rerere.zeroagent.data.model.Assistant
 import me.rerere.zeroagent.data.model.Conversation
 import me.rerere.zeroagent.data.model.ConversationCompaction
 import me.rerere.zeroagent.data.model.MessageNode
-import me.rerere.zeroagent.data.model.AssistantAffectScope
 import me.rerere.zeroagent.data.model.localFileUrls
-import me.rerere.zeroagent.data.model.replaceRegexes
 import me.rerere.zeroagent.data.model.toMessageNode
 import me.rerere.zeroagent.data.repository.ConversationRepository
 import me.rerere.zeroagent.data.repository.FolderRepository
@@ -128,34 +125,6 @@ private const val TAG = "ChatService"
  * the manual compress dialog (`CompressContextDialog`) so the two entry points behave the same.
  */
 private const val COMPACTION_TOOL_KEEP_RECENT_MESSAGES = 32
-private fun Throwable.isContextLimitError(): Boolean {
-    val markers = listOf(
-        "context length",
-        "context window",
-        "maximum context",
-        "max context",
-        "context length exceeded",
-        "maximum tokens",
-        "prompt is too long",
-        "prompt too long",
-        "too many tokens",
-        "token limit",
-        "input is too long",
-        "exceeds the model",
-        "exceed.*context",
-    )
-    return generateSequence(this) { it.cause }
-        .take(8)
-        .any { cause ->
-            val text = (cause.message.orEmpty() + " " + cause.toString())
-                .lowercase()
-                .replace('_', ' ')
-            markers.any { marker ->
-                if (marker.contains(".*")) Regex(marker).containsMatchIn(text) else marker in text
-            }
-        }
-}
-
 internal fun backgroundTextGenerationParams(
     model: Model,
     conversationId: Uuid,
@@ -767,137 +736,43 @@ class ChatService(
 
     // ---- 发送消息 ----
 
+    private val queuedAttachmentCleanup = QueuedAttachmentCleanup(appScope, conversationRepo, filesManager) {
+        sessions.values.toList()
+    }
+
+    private val outgoingQueue = ChatOutgoingQueue(
+        context = context,
+        outgoingDrafts = outgoingDrafts,
+        findSession = { sessions[it] },
+        openSession = ::getOrCreateSession,
+        sendQueuedMessage = ::sendQueuedMessage,
+        cleanupQueuedAttachments = queuedAttachmentCleanup::schedule,
+        addError = { error, id -> addError(error, id) },
+    )
+
     fun getMessageQueueFlow(conversationId: Uuid): StateFlow<MessageQueueState> =
-        getOrCreateSession(conversationId).messageQueue.state
+        outgoingQueue.getMessageQueueFlow(conversationId)
 
-    fun removeQueuedMessage(conversationId: Uuid, messageId: Uuid) {
-        val session = sessions[conversationId] ?: return
-        synchronized(session) {
-            val queue = session.messageQueue
-            val pending = queue.state.value.messages.firstOrNull { it.id == messageId } ?: return
-            if (pending.reply == null && !outgoingDrafts.removeUnsent(conversationId, messageId, durable = true)) {
-                queue.pause()
-                addError(IllegalStateException("無法移除待送訊息，請確認裝置儲存空間後再試。"), conversationId)
-                return
-            }
-            queue.remove(messageId)?.let(::cleanupQueuedAttachments)
-        }
-        dispatchNextQueuedMessage(conversationId)
-    }
+    fun removeQueuedMessage(conversationId: Uuid, messageId: Uuid) =
+        outgoingQueue.removeQueuedMessage(conversationId, messageId)
 
-    fun beginEditQueuedMessage(conversationId: Uuid, messageId: Uuid): QueuedMessage? {
-        val session = sessions[conversationId] ?: return null
-        return synchronized(session) { session.messageQueue.beginEdit(messageId) }
-    }
+    fun beginEditQueuedMessage(conversationId: Uuid, messageId: Uuid): QueuedMessage? =
+        outgoingQueue.beginEditQueuedMessage(conversationId, messageId)
 
-    fun finishEditQueuedMessage(
-        conversationId: Uuid,
-        messageId: Uuid,
-        parts: List<UIMessagePart>? = null
-    ) {
-        val session = sessions[conversationId] ?: return
-        synchronized(session) {
-            val queue = session.messageQueue
-            val before = queue.state.value.messages.firstOrNull { it.id == messageId && it.isEditing } ?: return
-            if (parts != null && parts.isEmptyInputMessage()) return
-            if (before.reply == null && parts != null && !recordUnsent(conversationId, before.copy(parts = parts), durable = true)) {
-                queue.pause()
-                queue.finishEdit(messageId)
-                addError(IllegalStateException("無法保存修改，已保留原本的待送訊息。"), conversationId)
-                return
-            }
-            queue.finishEdit(messageId, parts)?.let(::cleanupQueuedAttachments)
-        }
-        dispatchNextQueuedMessage(conversationId)
-    }
+    fun finishEditQueuedMessage(conversationId: Uuid, messageId: Uuid, parts: List<UIMessagePart>? = null) =
+        outgoingQueue.finishEditQueuedMessage(conversationId, messageId, parts)
 
-    private fun cleanupQueuedAttachments(previous: QueuedMessage) {
-        val candidates = previous.parts.localFileUrls()
-        if (candidates.isEmpty()) return
-        appScope.launch {
-            try {
-                // 未打开的会话及未选中的分支也可能引用同一附件。
-                val persistedReferences =
-                    candidates.filter { conversationRepo.hasFileReference(it) }.toSet()
-                // 数据库查询挂起期间队列可能已推进，删除前重新读取内存引用。
-                val currentSessions = sessions.values.toList()
-                val unusedFiles = unreferencedQueuedAttachmentUrls(
-                    previous = previous,
-                    conversations = currentSessions.map { it.state.value },
-                    pendingMessages = currentSessions.flatMap {
-                        it.messageQueue.state.value.messages + listOfNotNull(it.submittingMessage)
-                    },
-                ) - persistedReferences
-                if (unusedFiles.isNotEmpty()) {
-                    filesManager.deleteChatFiles(unusedFiles.map { it.toUri() })
-                }
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                // 无法确认引用时保留文件，避免误删。
-                Log.w(TAG, "Failed to clean queued attachments", e)
-            }
-        }
-    }
+    fun resumeMessageQueue(conversationId: Uuid) = outgoingQueue.resumeMessageQueue(conversationId)
 
-    fun resumeMessageQueue(conversationId: Uuid) {
-        sessions[conversationId]?.messageQueue?.resume()
-        dispatchNextQueuedMessage(conversationId)
-    }
-
-    fun sendMessage(conversationId: Uuid, content: List<UIMessagePart>, answer: Boolean = true) {
-        if (content.isEmptyInputMessage()) return
-        val session = getOrCreateSession(conversationId)
-        synchronized(session) {
-            if (session.messageQueue.state.value.messages.isEmpty()) session.messageQueue.resume()
-            val message = QueuedMessage(parts = content.toList(), answer = answer)
-            if (!recordUnsent(conversationId, message, durable = true)) {
-                session.messageQueue.recoverFailedSend(message)
-                addError(IllegalStateException("尚未送出，且裝置無法保存這則訊息。請先保留文字，再重新開啟應用程式。"), conversationId)
-                return
-            }
-            session.messageQueue.enqueue(message.parts, answer, messageId = message.id)
-            dispatchNextQueuedMessage(conversationId)
-        }
-    }
+    fun sendMessage(conversationId: Uuid, content: List<UIMessagePart>, answer: Boolean = true) =
+        outgoingQueue.sendMessage(conversationId, content, answer)
 
     /** Enqueue immediately; the result belongs to this item even after edits or later turns. */
-    fun enqueueVoiceMessage(conversationId: Uuid, text: String): Deferred<String?> {
-        val session = getOrCreateSession(conversationId)
-        val reply = CompletableDeferred<String?>()
-        synchronized(session) {
-            check(text.isNotBlank()) { context.getString(R.string.chat_page_voice_empty) }
-            check(!session.messageQueue.state.value.paused || session.messageQueue.state.value.messages.isEmpty()) {
-                context.getString(R.string.chat_page_voice_resume_queue)
-            }
-            check(session.state.value.currentMessages.none { message ->
-                message.parts.any { it is UIMessagePart.Tool && it.isPending }
-            }) { context.getString(R.string.chat_page_voice_tools_before_resume) }
-            if (session.messageQueue.state.value.messages.isEmpty()) session.messageQueue.resume()
-            session.messageQueue.enqueue(listOf(UIMessagePart.Text(text)), reply = reply)
-            dispatchNextQueuedMessage(conversationId)
-        }
-        return reply
-    }
+    fun enqueueVoiceMessage(conversationId: Uuid, text: String): Deferred<String?> =
+        outgoingQueue.enqueueVoiceMessage(conversationId, text)
 
-    private fun dispatchNextQueuedMessage(conversationId: Uuid): Job? {
-        val session = sessions[conversationId] ?: return null
-        synchronized(session) {
-            // A pending tool approval is still part of the current turn.
-            if (session.getJob() != null || session.state.value.currentMessages.any { message ->
-                    message.parts.any { it is UIMessagePart.Tool && it.isPending }
-                }) return null
-            val next = session.messageQueue.takeNext() ?: return null
-            session.submittingMessage = next
-            return sendQueuedMessage(session, next)
-        }
-    }
-
-    private fun recordUnsent(conversationId: Uuid, queued: QueuedMessage, durable: Boolean = false): Boolean =
-        outgoingDrafts.writeUnsent(
-            conversationId,
-            me.rerere.zeroagent.data.chat.UnsentChatMessage(queued.id.toString(), queued.parts, queued.answer),
-            durable = durable,
-        )
+    private fun dispatchNextQueuedMessage(conversationId: Uuid): Job? =
+        outgoingQueue.dispatchNextQueuedMessage(conversationId)
 
     private fun sendQueuedMessage(session: ConversationSession, queued: QueuedMessage): Job {
         val conversationId = session.id
@@ -922,7 +797,7 @@ class ChatService(
                     return@launchGenerationJob
                 }
                 if (queued.reply == null) {
-                    val journaled = withContext(Dispatchers.IO) { recordUnsent(conversationId, queued, durable = true) }
+                    val journaled = withContext(Dispatchers.IO) { outgoingQueue.recordUnsent(conversationId, queued, durable = true) }
                     check(journaled) { "無法保存待送出的訊息，請確認裝置儲存空間後再重試。" }
                 }
                 val settings = settingsStore.settingsFlow.first()
@@ -1092,27 +967,6 @@ class ChatService(
             )
         )
         return true
-    }
-
-    private fun preprocessUserInputParts(
-        parts: List<UIMessagePart>,
-        assistant: Assistant,
-    ): List<UIMessagePart> {
-        return parts.map { part ->
-            when (part) {
-                is UIMessagePart.Text -> {
-                    part.copy(
-                        text = part.text.replaceRegexes(
-                            assistant = assistant,
-                            scope = AssistantAffectScope.USER,
-                            visual = false
-                        )
-                    )
-                }
-
-                else -> part
-            }
-        }
     }
 
     // ---- 重新生成消息 ----
@@ -1803,16 +1657,13 @@ class ChatService(
         // A tool round normally ends with an ASSISTANT message containing executed
         // tool calls. That message is still a valid point for a context-limit retry:
         // compact the conversation and retry after the tool results have been stored.
-        val canRetryAfterContextLimit =
-            lastMessage?.role != MessageRole.ASSISTANT ||
-                lastMessage.getTools().any { it.isExecuted }
-        if (
-            allowContextRetry &&
-            messageRange == null &&
-            settings.enableAutoCompaction &&
-            generationFailure != null &&
-            generationFailure.isContextLimitError() &&
-            canRetryAfterContextLimit
+        if (shouldRetryContextLimit(
+                allowRetry = allowContextRetry,
+                rangedGeneration = messageRange != null,
+                autoCompactionEnabled = settings.enableAutoCompaction,
+                failure = generationFailure,
+                lastMessage = lastMessage,
+            )
         ) {
             // Some providers omit context_length metadata or reject requests because their
             // system/tool schema overhead is larger than the local estimate. Force one
@@ -2408,10 +2259,7 @@ class ChatService(
         // updatedConversation, and call saveConversation. Without this guard we'd wipe
         // the Pending tool the user was trying to approve.
         if (exists && conversation.messageNodes.isEmpty() && !allowEmptyHistory) {
-            val storedHasContent = runCatching {
-                conversationRepo.getConversationById(conversation.id)?.messageNodes?.isNotEmpty() == true
-            }.getOrDefault(false)
-            if (storedHasContent) {
+            if (conversationRepo.hasMessageNodes(conversation.id)) {
                 Log.w(TAG, "saveConversation: refusing to overwrite non-empty $conversationId with empty snapshot — likely an unhydrated session")
                 return false
             }
@@ -2563,7 +2411,7 @@ class ChatService(
                         id = Uuid.random(),
                         selectIndex = if (index == targetNodeIndex) node.messages.indexOfFirst { it.id == messageId } else node.selectIndex,
                         messages = node.messages.map { message ->
-                            message.copy(parts = message.parts.map { it.copyWithForkedFileUrl(copiedFiles) })
+                            message.copy(parts = message.parts.map { it.copyWithForkedFileUrl(copiedFiles, filesManager) })
                         },
                     )
                 }
@@ -2684,25 +2532,6 @@ class ChatService(
         }
 
         return conversation.copy(messageNodes = updatedNodes)
-    }
-
-    private fun UIMessagePart.copyWithForkedFileUrl(copiedFiles: MutableMap<String, android.net.Uri>): UIMessagePart {
-        fun copyLocalFileIfNeeded(url: String): String {
-            if (!url.startsWith("file:")) return url
-            return copiedFiles.getOrPut(url) {
-                requireNotNull(filesManager.createChatFilesByContents(listOf(url.toUri())).firstOrNull()) {
-                    "無法複製分岔所需的附件，請確認檔案及儲存空間。"
-                }
-            }.toString()
-        }
-
-        return when (this) {
-            is UIMessagePart.Image -> copy(url = copyLocalFileIfNeeded(url))
-            is UIMessagePart.Document -> copy(url = copyLocalFileIfNeeded(url))
-            is UIMessagePart.Video -> copy(url = copyLocalFileIfNeeded(url))
-            is UIMessagePart.Audio -> copy(url = copyLocalFileIfNeeded(url))
-            else -> this
-        }
     }
 
     fun clearTranslationField(conversationId: Uuid, messageId: Uuid) {

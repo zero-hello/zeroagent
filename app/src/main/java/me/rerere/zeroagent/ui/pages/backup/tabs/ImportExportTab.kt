@@ -161,6 +161,7 @@ fun ImportExportTab(
             StickyHeader { Text("選擇性備份") }
         }
         item { PortableBackupActions() }
+        item { TemplateBackupActions(vm) }
 
         stickyHeader {
             StickyHeader {

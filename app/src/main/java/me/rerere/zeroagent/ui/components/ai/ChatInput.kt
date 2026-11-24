@@ -61,6 +61,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
@@ -154,6 +156,7 @@ fun ChatInput(
     val errorContext = androidx.compose.ui.platform.LocalContext.current
     val toaster = LocalToaster.current
 
+    val composerFocus = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
 
@@ -220,6 +223,13 @@ fun ChatInput(
                 onFinishEdit = onFinishEditQueuedMessage,
                 onResume = onResumeMessageQueue,
             )
+            if (completionProviders.isNotEmpty() && !state.isEditing()) {
+                ComposerShortcutRow(
+                    state = state,
+                    hasWorkspace = completionProviders.any { it.id == "workspace_files" },
+                    onFocus = { composerFocus.requestFocus() },
+                )
+            }
             // Tonal Material surface keeps the editing area distinct from conversation controls.
             Surface(
                 modifier = Modifier
@@ -255,6 +265,7 @@ fun ChatInput(
                     TextInputRow(
                         state = state,
                         completionProviders = completionProviders,
+                        focusRequester = composerFocus,
                         onSendMessage = { sendMessage() },
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -316,6 +327,7 @@ private fun TextInputRow(
     onSendMessage: () -> Unit,
     modifier: Modifier = Modifier,
     onFocusChanged: (Boolean) -> Unit = {},
+    focusRequester: FocusRequester? = null,
 ) {
     val settings = LocalSettings.current
     val assistant = settings.getCurrentAssistant()
@@ -404,6 +416,7 @@ private fun TextInputRow(
             state = state.textContent,
             modifier = Modifier
                 .fillMaxWidth()
+                .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
                 .testTag("chat_input")
                 .contentReceiver(receiveContentListener)
                 .onFocusChanged {

@@ -148,6 +148,8 @@ val dataSourceModule = module {
     single { AgentRunBootRecovery(context = get(), repository = get()) }
     single {
         OrphanedReasoningRecovery(
+            context = get(),
+            database = get(),
             conversationDAO = get<AppDatabase>().conversationDao(),
             messageNodeDAO = get<AppDatabase>().messageNodeDao(),
         )

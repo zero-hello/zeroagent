@@ -38,6 +38,7 @@ import me.rerere.zeroagent.ui.components.ui.CardGroup
 import me.rerere.zeroagent.ui.theme.CustomColors
 import me.rerere.zeroagent.ui.context.LocalToaster
 import com.dokar.sonner.ToastType
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
 
@@ -117,7 +118,12 @@ fun SettingPermissionsPage() {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Group.values().forEach { group ->
+            Text(
+                text = stringResource(R.string.permission_privacy_intro),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+            Group.entries.forEach { group ->
                 val rowsForGroup = grouped[group] ?: return@forEach
                 if (rowsForGroup.isEmpty()) return@forEach
                 Text(
@@ -129,6 +135,7 @@ fun SettingPermissionsPage() {
                     rowsForGroup.forEach { row ->
                         val grantAction = row.grant
                         val click: (() -> Unit)? = when {
+                            row.id in featureManagedPermissions && row.status == Status.DENIED -> null
                             grantAction is GrantAction.Runtime
                                 && row.status != Status.GRANTED -> {
                                 { runtimeRequester.launch(grantAction.permission) }
@@ -146,11 +153,12 @@ fun SettingPermissionsPage() {
                                 val statusText = when (row.status) {
                                     Status.GRANTED -> stringResource(R.string.setting_page_permissions_status_granted)
                                     Status.AUTO_GRANTED -> stringResource(R.string.setting_page_permissions_status_auto_granted)
+                                    Status.SESSION_CONSENT -> stringResource(R.string.permission_privacy_each_session)
                                     Status.DENIED -> stringResource(if (grantAction is GrantAction.None) R.string.zeroagent_permission_unavailable else R.string.setting_page_permissions_status_denied)
                                 }
                                 val tint = when (row.status) {
                                     Status.GRANTED -> MaterialTheme.colorScheme.primary
-                                    Status.AUTO_GRANTED -> MaterialTheme.colorScheme.outline
+                                    Status.AUTO_GRANTED, Status.SESSION_CONSENT -> MaterialTheme.colorScheme.onSurfaceVariant
                                     Status.DENIED -> MaterialTheme.colorScheme.error
                                 }
                                 androidx.compose.material3.Surface(
@@ -170,8 +178,20 @@ fun SettingPermissionsPage() {
     }
 }
 
+private val featureManagedPermissions = setOf(
+    Manifest.permission.MANAGE_EXTERNAL_STORAGE,
+    Manifest.permission.REQUEST_INSTALL_PACKAGES,
+    Manifest.permission.SEND_SMS,
+    Manifest.permission.READ_SMS,
+    Manifest.permission.READ_CALL_LOG,
+    Manifest.permission.READ_CONTACTS,
+    Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+    Manifest.permission.SYSTEM_ALERT_WINDOW,
+)
+
 @Composable
 private fun sectionTitle(group: Group): String = when (group) {
+    Group.PrivacySensitive -> stringResource(R.string.permission_privacy_section)
     Group.ServicesAndIntegrations ->
         stringResource(R.string.setting_page_permissions_group_services)
     Group.SpecialAccess ->

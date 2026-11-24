@@ -5,7 +5,6 @@ import kotlin.uuid.Uuid
 
 sealed class AppEvent {
     data class Speak(val text: String) : AppEvent()
-    data object OpenUsageAccessSettings : AppEvent()
 
     /** 聊天生成过程中的流式更新，由 ChatNotificationManager 消费用于 Live Update 通知。 */
     data class ChatGenerationUpdate(

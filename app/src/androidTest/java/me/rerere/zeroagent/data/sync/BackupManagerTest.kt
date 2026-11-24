@@ -2,12 +2,17 @@ package me.rerere.zeroagent.data.sync
 
 import android.content.Context
 import android.content.ContextWrapper
+import androidx.room.withTransaction
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.runBlocking
 import me.rerere.zeroagent.data.datastore.SettingsStore
 import me.rerere.zeroagent.data.db.AppDatabase
 import me.rerere.zeroagent.data.db.AppDatabaseFactory
+import me.rerere.zeroagent.data.db.ChatPayloadStore
+import me.rerere.zeroagent.data.db.dao.readMessagePayload
+import me.rerere.zeroagent.data.db.entity.ConversationEntity
+import me.rerere.zeroagent.data.db.entity.MessageNodeEntity
 import me.rerere.zeroagent.utils.JsonInstant
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -92,6 +97,40 @@ class BackupManagerTest {
         }
         manager.stageRestore(archive, listOf(BackupItem.DATABASE))
         assertEquals("live", probe(liveDatabase))
+    }
+
+    @Test fun largeChatPayloadIsIncludedInADatabaseOnlyBackup() = runBlocking {
+        val content = """[{"role":"assistant","parts":[{"type":"text","text":"${"界🌱".repeat(350_000)}"}]}]"""
+        val store = ChatPayloadStore(context, liveDatabase)
+        val dao = liveDatabase.messageNodeDao()
+        liveDatabase.withTransaction {
+            liveDatabase.conversationDao().insert(
+                ConversationEntity("room", "assistant", "Title", "[]", 0, 0, "[]", false),
+            )
+            dao.insert(store.encode(MessageNodeEntity("node", "room", 0, content, 0)))
+            val node = requireNotNull(dao.getBoundedNode("node"))
+            assertTrue(node.payloadSha256 != null)
+            assertEquals(content, store.load(node))
+        }
+        val archive = manager.createBackup(listOf(BackupItem.DATABASE))
+        val standalone = File(directory, "standalone")
+        ZipFile(archive).use { zip ->
+            zip.getInputStream(zip.getEntry(DatabaseBackup.ARCHIVE_DATABASE)).use { input ->
+                standalone.outputStream().use { output -> input.copyTo(output) }
+            }
+        }
+        val room = AppDatabaseFactory.create(context, standalone.absolutePath)
+        try {
+            room.withTransaction {
+                val portableDao = room.messageNodeDao()
+                val node = requireNotNull(portableDao.getBoundedNode("node"))
+                assertEquals(null, node.payloadSha256)
+                assertEquals(content, portableDao.readMessagePayload(node))
+            }
+        } finally {
+            room.close()
+        }
+        manager.stageRestore(archive, listOf(BackupItem.DATABASE))
     }
 
     @Test fun unsupportedSchemaIsRejectedBeforePublishing() = runBlocking {

@@ -31,9 +31,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.dokar.sonner.ToastType
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import me.rerere.zeroagent.R
 import me.rerere.zeroagent.data.repository.WorkspaceRepository
+import me.rerere.zeroagent.data.repository.WorkspaceTextChanges
 import me.rerere.zeroagent.ui.components.nav.BackButton
 import me.rerere.zeroagent.ui.components.webview.WebView
 import me.rerere.zeroagent.ui.components.webview.rememberWebViewState
@@ -70,6 +76,11 @@ fun WorkspaceFileEditorPage(
     var loading by remember { mutableStateOf(true) }
     var loadError by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
+    var savedText by remember(id, area, path) { mutableStateOf("") }
+    var diff by remember(id, area, path) { mutableStateOf<Pair<WorkspaceTextChanges.Change, String>?>(null) }
+    var restoring by remember(id, area, path) { mutableStateOf(false) }
+    var restoreMessage by remember(id, area, path) { mutableStateOf<String?>(null) }
+    var loadingDiff by remember(id, area, path) { mutableStateOf(false) }
 
     LaunchedEffect(id, area, path) {
         loading = true
@@ -78,11 +89,52 @@ fun WorkspaceFileEditorPage(
             repository.readTextForPreview(id, area, path)
         }.onSuccess { content ->
             textState.setTextAndPlaceCursorAtEnd(content)
+            savedText = content
             loading = false
         }.onFailure {
             loadError = it.message ?: "Could not read the file"
             loading = false
         }
+    }
+
+    diff?.let { (change, lines) ->
+        WorkspaceDiffDialog(
+            diff = lines,
+            removing = change.previous == null,
+            restoring = restoring,
+            error = restoreMessage,
+            onDismiss = { if (!restoring) diff = null },
+            onRestore = {
+                restoring = true
+                restoreMessage = null
+                scope.launch {
+                    try {
+                        when (repository.restoreTextChange(id, path, change)) {
+                            WorkspaceTextChanges.RestoreResult.Changed -> {
+                                restoreMessage = errorContext.getString(R.string.workspace_diff_conflict)
+                            }
+                            WorkspaceTextChanges.RestoreResult.Removed -> {
+                                loadError = errorContext.getString(R.string.workspace_diff_created_file_removed)
+                                diff = null
+                            }
+                            WorkspaceTextChanges.RestoreResult.Restored -> {
+                                val restored = checkNotNull(change.previous)
+                                savedText = restored
+                                textState.setTextAndPlaceCursorAtEnd(restored)
+                                diff = null
+                                toaster.show(errorContext.getString(R.string.workspace_diff_restored), type = ToastType.Success)
+                            }
+                        }
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        restoreMessage = errorContext.localizedErrorMessage(error)
+                    } finally {
+                        restoring = false
+                    }
+                }
+            },
+        )
     }
 
     Scaffold(
@@ -104,18 +156,45 @@ fun WorkspaceFileEditorPage(
                     }
                     if (editable && !loading && loadError == null) {
                         TextButton(
+                            shapes = ButtonDefaults.shapes(),
+                            enabled = !saving && !loadingDiff && textState.text.toString() == savedText,
+                            onClick = {
+                                loadingDiff = true
+                                restoreMessage = null
+                                scope.launch {
+                                    try {
+                                        val change = repository.latestTextChange(id, path)
+                                        val unified = withContext(Dispatchers.Default) { change?.unifiedDiff(path) }
+                                        if (change == null || unified == null) {
+                                            toaster.show(errorContext.getString(R.string.workspace_diff_unavailable))
+                                        } else if (textState.text.toString() == savedText) {
+                                            diff = change to unified
+                                        }
+                                    } catch (cancelled: CancellationException) {
+                                        throw cancelled
+                                    } catch (error: Exception) {
+                                        toaster.show(errorContext.localizedErrorMessage(error), type = ToastType.Error)
+                                    } finally {
+                                        loadingDiff = false
+                                    }
+                                }
+                            },
+                        ) { Text(stringResource(R.string.workspace_diff_action)) }
+                        TextButton(
                             shapes = ButtonDefaults.shapes(), onClick = {
                                 if (saving) return@TextButton
                                 saving = true
+                                val submittedText = textState.text.toString()
                                 scope.launch {
                                     runCatching {
                                         repository.writeText(
                                             id = id,
                                             path = path,
-                                            text = textState.text.toString(),
+                                            text = submittedText,
                                             overwrite = true,
                                         )
                                     }.onSuccess {
+                                        savedText = submittedText
                                         toaster.show("Saved", type = ToastType.Success)
                                     }.onFailure {
                                         toaster.show(errorContext.localizedErrorMessage(it), type = ToastType.Error)

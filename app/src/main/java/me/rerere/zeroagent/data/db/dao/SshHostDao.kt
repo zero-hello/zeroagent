@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import me.rerere.zeroagent.data.db.entity.SshHostEntity
 
 @Dao
@@ -23,4 +24,10 @@ interface SshHostDao {
 
     @Query("DELETE FROM ssh_hosts WHERE name = :name")
     suspend fun deleteByName(name: String)
+
+    @Transaction
+    suspend fun rename(originalName: String, host: SshHostEntity) {
+        upsert(host)
+        if (originalName != host.name) deleteByName(originalName)
+    }
 }

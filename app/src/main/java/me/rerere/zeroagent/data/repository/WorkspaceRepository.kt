@@ -6,6 +6,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import me.rerere.zeroagent.data.datastore.SettingsStore
 import me.rerere.zeroagent.data.db.dao.WorkspaceDAO
@@ -21,6 +23,9 @@ import me.rerere.workspace.WorkspaceShellStatus
 import me.rerere.workspace.WorkspaceStorageArea
 import me.rerere.workspace.WorkspaceTreeResult
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.LinkOption.NOFOLLOW_LINKS
 import java.io.InputStream
 import java.io.OutputStream
 import kotlin.uuid.Uuid
@@ -31,6 +36,9 @@ class WorkspaceRepository(
     private val rootfsInstaller: RootfsInstaller,
     private val settingsStore: SettingsStore,
 ) {
+    private val fileChanges = WorkspaceTextChanges()
+    private val fileChangeMutex = Mutex()
+
     fun listFlow(): Flow<List<WorkspaceEntity>> = dao.listFlow()
 
     suspend fun checkIntegrity() = withContext(Dispatchers.IO) {
@@ -176,7 +184,59 @@ class WorkspaceRepository(
     ): WorkspaceFileEntry = withContext(Dispatchers.IO) {
         val workspace = dao.getById(id) ?: error("Workspace not found: $id")
         manager.ensureWorkspace(workspace.root)
-        manager.writeText(workspace.root, path, text, overwrite)
+        withWorkspaceTextChange(id, path) {
+            manager.writeText(workspace.root, path, text, overwrite)
+        }
+    }
+
+    /** Captures dedicated text edits in the files area, including approved Rootfs tool writes. */
+    internal suspend fun <T> withWorkspaceTextChange(
+        id: String,
+        path: String,
+        write: suspend () -> T,
+    ): T = withContext(Dispatchers.IO) {
+        fileChangeMutex.withLock {
+            val target = trackedFile(id, path) ?: return@withLock write()
+            val before = WorkspaceTextChanges.snapshot(target)
+            val isNew = Files.notExists(target.toPath(), NOFOLLOW_LINKS)
+            val result = write()
+            if (before != null || isNew) {
+                fileChanges.record(id, target, before, WorkspaceTextChanges.snapshot(target))
+            } else {
+                fileChanges.invalidate(id, target)
+            }
+            result
+        }
+    }
+
+    internal suspend fun latestTextChange(id: String, path: String): WorkspaceTextChanges.Change? =
+        withContext(Dispatchers.IO) {
+            fileChangeMutex.withLock {
+                trackedFile(id, path)?.let { fileChanges.latest(id, it) }
+            }
+        }
+
+    internal suspend fun restoreTextChange(
+        id: String,
+        path: String,
+        change: WorkspaceTextChanges.Change,
+    ): WorkspaceTextChanges.RestoreResult = withContext(Dispatchers.IO) {
+        fileChangeMutex.withLock {
+            val target = trackedFile(id, path) ?: return@withLock WorkspaceTextChanges.RestoreResult.Changed
+            fileChanges.restore(id, target, change)
+        }
+    }
+
+    // Skip links and ambiguous path syntax without changing how existing callers write files.
+    private suspend fun trackedFile(id: String, path: String): File? {
+        if (path.isBlank() || path.startsWith('/') || '\\' in path || path != path.trim()) return null
+        if (path.split('/').any { it == "." || it == ".." || it.isEmpty() }) return null
+        val workspace = dao.getById(id) ?: return null
+        return runCatching {
+            val files = manager.filesDir(workspace.root).canonicalFile
+            val expected = File(files, path)
+            manager.resolveFile(workspace.root, path, WorkspaceStorageArea.FILES).takeIf { it == expected }
+        }.getOrNull()
     }
 
     /** Creates a directory (and missing parents) in [area] — the primitive behind "new folder". */
@@ -325,8 +385,41 @@ class WorkspaceRepository(
         cwd: String = "",
         timeoutMillis: Long = WorkspaceManager.DEFAULT_COMMAND_TIMEOUT_MS,
         stdin: ByteArray? = null,
+        trackWorkspaceChanges: Boolean = false,
     ): WorkspaceCommandResult {
         val workspace = dao.getById(id) ?: error("Workspace not found: $id")
+        if (trackWorkspaceChanges) {
+            return withContext(Dispatchers.IO) {
+                fileChangeMutex.withLock {
+                    manager.ensureWorkspace(workspace.root)
+                    val files = manager.filesDir(workspace.root).canonicalFile
+                    val before = captureWorkspaceTextTree(files)
+                    try {
+                        runInterruptible {
+                            manager.executeCommand(
+                                workspace.root, command, cwd, timeoutMillis, stdin,
+                                shellCompatibilityMode = workspace.shellCompatibilityMode,
+                            )
+                        }
+                    } finally {
+                        if (before != null) {
+                            val after = captureWorkspaceTextTree(files)
+                            if (after != null) {
+                                after.forEach { (file, next) ->
+                                    val previous = before[file]
+                                    if (previous != null || file !in before) {
+                                        fileChanges.record(id, file, previous, next)
+                                    } else {
+                                        fileChanges.invalidate(id, file)
+                                    }
+                                }
+                                (before.keys - after.keys).forEach { fileChanges.invalidate(id, it) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         // runInterruptible 让协程取消转化为线程中断，从而打断阻塞的 Process.waitFor 并杀掉进程
         return runInterruptible(Dispatchers.IO) {
             manager.ensureWorkspace(workspace.root)

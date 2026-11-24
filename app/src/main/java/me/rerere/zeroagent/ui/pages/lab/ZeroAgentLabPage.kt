@@ -56,14 +56,14 @@ fun ZeroAgentLabPage() {
             transitionSpec = { me.rerere.zeroagent.ui.motion.sharedAxisTransition(targetState, motion) },
             label = "Lab",
         ) { drawer ->
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-                Column(
-                    Modifier.widthIn(max = 680.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    if (drawer) {
-                        MemoryDrawerWorkspace()
-                    } else {
+            if (drawer) {
+                MemoryDrawerWorkspace(Modifier.fillMaxSize())
+            } else {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                    Column(
+                        Modifier.widthIn(max = 680.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
                         Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.extraLarge) {
                             Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                 LabFlask()

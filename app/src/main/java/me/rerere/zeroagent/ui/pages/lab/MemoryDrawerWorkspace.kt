@@ -1,5 +1,25 @@
 package me.rerere.zeroagent.ui.pages.lab
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
+import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
+import androidx.compose.material3.adaptive.layout.ThreePaneScaffoldValue
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
+import me.rerere.zeroagent.R
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,8 +53,9 @@ import me.rerere.zeroagent.data.productivity.ProjectStore
 import me.rerere.zeroagent.data.repository.MemoryRepository
 import org.koin.compose.koinInject
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun MemoryDrawerWorkspace() {
+internal fun MemoryDrawerWorkspace(modifier: Modifier) {
     val context = LocalContext.current
     val repository: MemoryRepository = koinInject()
     val scope = rememberCoroutineScope()
@@ -70,21 +91,22 @@ internal fun MemoryDrawerWorkspace() {
             }
         }
     }
-    Text("這裡顯示本機記憶庫與待確認的變更。關閉 Lab 入口後，現有記憶與待確認建議仍會保留。")
-    ListItem(
-        headlineContent = { Text("暫停 AI 新增或修改記憶") },
-        supportingContent = { Text("暫停捕捉後仍可查看和編輯現有記憶。需要排除某一筆時，可選擇刪除並阻擋相同內容。") },
-        trailingContent = { Switch(paused == "true", { LabPreferences.set(context, LabMemoryReview.CAPTURE_PAUSED, it.toString()) }) },
-    )
-    if (notice.isNotBlank()) Text(notice, color = MaterialTheme.colorScheme.primary)
-    if (pending.isNotEmpty()) Text("待確認的新增與衝突", style = MaterialTheme.typography.titleMedium)
-    for (change in pending) {
+    val controls: @Composable () -> Unit = {
+        Text("這裡顯示本機記憶庫與待確認的變更。關閉 Lab 入口後，現有記憶與待確認建議仍會保留。")
+        ListItem(
+            headlineContent = { Text("暫停 AI 新增或修改記憶") },
+            supportingContent = { Text("暫停捕捉後仍可查看和編輯現有記憶。需要排除某一筆時，可選擇刪除並阻擋相同內容。") },
+            trailingContent = { Switch(paused == "true", { LabPreferences.set(context, LabMemoryReview.CAPTURE_PAUSED, it.toString()) }) },
+        )
+        if (notice.isNotBlank()) Text(notice, color = MaterialTheme.colorScheme.primary)
+    }
+    val pendingCard: @Composable (MemoryChange) -> Unit = { change ->
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(scopeName(change.scope), style = MaterialTheme.typography.labelLarge)
                 change.original?.let { Text("目前：$it") }
                 Text(change.proposed?.let { "建議：$it" } ?: "建議移除這筆記憶")
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     FilledTonalButton(enabled = !busy, onClick = { write { LabMemoryReview.apply(context, change, repository) } }) {
                         Text(if (change.original == null) "保存" else if (change.proposed == null) "移除" else "取代")
                     }
@@ -97,9 +119,7 @@ internal fun MemoryDrawerWorkspace() {
             }
         }
     }
-    Text("已保存記憶", style = MaterialTheme.typography.titleMedium)
-    if (records.isEmpty()) Text("目前沒有保存的記憶。")
-    for (record in records.sortedBy { it.assistantId }) {
+    val recordCard: @Composable (MemoryEntity) -> Unit = { record ->
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(scopeName(record.assistantId), style = MaterialTheme.typography.labelLarge)
@@ -107,6 +127,91 @@ internal fun MemoryDrawerWorkspace() {
                 Row {
                     TextButton(enabled = !busy, onClick = { editing = record; text = record.content }) { Text("編輯") }
                     TextButton(enabled = !busy, onClick = { removing = record }) { Text("移除") }
+                }
+            }
+        }
+    }
+    val sortedRecords = remember(records) { records.sortedBy { it.assistantId } }
+    var selection by rememberSaveable { mutableStateOf<String?>(null) }
+    val selectedSuggestion = pending.firstOrNull { "suggestion:${it.key}" == selection }
+    val selectedRecord = records.firstOrNull { "memory:${it.id}" == selection }
+    val listScroll = rememberScrollState()
+    val windowDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
+    BoxWithConstraints(modifier) {
+        val useTwoPanes = maxWidth >= 840.dp && windowDirective.maxHorizontalPartitions >= 2
+        if (useTwoPanes) {
+            ListDetailPaneScaffold(
+                directive = windowDirective,
+                value = ThreePaneScaffoldValue(
+                    primary = PaneAdaptedValue.Expanded,
+                    secondary = PaneAdaptedValue.Expanded,
+                    tertiary = PaneAdaptedValue.Hidden,
+                ),
+                modifier = Modifier.fillMaxSize(),
+                listPane = {
+                    Column(
+                        Modifier.fillMaxSize().verticalScroll(listScroll).padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        controls()
+                        if (pending.isNotEmpty()) {
+                            Text("待確認的新增與衝突", style = MaterialTheme.typography.titleMedium)
+                        }
+                        pending.forEach { change ->
+                            val key = "suggestion:${change.key}"
+                            MemoryListCard(
+                                scopeName(change.scope),
+                                change.proposed ?: "建議移除這筆記憶",
+                                selected = key == selection,
+                                onClick = { selection = key },
+                            )
+                        }
+                        Text("已保存記憶", style = MaterialTheme.typography.titleMedium)
+                        if (sortedRecords.isEmpty()) Text("目前沒有保存的記憶。")
+                        sortedRecords.forEach { record ->
+                            val key = "memory:${record.id}"
+                            MemoryListCard(
+                                scopeName(record.assistantId),
+                                record.content,
+                                selected = key == selection,
+                                onClick = { selection = key },
+                            )
+                        }
+                    }
+                },
+                detailPane = {
+                    androidx.compose.runtime.key(selection) {
+                        Box(Modifier.fillMaxSize().padding(20.dp), contentAlignment = Alignment.TopCenter) {
+                            when {
+                                selectedSuggestion != null -> Column(Modifier.verticalScroll(rememberScrollState())) {
+                                    pendingCard(selectedSuggestion)
+                                }
+                                selectedRecord != null -> Column(Modifier.verticalScroll(rememberScrollState())) {
+                                    recordCard(selectedRecord)
+                                }
+                                else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text(
+                                        stringResource(R.string.adaptive_memory_choose_entry),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+            )
+        } else {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                Column(
+                    Modifier.widthIn(max = 680.dp).fillMaxWidth().verticalScroll(listScroll).padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    controls()
+                    if (pending.isNotEmpty()) Text("待確認的新增與衝突", style = MaterialTheme.typography.titleMedium)
+                    pending.forEach { pendingCard(it) }
+                    Text("已保存記憶", style = MaterialTheme.typography.titleMedium)
+                    if (sortedRecords.isEmpty()) Text("目前沒有保存的記憶。")
+                    sortedRecords.forEach { recordCard(it) }
                 }
             }
         }
@@ -137,3 +242,20 @@ internal fun MemoryDrawerWorkspace() {
     }
 }
 
+
+@Composable
+private fun MemoryListCard(title: String, preview: String, selected: Boolean, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().semantics { this.selected = selected },
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = if (selected) MaterialTheme.colorScheme.secondaryContainer
+            else MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = MaterialTheme.typography.labelLarge)
+            Text(preview, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}

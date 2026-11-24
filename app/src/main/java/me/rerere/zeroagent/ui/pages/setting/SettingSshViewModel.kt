@@ -92,9 +92,11 @@ class SettingSshViewModel(
             )
             withContext(Dispatchers.IO) {
                 val original = draft.originalName?.trim()
-                // `name` is the primary key, so a rename is a delete + insert.
-                if (original != null && original != entity.name) repository.deleteByName(original)
-                repository.upsert(entity)
+                if (original != null && original != entity.name) {
+                    repository.rename(original, entity)
+                } else {
+                    repository.upsert(entity)
+                }
             }
             refresh()
         }

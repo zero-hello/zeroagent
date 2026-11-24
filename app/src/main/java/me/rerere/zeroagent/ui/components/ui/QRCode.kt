@@ -22,7 +22,8 @@ fun QRCode(
     modifier: Modifier = Modifier,
     size: Int = 512,
     color: Color = Color.Unspecified,
-    backgroundColor: Color = Color.Unspecified
+    backgroundColor: Color = Color.Unspecified,
+    description: String? = null,
 ) {
     val actualColor = color.takeOrElse { MaterialTheme.colorScheme.secondary }
     val actualBackgroundColor = backgroundColor.takeOrElse { Color.Transparent }
@@ -42,7 +43,7 @@ fun QRCode(
     }
     Image(
         bitmap = bitmap.asImageBitmap(),
-        contentDescription = stringResource(R.string.accessibility_qr_code_value, value),
+        contentDescription = description ?: stringResource(R.string.accessibility_qr_code_value, value),
         modifier = modifier
     )
 }

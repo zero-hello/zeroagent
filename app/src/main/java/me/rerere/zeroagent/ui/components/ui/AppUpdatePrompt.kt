@@ -121,8 +121,7 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
                 TextButton(enabled = !downloading, onClick = {
                     withNotifications { scope.launch {
                         try {
-                            checker.downloadUpdate(context, asset)
-                            dismissedVersion = info.version
+                            if (checker.downloadUpdate(context, asset)) dismissedVersion = info.version
                         } catch (e: CancellationException) {
                             throw e
                         } catch (e: Exception) {

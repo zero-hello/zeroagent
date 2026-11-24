@@ -30,9 +30,9 @@ import me.rerere.zeroagent.service.ZeroAgentNotificationListenerService
  */
 object PermissionInventory {
 
-    enum class Group { ServicesAndIntegrations, SpecialAccess, Runtime, AutoGranted }
+    enum class Group { PrivacySensitive, ServicesAndIntegrations, SpecialAccess, Runtime, AutoGranted }
 
-    enum class Status { GRANTED, DENIED, AUTO_GRANTED }
+    enum class Status { GRANTED, DENIED, AUTO_GRANTED, SESSION_CONSENT }
 
     sealed class GrantAction {
         /** No action required — install-time / signature-level / always granted. */
@@ -64,7 +64,10 @@ object PermissionInventory {
 
         val declared = readDeclaredPermissions(context)
         for (perm in declared) {
-            rows += classify(context, perm) ?: continue
+            val row = classify(context, perm) ?: continue
+            rows += privacyDescription(perm)?.let {
+                row.copy(group = Group.PrivacySensitive, description = context.getString(it))
+            } ?: row
         }
         return rows.sortedWith(
             compareBy({ it.group.ordinal }, { if (it.status == Status.DENIED) 0 else 1 }, { it.label })
@@ -96,6 +99,32 @@ object PermissionInventory {
         // Special-access permissions — each has its own canWrite / canDrawOverlays / etc check
         // and a deep-link Intent.
         when (perm) {
+            Manifest.permission.REQUEST_INSTALL_PACKAGES -> return Row(
+                id = perm,
+                label = context.getString(R.string.permission_privacy_install),
+                description = context.getString(R.string.permission_privacy_install_use),
+                status = if (pm.canRequestPackageInstalls()) Status.GRANTED else Status.DENIED,
+                group = Group.PrivacySensitive,
+                grant = GrantAction.SystemSettings(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, pkgUri)),
+            )
+            Manifest.permission.QUERY_ALL_PACKAGES -> return Row(
+                id = perm,
+                label = context.getString(R.string.permission_privacy_packages),
+                description = context.getString(R.string.permission_privacy_packages_use),
+                status = if (ContextCompat.checkSelfPermission(context, perm) == PackageManager.PERMISSION_GRANTED) {
+                    Status.AUTO_GRANTED
+                } else Status.DENIED,
+                group = Group.PrivacySensitive,
+                grant = GrantAction.None,
+            )
+            Manifest.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION -> return Row(
+                id = perm,
+                label = context.getString(R.string.permission_privacy_capture),
+                description = context.getString(R.string.permission_privacy_capture_use),
+                status = Status.SESSION_CONSENT,
+                group = Group.PrivacySensitive,
+                grant = GrantAction.None,
+            )
             Manifest.permission.ACCESS_BACKGROUND_LOCATION -> return Row(
                 id = perm,
                 label = context.getString(R.string.zeroagent_permission_background_location),
@@ -112,13 +141,6 @@ object PermissionInventory {
                 group = Group.SpecialAccess,
                 grant = GrantAction.SystemSettings(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, pkgUri)),
             )
-            Manifest.permission.PACKAGE_USAGE_STATS -> {
-                val ops = context.getSystemService(android.app.AppOpsManager::class.java)
-                val granted = ops?.unsafeCheckOpNoThrow(android.app.AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), context.packageName) == android.app.AppOpsManager.MODE_ALLOWED
-                return Row(perm, context.getString(R.string.zeroagent_permission_usage), context.getString(R.string.zeroagent_permission_usage_hint),
-                    if (granted) Status.GRANTED else Status.DENIED, Group.SpecialAccess,
-                    GrantAction.SystemSettings(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS, pkgUri)))
-            }
             Manifest.permission.SYSTEM_ALERT_WINDOW -> {
                 val granted = Settings.canDrawOverlays(context)
                 return Row(
@@ -236,6 +258,17 @@ object PermissionInventory {
             Row(perm, resolveLabel(context, perm, info), context.getString(R.string.zeroagent_permission_restricted),
                 if (granted) Status.GRANTED else Status.DENIED, Group.SpecialAccess, GrantAction.None)
         }
+    }
+
+    private fun privacyDescription(perm: String) = when (perm) {
+        Manifest.permission.MANAGE_EXTERNAL_STORAGE -> R.string.permission_privacy_files_use
+        Manifest.permission.SEND_SMS -> R.string.permission_privacy_send_sms_use
+        Manifest.permission.READ_SMS -> R.string.permission_privacy_read_sms_use
+        Manifest.permission.READ_CALL_LOG -> R.string.permission_privacy_call_log_use
+        Manifest.permission.READ_CONTACTS -> R.string.permission_privacy_contacts_use
+        Manifest.permission.ACCESS_BACKGROUND_LOCATION -> R.string.permission_privacy_location_use
+        Manifest.permission.SYSTEM_ALERT_WINDOW -> R.string.permission_privacy_overlay_use
+        else -> null
     }
 
     private fun autoRow(context: Context, perm: String, label: String) = Row(

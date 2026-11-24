@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentModalBottomSheet as ModalBottomSheet
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
@@ -86,6 +87,7 @@ import me.rerere.hugeicons.stroke.LeftToRightListBullet
 import me.rerere.hugeicons.stroke.Menu03
 import me.rerere.hugeicons.stroke.MessageAdd01
 import me.rerere.hugeicons.stroke.ComputerTerminal01
+import me.rerere.ai.provider.ProviderSetting
 import me.rerere.zeroagent.R
 import me.rerere.zeroagent.data.chat.ChatCommandEffect
 import me.rerere.zeroagent.data.chat.ChatSlashCommand
@@ -153,10 +155,15 @@ fun ChatPage(
     // already shows instead of adding a second surface.
     val subAgentRegistry: SubAgentRegistry = koinInject()
     val subAgentRuns by subAgentRegistry.runs.collectAsStateWithLifecycle()
-    val subAgentStatus = subAgentStatusLine(id, subAgentRuns)
-    val mergedStatus = listOfNotNull(processingStatus, subAgentStatus)
-        .joinToString(separator = "  ·  ")
-        .ifBlank { null }
+    val activeSubAgents = remember(id, subAgentRuns) {
+        subAgentRuns.values.filter {
+            it.parentChatId == id.toString() &&
+                (it.status == SubAgentStatus.RUNNING || it.status == SubAgentStatus.PENDING)
+        }
+    }
+    val subAgentStatus = subAgentStatusLine(activeSubAgents)
+    var showSubAgentMonitor by remember(id) { mutableStateOf(false) }
+
 
     val appDrawer = LocalAppDrawer.current
     val isBigScreen = appDrawer.isPermanent
@@ -209,12 +216,19 @@ fun ChatPage(
     val themeFlow = remember(themeContext, id) { ChatExtras.themeFlow(themeContext, id) }
     val themeId by themeFlow.collectAsStateWithLifecycle(initialValue = ChatExtras.theme(themeContext, id))
     val palette = PresetThemes.firstOrNull { it.id == themeId }
-    MaterialTheme(colorScheme = palette?.getColorScheme(LocalDarkMode.current) ?: MaterialTheme.colorScheme) {
+    MaterialExpressiveTheme(
+        colorScheme = palette?.getColorScheme(LocalDarkMode.current) ?: MaterialTheme.colorScheme,
+        motionScheme = MaterialTheme.motionScheme,
+        shapes = MaterialTheme.shapes,
+        typography = MaterialTheme.typography,
+    ) {
         ChatPageContent(
             onStartVoiceMode = startVoiceMode,
             inputState = inputState,
             loadingJob = loadingJob,
-            processingStatus = mergedStatus,
+            processingStatus = processingStatus,
+            subAgentStatus = subAgentStatus,
+            onOpenSubAgentMonitor = { showSubAgentMonitor = true },
             setting = setting,
             conversation = conversation,
             onOpenDrawer = appDrawer::open,
@@ -229,6 +243,9 @@ fun ChatPage(
             onDismissError = { vm.dismissError(it) },
             onClearAllErrors = { vm.clearAllErrors() },
         )
+        if (showSubAgentMonitor) {
+            SubAgentMonitorSheet(activeSubAgents, { showSubAgentMonitor = false }, { subAgentRegistry.requestCancel(it) })
+        }
     }
 }
 
@@ -240,12 +257,7 @@ fun ChatPage(
  * active, so the status line is exactly as before on an install that never dispatches.
  */
 @Composable
-private fun subAgentStatusLine(conversationId: Uuid, runs: Map<String, SubAgentRun>): String? {
-    val parentId = conversationId.toString()
-    val active = runs.values.filter {
-        it.parentChatId == parentId &&
-            (it.status == SubAgentStatus.RUNNING || it.status == SubAgentStatus.PENDING)
-    }
+private fun subAgentStatusLine(active: List<SubAgentRun>): String? {
     if (active.isEmpty()) return null
     var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(active.size) {
@@ -275,6 +287,8 @@ private fun ChatPageContent(
     inputState: ChatInputState,
     loadingJob: Job?,
     processingStatus: String? = null,
+    subAgentStatus: String? = null,
+    onOpenSubAgentMonitor: () -> Unit = {},
     setting: Settings,
     bigScreen: Boolean,
     conversation: Conversation,
@@ -432,83 +446,96 @@ private fun ChatPageContent(
             topBar = {},
             bottomBar = {
                 val messageQueue by vm.messageQueue.collectAsStateWithLifecycle()
-                ChatInput(
-                    onStartVoiceMode = onStartVoiceMode,
-                    onUpdateChatModel = onUpdateChatModel,
-                    accessControl = {
-                        Column {
-                            if (conversation.customSystemPrompt?.contains("[zeroagent:plan]") == true) Text(stringResource(R.string.zeroagent8_plan_active), style = MaterialTheme.typography.labelSmall)
-                            if (conversation.customSystemPrompt?.contains("[zeroagent:goal]") == true) Text(stringResource(R.string.zeroagent8_goal_active), style = MaterialTheme.typography.labelSmall)
-                            me.rerere.zeroagent.ui.components.ai.ConversationAccessControl(
-                                conversation.id, accessRequest,
-                                modelName = currentChatModel?.let { it.displayName.ifBlank { it.modelId } }.orEmpty(),
-                            )
+                Column {
+                    if (subAgentStatus != null) {
+                        androidx.compose.material3.TextButton(onClick = onOpenSubAgentMonitor) {
+                            Text(subAgentStatus)
                         }
-                    },
-                    state = inputState,
-                    messageQueue = messageQueue,
-                    onRemoveQueuedMessage = vm::removeQueuedMessage,
-                    onBeginEditQueuedMessage = vm::beginEditQueuedMessage,
-                    onFinishEditQueuedMessage = vm::finishEditQueuedMessage,
-                    onResumeMessageQueue = vm::resumeMessageQueue,
-                    loading = loadingJob != null,
-                    settings = setting,
-                    assistant = assistant,
-                    model = currentChatModel,
+                    }
+                    ChatContextMeter(
+                        conversation = conversation,
+                        contextLength = currentChatModel?.contextLength,
+                        canCompact = loadingJob == null && conversation.messageNodes.size > 1,
+                        onCompact = { handleSlash("/compact") },
+                    )
+                    ChatInput(
+                        onStartVoiceMode = onStartVoiceMode,
+                        onUpdateChatModel = onUpdateChatModel,
+                        accessControl = {
+                            Column {
+                                if (conversation.customSystemPrompt?.contains("[zeroagent:plan]") == true) Text(stringResource(R.string.zeroagent8_plan_active), style = MaterialTheme.typography.labelSmall)
+                                if (conversation.customSystemPrompt?.contains("[zeroagent:goal]") == true) Text(stringResource(R.string.zeroagent8_goal_active), style = MaterialTheme.typography.labelSmall)
+                                me.rerere.zeroagent.ui.components.ai.ConversationAccessControl(
+                                    conversation.id, accessRequest,
+                                    modelName = currentChatModel?.let { it.displayName.ifBlank { it.modelId } }.orEmpty(),
+                                )
+                            }
+                        },
+                        state = inputState,
+                        messageQueue = messageQueue,
+                        onRemoveQueuedMessage = vm::removeQueuedMessage,
+                        onBeginEditQueuedMessage = vm::beginEditQueuedMessage,
+                        onFinishEditQueuedMessage = vm::finishEditQueuedMessage,
+                        onResumeMessageQueue = vm::resumeMessageQueue,
+                        loading = loadingJob != null,
+                        settings = setting,
+                        assistant = assistant,
+                        model = currentChatModel,
 
-                    completionProviders = completionProviders,
-                    onCancelClick = {
-                        vm.stopGeneration()
-                    },
-                    onSendClick = {
-                        if (!inputState.isEditing() && inputState.messageContent.isEmpty() && handleSlash(inputState.textContent.text.toString())) return@ChatInput
-                        if (currentChatModel == null) {
-                            toaster.show(
-                                localizedResources.getString(R.string.chat_select_model_first),
-                                type = ToastType.Error,
-                            )
-                            // Dead-end fix: instead of only refusing, take the user to the
-                            // first-run checklist so they can see everything that still needs
-                            // setting up — and land on the "add a model" step.
-                            navController.navigate(Screen.SettingProvider)
-                            return@ChatInput
-                        }
-                        if (inputState.isEditing()) {
-                            vm.handleMessageEdit(
-                                parts = inputState.getContents(),
-                                messageId = inputState.editingMessage!!,
-                            )
-                        } else {
-                            val outgoing = inputState.getContents()
-                            if (maskEnabled == "true" && outgoing.isNotEmpty()) {
-                                draftToMask = outgoing
+                        completionProviders = completionProviders,
+                        onCancelClick = {
+                            vm.stopGeneration()
+                        },
+                        onSendClick = {
+                            if (!inputState.isEditing() && inputState.messageContent.isEmpty() && handleSlash(inputState.textContent.text.toString())) return@ChatInput
+                            if (currentChatModel == null) {
+                                toaster.show(
+                                    localizedResources.getString(R.string.chat_select_model_first),
+                                    type = ToastType.Error,
+                                )
+                                // Dead-end fix: instead of only refusing, take the user to the
+                                // first-run checklist so they can see everything that still needs
+                                // setting up — and land on the "add a model" step.
+                                navController.navigate(Screen.SettingProvider)
                                 return@ChatInput
                             }
-                            pendingSentCheck = true
-                            vm.handleMessageSend(outgoing)
-                        }
-                        inputState.clearInput()
-                    },
-                    onLongSendClick = {
-                        if (inputState.isEditing()) {
-                            vm.handleMessageEdit(
-                                parts = inputState.getContents(),
-                                messageId = inputState.editingMessage!!,
-                            )
-                        } else {
-                            vm.handleMessageSend(content = inputState.getContents(), answer = false)
-                        }
-                        inputState.clearInput()
-                    },
-                    onUpdateReasoningLevel = { level ->
-                        currentChatModel?.id?.let { modelId ->
-                            vm.updateSettings { it.withChatModelReasoning(modelId, level) }
-                        }
-                    },
-                    onMoreClick = {
-                        showFilesSheet = true
-                    },
-                )
+                            if (inputState.isEditing()) {
+                                vm.handleMessageEdit(
+                                    parts = inputState.getContents(),
+                                    messageId = inputState.editingMessage!!,
+                                )
+                            } else {
+                                val outgoing = inputState.getContents()
+                                if (maskEnabled == "true" && outgoing.isNotEmpty()) {
+                                    draftToMask = outgoing
+                                    return@ChatInput
+                                }
+                                pendingSentCheck = true
+                                vm.handleMessageSend(outgoing)
+                            }
+                            inputState.clearInput()
+                        },
+                        onLongSendClick = {
+                            if (inputState.isEditing()) {
+                                vm.handleMessageEdit(
+                                    parts = inputState.getContents(),
+                                    messageId = inputState.editingMessage!!,
+                                )
+                            } else {
+                                vm.handleMessageSend(content = inputState.getContents(), answer = false)
+                            }
+                            inputState.clearInput()
+                        },
+                        onUpdateReasoningLevel = { level ->
+                            currentChatModel?.id?.let { modelId ->
+                                vm.updateSettings { it.withChatModelReasoning(modelId, level) }
+                            }
+                        },
+                        onMoreClick = {
+                            showFilesSheet = true
+                        },
+                    )
+                }
             },
         ) { innerPadding ->
             // The title bar rides above the message list, so its measured height is what the list
@@ -533,7 +560,18 @@ private fun ChatPageContent(
                     Modifier.align(Alignment.TopCenter).padding(top = listInset.calculateTopPadding()).size(32.dp),
                     description = "訊息已加入對話")
                 if (conversation.currentMessages.isEmpty() && loadingJob == null && errors.isEmpty()) {
-                    ZeroAgentWelcome(Modifier.fillMaxSize().padding(listInset)) { inputState.setMessageText(it) }
+                    if (setting.providers.any { it.isReadyForOnboarding() }) {
+                        ZeroAgentWelcome(Modifier.fillMaxSize().padding(listInset)) { inputState.setMessageText(it) }
+                    } else {
+                        val cloudProviders = setting.providers.filter { it.acceptsOnboardingApiKey() }
+                        ChatModelSetupCard(
+                            providers = cloudProviders,
+                            onProviderClick = { navController.navigate(Screen.SettingProviderDetail(it.id.toString())) },
+                            onAllProvidersClick = { navController.navigate(Screen.SettingProvider) },
+                            canOfferLocal = setting.providers.any { it is ProviderSetting.LlamaCppLocal },
+                            modifier = Modifier.fillMaxSize().padding(listInset),
+                        )
+                    }
                 }
                 if (vm.pendingDelete != null) {
                     androidx.compose.material3.Snackbar(

@@ -1,12 +1,17 @@
 package me.rerere.zeroagent.data.ai
 
+import android.content.Context
 import android.util.Log
-import kotlinx.coroutines.flow.first
-import kotlinx.datetime.Instant
+import androidx.room.withTransaction
+import kotlinx.coroutines.CancellationException
+import kotlin.time.Instant
 import me.rerere.ai.ui.UIMessage
 import me.rerere.ai.ui.UIMessagePart
+import me.rerere.zeroagent.data.db.AppDatabase
 import me.rerere.zeroagent.data.db.dao.ConversationDAO
 import me.rerere.zeroagent.data.db.dao.MessageNodeDAO
+import me.rerere.zeroagent.data.db.ChatPayloadStore
+import me.rerere.zeroagent.data.db.toEntity
 import me.rerere.zeroagent.utils.JsonInstant
 
 private const val TAG = "OrphanedReasoning"
@@ -30,60 +35,54 @@ private const val TAG = "OrphanedReasoning"
  * actually need repairing rather than to the size of the database.
  */
 class OrphanedReasoningRecovery(
+    context: Context,
+    private val database: AppDatabase,
     private val conversationDAO: ConversationDAO,
     private val messageNodeDAO: MessageNodeDAO,
 ) {
+    private val payloads = ChatPayloadStore(context, database)
 
     /**
      * Repair every node holding an open part. Returns the number of nodes rewritten (useful for
      * tests and for the boot log).
      */
-    suspend fun runRecovery(): Int =
-        runCatching {
-            val nodes = messageNodeDAO.getNodesWithOpenFinishedAt()
-            if (nodes.isEmpty()) return@runCatching 0
-
-            val closedAtCache = mutableMapOf<String, Instant>()
-            var repaired = 0
-
-            nodes.forEach { node ->
-                // An unreadable blob is a separate problem (the load path has its own row-by-row
-                // recovery); leave it exactly as it is rather than dropping content.
-                val messages = runCatching {
-                    JsonInstant.decodeFromString<List<UIMessage>>(node.messages)
-                }.getOrElse { return@forEach }
-
-                val closedAt = closedAtCache.getOrPut(node.conversationId) {
-                    val updateAt = runCatching {
-                        conversationDAO.getConversationFlowById(node.conversationId).first()?.updateAt
-                    }.getOrNull() ?: 0L
-                    Instant.fromEpochMilliseconds(updateAt)
-                }
-
-                var changed = false
-                val repairedMessages = messages.map { message ->
-                    val parts = message.parts.map { part ->
-                        if (part is UIMessagePart.Reasoning && part.finishedAt == null) {
-                            changed = true
-                            part.copy(finishedAt = maxOf(part.createdAt, closedAt))
-                        } else {
-                            part
-                        }
-                    }
-                    message.copy(parts = parts)
-                }
-
-                if (changed) {
-                    messageNodeDAO.update(node.copy(messages = JsonInstant.encodeToString(repairedMessages)))
-                    repaired++
-                }
+    suspend fun runRecovery(): Int {
+        var repaired = 0
+        val candidateIds = messageNodeDAO.getOpenFinishedAtNodeIds()
+        for (id in candidateIds) {
+            try {
+                if (database.withTransaction { repairNode(id) }) repaired++
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Keep the original row intact if it cannot be decoded or updated.
+                Log.w(TAG, "Could not close an orphaned reasoning part", e)
             }
+        }
+        return repaired
+    }
 
-            if (repaired > 0) {
-                Log.i(TAG, "runRecovery: closed orphaned reasoning parts in $repaired node(s)")
-            }
-            repaired
-        }.onFailure {
-            runCatching { Log.w(TAG, "runRecovery failed", it) }
-        }.getOrDefault(0)
+    private suspend fun repairNode(id: String): Boolean {
+        val node = messageNodeDAO.getBoundedNode(id) ?: return false
+        val messages = JsonInstant.decodeFromString<List<UIMessage>>(payloads.load(node))
+        val updateAt = conversationDAO.getConversationUpdateAt(node.conversationId) ?: return false
+        val closedAt = Instant.fromEpochMilliseconds(updateAt)
+        var changed = false
+        val repairedMessages = messages.map { message ->
+            message.copy(parts = message.parts.map { part ->
+                if (part is UIMessagePart.Reasoning && part.finishedAt == null) {
+                    changed = true
+                    part.copy(finishedAt = maxOf(part.createdAt, closedAt))
+                } else {
+                    part
+                }
+            })
+        }
+        if (changed) {
+            messageNodeDAO.update(
+                payloads.encode(node.toEntity(JsonInstant.encodeToString(repairedMessages)))
+            )
+        }
+        return changed
+    }
 }

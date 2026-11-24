@@ -36,8 +36,6 @@
     <string name="setting_termux_verify_other_error">Ошибка проверки: %s</string>
     <string name="setting_termux_verify_timeout">Время простой проверки</string>
     <string name="setting_termux_verify_timeout_desc">Время ожидания простой echo-проверки allow-external-apps. От 3 до 30 секунд.</string>
-    <string name="videogen_page_delete_videos_failed">Удалено: %1$d. Ошибок: %2$d. Повторите попытку.</string>
-    <string name="videogen_page_save_failed">Ошибка сохранения: %1$s</string>
     <string name="workspace_cwd_new_folder_invalid">Введите одно имя папки без косых черт.</string>
     <string name="zeroagent6s_root_denied">Разрешение не выдано. Проверьте менеджер суперпользователя и повторите попытку.</string>
     <string name="zeroagent6s_root_error">Не удалось проверить Root-доступ. Повторите попытку.</string>

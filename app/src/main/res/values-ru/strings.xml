@@ -287,7 +287,6 @@
   <string name="chat_page_export_share_via">Поделиться через</string>
   <string name="chat_page_export_success">Экспортировано в %1$s</string>
   <string name="chat_page_history">История чата</string>
-  <string name="chat_page_menu_ai_translator">AI-переводчик</string>
   <string name="chat_page_menu_image_generation">Генерация изображений</string>
   <string name="chat_page_message_count">%d сообщений</string>
   <string name="chat_page_move_to_assistant">Перейти к ассистенту</string>
@@ -1034,11 +1033,6 @@
   <string name="translation_clear">Очистить перевод</string>
   <string name="translation_language_selection_title">Выберите язык перевода</string>
   <string name="translation_text">Перевод</string>
-  <string name="translator_page_cancel">Отмена</string>
-  <string name="translator_page_input_placeholder">Введите текст для перевода...</string>
-  <string name="translator_page_result_placeholder">Результат перевода будет показан здесь</string>
-  <string name="translator_page_title">Переводчик</string>
-  <string name="translator_page_translate">Перевести</string>
   <string name="tts">TTS</string>
   <string name="unpin_chat">Открепить чат</string>
   <string name="update_card_check_failed">Проверка обновления не удалась</string>
@@ -1555,9 +1549,6 @@
   <string name="skill_webview_card_direct">Прямой просмотрщик</string>
   <string name="skill_webview_card_embedded">Встроенный просмотрщик</string>
   <string name="skill_webview_card_open">Открыть в браузере</string>
-  <string name="translator_copy_result">Копировать перевод</string>
-  <string name="translator_error_generic">Ошибка</string>
-  <string name="translator_paste_text">Вставить текст</string>
   <string name="update_download_description">Загрузка обновления…</string>
   <string name="assistant_page_gradient_background">Градиентный фон</string>
   <string name="assistant_page_gradient_background_desc">Использовать динамический градиентный фон на странице чата</string>

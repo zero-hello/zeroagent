@@ -1,0 +1,9 @@
+<resources>
+    <string name="workspace_diff_action">檔案差異</string>
+    <string name="workspace_diff_restore">還原此變更</string>
+    <string name="workspace_diff_remove_note">這次變更新增了檔案。還原後會移除這個檔案。</string>
+    <string name="workspace_diff_conflict">這次變更之後檔案又被修改過，已保留目前內容。</string>
+    <string name="workspace_diff_created_file_removed">已移除這次新增的檔案。</string>
+    <string name="workspace_diff_restored">已還原原本的檔案內容。</string>
+    <string name="workspace_diff_unavailable">沒有可預覽的近期變更。僅保留本次開啟期間的小型文字檔變更。</string>
+</resources>

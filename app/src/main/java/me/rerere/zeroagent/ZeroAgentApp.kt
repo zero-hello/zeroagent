@@ -23,7 +23,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
 import me.rerere.common.android.appTempFolder
-import com.whl.quickjs.android.QuickJSLoader
 import me.rerere.zeroagent.di.appModule
 import me.rerere.zeroagent.di.dataSourceModule
 import me.rerere.zeroagent.di.repositoryModule
@@ -37,7 +36,6 @@ import me.rerere.zeroagent.data.sync.RestoreFailedException
 import me.rerere.zeroagent.utils.JsonInstant
 import me.rerere.zeroagent.service.FloatingBallService
 import me.rerere.zeroagent.utils.CrashHandler
-import me.rerere.zeroagent.utils.DatabaseUtil
 import me.rerere.zeroagent.data.repository.WorkspaceRepository
 import me.rerere.workspace.WorkspaceManager
 import org.koin.android.ext.android.get
@@ -63,16 +61,18 @@ class ZeroAgentApp : Application() {
         // envelope can tell "never enabled" apart from "the system killed it in the background".
         AccessibilityServiceHandle.attach(this)
         // Restore files and settings before eager Koin singletons or workers can access them.
-        try {
-            val restored = runBlocking(Dispatchers.IO) {
-                BackupManager.applyPendingRestore(this@ZeroAgentApp, JsonInstant)
+        if (BackupManager.hasPendingRestore(this)) {
+            try {
+                val restored = runBlocking(Dispatchers.IO) {
+                    BackupManager.applyPendingRestore(this@ZeroAgentApp, JsonInstant)
+                }
+                if (restored) {
+                    Toast.makeText(this, R.string.backup_page_restore_success, Toast.LENGTH_LONG).show()
+                }
+            } catch (e: RestoreFailedException) {
+                Log.e(TAG, "Backup restore rolled back", e)
+                Toast.makeText(this, "Backup restore failed. Your existing data is safe. Please import the backup again.", Toast.LENGTH_LONG).show()
             }
-            if (restored) {
-                Toast.makeText(this, R.string.backup_page_restore_success, Toast.LENGTH_LONG).show()
-            }
-        } catch (e: RestoreFailedException) {
-            Log.e(TAG, "Backup restore rolled back", e)
-            Toast.makeText(this, "Backup restore failed. Your existing data is safe. Please import the backup again.", Toast.LENGTH_LONG).show()
         }
 
         me.rerere.zeroagent.data.lab.LabPreferences.retireUnusedOptions(this)
@@ -80,16 +80,17 @@ class ZeroAgentApp : Application() {
         me.rerere.zeroagent.data.ai.tools.ConversationAccess.initialize(this)
 
         startKoin {
-            androidLogger()
+            if (BuildConfig.DEBUG) androidLogger()
             androidContext(this@ZeroAgentApp)
             workManagerFactory()
             modules(appModule, viewModelModule, dataSourceModule, repositoryModule)
         }
         get<AppScope>().launch(Dispatchers.IO) {
             me.rerere.zeroagent.data.telegram.RetiredTelegramCleanup.run(this@ZeroAgentApp)
+            val workManager = androidx.work.WorkManager.getInstance(this@ZeroAgentApp)
+            workManager.cancelUniqueWork("zeroagent_mood_weather")
+            workManager.cancelUniqueWork("zeroagent-lab-focus")
         }
-        androidx.work.WorkManager.getInstance(this).cancelUniqueWork("zeroagent_mood_weather")
-        androidx.work.WorkManager.getInstance(this).cancelUniqueWork("zeroagent-lab-focus")
         this.createNotificationChannel()
 
         // Restore any headless conversation IDs that survived a process kill; must run
@@ -99,14 +100,8 @@ class ZeroAgentApp : Application() {
         // Sweep orphan headless conversations created by workers that were killed mid-execute.
         sweepOrphanHeadlessConversations()
 
-        // set cursor window size to 32MB
-        DatabaseUtil.setCursorWindowSize(32 * 1024 * 1024)
-
         // install crash handler
         CrashHandler.install(this)
-
-        // Init QuickJS native library
-        QuickJSLoader.init()
 
         // delete temp files
         deleteTempFiles()
@@ -310,6 +305,7 @@ class ZeroAgentApp : Application() {
         get<AppScope>().launch(Dispatchers.IO) {
             runCatching {
                 get<me.rerere.zeroagent.data.ai.OrphanedReasoningRecovery>().runRecovery()
+                me.rerere.zeroagent.data.db.ChatPayloadStore(this@ZeroAgentApp, get()).migrateLargeRows()
             }.onFailure {
                 Log.w(TAG, "runOrphanedReasoningRecovery failed", it)
             }

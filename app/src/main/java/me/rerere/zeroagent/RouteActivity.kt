@@ -1,5 +1,9 @@
 package me.rerere.zeroagent
 
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import me.rerere.zeroagent.data.datastore.nativeVoiceSelection
 import me.rerere.zeroagent.data.datastore.getCurrentAssistant
 import me.rerere.zeroagent.data.datastore.assistantForModel
@@ -117,7 +121,6 @@ import me.rerere.zeroagent.ui.pages.extensions.workspace.WorkspaceTerminalPage
 import me.rerere.zeroagent.ui.pages.favorite.FavoritePage
 import me.rerere.zeroagent.ui.pages.history.HistoryPage
 import me.rerere.zeroagent.ui.pages.imggen.ImageGenPage
-import me.rerere.zeroagent.ui.pages.videogen.VideoGenPage
 import me.rerere.zeroagent.ui.pages.log.LogPage
 import me.rerere.zeroagent.ui.pages.search.SearchPage
 import me.rerere.zeroagent.ui.pages.setting.SettingAboutPage
@@ -146,12 +149,10 @@ import me.rerere.zeroagent.ui.pages.setting.SettingSpeechPage
 import me.rerere.zeroagent.ui.pages.setting.SettingSshPage
 import me.rerere.zeroagent.ui.pages.share.handler.ShareHandlerPage
 import me.rerere.zeroagent.ui.pages.stats.StatsPage
-import me.rerere.zeroagent.ui.pages.translator.TranslatorPage
 import me.rerere.zeroagent.ui.pages.webview.WebViewPage
 import me.rerere.zeroagent.ui.theme.LocalDarkMode
 import me.rerere.zeroagent.ui.theme.ZeroAgentTheme
 import me.rerere.zeroagent.utils.CrashHandler
-import me.rerere.zeroagent.utils.openUsageAccessSettings
 import me.rerere.zeroagent.utils.resolveInitialChatStack
 import me.rerere.zeroagent.utils.validConversationId
 import okhttp3.OkHttpClient
@@ -160,9 +161,22 @@ import org.koin.compose.koinInject
 import kotlin.uuid.Uuid
 
 private const val FULL_WIDTH_ROUTE = "zeroagent.fullWidthRoute"
+private const val SETTINGS_SCENE = "zeroagent.settings"
+private const val PROVIDER_SCENE = "zeroagent.providers"
+
+@Composable
+private fun SettingsPanePlaceholder(@androidx.annotation.StringRes message: Int) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(
+            text = stringResource(message),
+            modifier = Modifier.padding(24.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyLarge,
+        )
+    }
+}
 
 private const val TAG = "RouteActivity"
-private const val ACTION_TRANSLATE = "me.rerere.zeroagent.action.TRANSLATE"
 
 class RouteActivity : androidx.fragment.app.FragmentActivity() {
     override fun attachBaseContext(base: android.content.Context) {
@@ -279,7 +293,6 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
             intent.removeExtra(EXTRA_OPEN_GEMINI_SETTINGS)
         }
         val destination = when (intent.action) {
-            ACTION_TRANSLATE -> Screen.Translator
             Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE -> {
                 val current = backStack.lastOrNull { it is Screen.Chat } as? Screen.Chat
                 val streams = if (intent.action == Intent.ACTION_SEND_MULTIPLE) {
@@ -332,6 +345,13 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
     fun AppRoutes() {
         val motionEnabled = me.rerere.zeroagent.ui.components.ui.rememberMotionEnabled()
         val rightToLeft = LocalLayoutDirection.current == LayoutDirection.Rtl
+        val paneDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
+        val expandedSettings = paneDirective.maxHorizontalPartitions >= 2
+        val settingsSceneStrategy = rememberListDetailSceneStrategy<NavKey>(
+            directive = paneDirective,
+            shouldHandleSinglePaneLayout = false,
+        )
+        val settingsDetailMetadata = ListDetailSceneStrategy.detailPane(sceneKey = SETTINGS_SCENE)
         val motionDecorator = remember { NavEntryDecorator<NavKey> { entry ->
             CompositionLocalProvider(LocalMotionRoute provides entry.contentKey.toString()) {
                 // Keep the host viewport stable. Each destination keeps its own width while leaving.
@@ -355,7 +375,6 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
             eventBus.events.collect { event ->
                 when (event) {
                     is AppEvent.Speak -> tts.speak(event.text)
-                    is AppEvent.OpenUsageAccessSettings -> this@RouteActivity.openUsageAccessSettings()
                     is AppEvent.ChatGenerationUpdate -> Unit // 本 fork 使用自有的前台服务通知，不经事件总线消费
                     is AppEvent.ChatGenerationEnded -> Unit // 本 fork 使用自有的前台服务通知，不经事件总线消费
                 }
@@ -442,7 +461,8 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                         .background(MaterialTheme.colorScheme.background)
                 ) {
                     AppDrawerHost(
-                        enabled = backStack.lastOrNull() is Screen.Chat || backStack.lastOrNull() == Screen.Setting,
+                        enabled = backStack.lastOrNull() is Screen.Chat ||
+                            (!expandedSettings && backStack.lastOrNull() == Screen.Setting),
                         navigationKey = backStack.lastOrNull() to backStack.size,
                         currentConversationId = backStack.filterIsInstance<Screen.Chat>().lastOrNull()?.id
                             ?.let { runCatching { Uuid.parse(it) }.getOrNull() },
@@ -450,6 +470,7 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                     ) {
                     NavDisplay(
                         backStack = backStack,
+                        sceneStrategies = listOf(settingsSceneStrategy),
                         sharedTransitionScope = this@SharedTransitionLayout,
                         entryDecorators = listOf(
                             rememberSaveableStateHolderNavEntryDecorator(),
@@ -500,17 +521,17 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                 )
                             }
 
-                            entry<Screen.ZeroAgentLab> {
+                            entry<Screen.ZeroAgentLab>(metadata = mapOf(FULL_WIDTH_ROUTE to true)) {
                                 me.rerere.zeroagent.ui.pages.lab.ZeroAgentLabPage()
                             }
-                            entry<Screen.SettingFun> {
+                            entry<Screen.SettingFun>(metadata = settingsDetailMetadata) {
                                 me.rerere.zeroagent.ui.pages.setting.SettingFunPage()
                             }
                             entry<Screen.History> {
                                 HistoryPage()
                             }
 
-                            entry<Screen.Favorite> {
+                            entry<Screen.Favorite>(metadata = settingsDetailMetadata) {
                                 FavoritePage()
                             }
 
@@ -518,7 +539,7 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                 val model = settings.findModelById(kotlin.uuid.Uuid.parse(key.modelId))
                                 if (model == null) SettingModelPage() else AssistantLocalToolPage(settings.assistantForModel(model).id.toString())
                             }
-                            entry<Screen.ModelMemory> { key ->
+                            entry<Screen.ModelMemory>(metadata = settingsDetailMetadata) { key ->
                                 val model = runCatching { kotlin.uuid.Uuid.parse(key.modelId) }.getOrNull()
                                     ?.let(settings::findModelById)
                                 val profile = model?.let(settings::assistantForModel) ?: settings.getCurrentAssistant()
@@ -570,18 +591,24 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                             }
 
                             entry<Screen.Translator> {
-                                TranslatorPage()
+                                LaunchedEffect(Unit) {
+                                    backStack.removeAll { it == Screen.Translator || it == Screen.VideoGen }
+                                    if (backStack.isEmpty()) backStack.add(Screen.Chat(initialChatIds.first()))
+                                }
                             }
 
-                            entry<Screen.Setting> {
-                                SettingPage()
+                            entry<Screen.Setting>(metadata = ListDetailSceneStrategy.listPane(
+                                sceneKey = SETTINGS_SCENE,
+                                detailPlaceholder = { SettingsPanePlaceholder(R.string.adaptive_settings_choose_option) },
+                            )) {
+                                SettingPage(showBackButton = expandedSettings)
                             }
 
-                            entry<Screen.SettingsSearch> {
+                            entry<Screen.SettingsSearch>(metadata = settingsDetailMetadata) {
                                 SettingsSearchPage()
                             }
 
-                            entry<Screen.Backup> {
+                            entry<Screen.Backup>(metadata = settingsDetailMetadata) {
                                 BackupPage()
                             }
 
@@ -590,7 +617,10 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                             }
 
                             entry<Screen.VideoGen> {
-                                VideoGenPage()
+                                LaunchedEffect(Unit) {
+                                    backStack.removeAll { it == Screen.Translator || it == Screen.VideoGen }
+                                    if (backStack.isEmpty()) backStack.add(Screen.Chat(initialChatIds.first()))
+                                }
                             }
 
                             entry<Screen.WebView>(metadata = mapOf(FULL_WIDTH_ROUTE to true)) { key ->
@@ -601,68 +631,73 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                 SettingThemePage()
                             }
 
-                            entry<Screen.SettingPreferencesTheme> {
+                            entry<Screen.SettingPreferencesTheme>(metadata = settingsDetailMetadata) {
                                 SettingPreferencesThemePage()
                             }
 
-                            entry<Screen.SettingPreferencesNotification> {
+                            entry<Screen.SettingPreferencesNotification>(metadata = settingsDetailMetadata) {
                                 SettingPreferencesNotificationPage()
                             }
 
-                            entry<Screen.SettingPreferencesGeneral> {
+                            entry<Screen.SettingPreferencesGeneral>(metadata = settingsDetailMetadata) {
                                 SettingPreferencesGeneralPage()
                             }
 
-                            entry<Screen.SettingPreferencesUI> {
+                            entry<Screen.SettingPreferencesUI>(metadata = settingsDetailMetadata) {
                                 SettingPreferencesUIPage()
                             }
 
-                            entry<Screen.SettingPreferencesNetwork> {
+                            entry<Screen.SettingPreferencesNetwork>(metadata = settingsDetailMetadata) {
                                 SettingPreferencesNetworkPage()
                             }
 
-                            entry<Screen.SettingProvider> {
+                            entry<Screen.SettingProvider>(metadata = ListDetailSceneStrategy.listPane(
+                                sceneKey = PROVIDER_SCENE,
+                                detailPlaceholder = { SettingsPanePlaceholder(R.string.adaptive_settings_choose_provider) },
+                            )) {
                                 SettingProviderPage()
                             }
 
-                            entry<Screen.SettingProviderDetail> { key ->
+                            entry<Screen.SettingProviderDetail>(
+                                metadata = ListDetailSceneStrategy.detailPane(sceneKey = PROVIDER_SCENE),
+                            ) { key ->
                                 val id = Uuid.parse(key.providerId)
                                 SettingProviderDetailPage(id = id)
                             }
 
-                            entry<Screen.SettingModels> {
+                            entry<Screen.SettingModels>(metadata = settingsDetailMetadata) {
                                 SettingModelPage()
                             }
 
-                            entry<Screen.SettingAbout> {
+                            entry<Screen.SettingAbout>(metadata = settingsDetailMetadata) {
                                 SettingAboutPage()
                             }
 
-                            entry<Screen.SettingSearch> {
+                            entry<Screen.SettingSearch>(metadata = settingsDetailMetadata) {
                                 SettingSearchPage()
                             }
 
                             entry<Screen.SettingTTS> {
                                 SettingTTSPage()
                             }
-                            entry<Screen.SettingSearchDetail> { key ->
+                            entry<Screen.SettingSearchDetail>(metadata = settingsDetailMetadata) { key ->
                                 val id = Uuid.parse(key.serviceId)
                                 SettingSearchDetailPage(id)
                             }
 
-                            entry<Screen.SettingSpeech> {
+                            entry<Screen.SettingSpeech>(metadata = settingsDetailMetadata) {
                                 SettingSpeechPage()
                             }
 
-                            entry<Screen.SettingMcp> {
+                            entry<Screen.SettingMcp>(metadata = settingsDetailMetadata) {
                                 SettingMcpPage()
                             }
 
-                            entry<Screen.SettingSsh> {
+                            entry<Screen.SettingSsh>(metadata = settingsDetailMetadata) {
                                 SettingSshPage()
                             }
 
-                            entry<Screen.SettingFiles> {
+                            entry<Screen.SettingFiles>(metadata = settingsDetailMetadata) {
                                 SettingFilesPage()
                             }
 
@@ -670,7 +705,7 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                 SettingPage()
                             }
 
-                            entry<Screen.SettingWorkflows> {
+                            entry<Screen.SettingWorkflows>(metadata = settingsDetailMetadata) {
                                 me.rerere.zeroagent.workflow.ui.WorkflowsScreen()
                             }
 
@@ -678,19 +713,19 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                 me.rerere.zeroagent.workflow.ui.WorkflowDetailScreen(workflowId = key.id)
                             }
 
-                            entry<Screen.SettingScheduledJobs> {
+                            entry<Screen.SettingScheduledJobs>(metadata = settingsDetailMetadata) {
                                 me.rerere.zeroagent.ui.pages.setting.scheduledjobs.ScheduledJobsScreen()
                             }
 
-                            entry<Screen.SettingBrowser> {
+                            entry<Screen.SettingBrowser>(metadata = settingsDetailMetadata) {
                                 me.rerere.zeroagent.ui.pages.setting.browser.SettingBrowserPage()
                             }
 
-                            entry<Screen.SettingTermux> {
+                            entry<Screen.SettingTermux>(metadata = settingsDetailMetadata) {
                                 me.rerere.zeroagent.ui.pages.setting.termux.SettingTermuxPage()
                             }
 
-                            entry<Screen.SettingShizuku> {
+                            entry<Screen.SettingShizuku>(metadata = settingsDetailMetadata) {
                                 me.rerere.zeroagent.ui.pages.setting.shizuku.SettingShizukuPage()
                             }
 
@@ -698,35 +733,35 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                 me.rerere.zeroagent.ui.pages.setting.scheduledjobs.ScheduledJobDetailScreen(jobId = key.id)
                             }
 
-                            entry<Screen.SettingDoctor> {
+                            entry<Screen.SettingDoctor>(metadata = settingsDetailMetadata) {
                                 me.rerere.zeroagent.ui.pages.setting.doctor.DoctorScreen()
                             }
 
-                            entry<Screen.GettingStarted> {
+                            entry<Screen.GettingStarted>(metadata = settingsDetailMetadata) {
                                 GettingStartedPage()
                             }
 
-                            entry<Screen.SettingToolApprovals> {
+                            entry<Screen.SettingToolApprovals>(metadata = settingsDetailMetadata) {
                                 me.rerere.zeroagent.ui.pages.setting.SettingToolApprovalsPage()
                             }
 
-                            entry<Screen.SettingAccessibility> {
+                            entry<Screen.SettingAccessibility>(metadata = settingsDetailMetadata) {
                                 SettingAccessibilityPage()
                             }
 
-                            entry<Screen.SettingFloatingBall> {
+                            entry<Screen.SettingFloatingBall>(metadata = settingsDetailMetadata) {
                                 SettingFloatingBallPage()
                             }
 
-                            entry<Screen.SettingNotifications> {
+                            entry<Screen.SettingNotifications>(metadata = settingsDetailMetadata) {
                                 SettingNotificationsPage()
                             }
 
-                            entry<Screen.TaskCenter> {
+                            entry<Screen.TaskCenter>(metadata = settingsDetailMetadata) {
                                 me.rerere.zeroagent.ui.pages.chat.ZeroAgentTaskCenterPage()
                             }
 
-                            entry<Screen.Productivity> { key ->
+                            entry<Screen.Productivity>(metadata = settingsDetailMetadata) { key ->
                                 me.rerere.zeroagent.ui.pages.productivity.ProductivityPage(key.conversationId)
                             }
                             entry<Screen.Projects> { key ->
@@ -748,15 +783,15 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                 me.rerere.zeroagent.ui.pages.productivity.VisualAssistPage()
                             }
 
-                            entry<Screen.SettingRoot> {
+                            entry<Screen.SettingRoot>(metadata = settingsDetailMetadata) {
                                 me.rerere.zeroagent.ui.pages.setting.SettingRootPage()
                             }
 
-                            entry<Screen.SettingPermissions> {
+                            entry<Screen.SettingPermissions>(metadata = settingsDetailMetadata) {
                                 SettingPermissionsPage()
                             }
 
-                            entry<Screen.Developer> {
+                            entry<Screen.Developer>(metadata = settingsDetailMetadata) {
                                 DeveloperPage()
                             }
 
@@ -764,15 +799,15 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                 DebugPage()
                             }
 
-                            entry<Screen.Log> {
+                            entry<Screen.Log>(metadata = settingsDetailMetadata) {
                                 LogPage()
                             }
 
-                            entry<Screen.Extensions> {
+                            entry<Screen.Extensions>(metadata = settingsDetailMetadata) {
                                 ExtensionsPage()
                             }
 
-                            entry<Screen.QuickMessages> {
+                            entry<Screen.QuickMessages>(metadata = settingsDetailMetadata) {
                                 QuickMessagesPage()
                             }
 
@@ -808,7 +843,7 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                 SearchPage()
                             }
 
-                            entry<Screen.Stats> {
+                            entry<Screen.Stats>(metadata = settingsDetailMetadata) {
                                 StatsPage()
                             }
 
@@ -938,6 +973,7 @@ sealed interface Screen : NavKey {
     @Serializable
     data class AssistantInjections(val id: String) : Screen
 
+    // Retained to decode navigation state saved before this screen was retired.
     @Serializable
     data object Translator : Screen
 
@@ -953,6 +989,7 @@ sealed interface Screen : NavKey {
     @Serializable
     data object ImageGen : Screen
 
+    // Retained to decode navigation state saved before this screen was retired.
     @Serializable
     data object VideoGen : Screen
 

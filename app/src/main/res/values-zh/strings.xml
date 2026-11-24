@@ -306,7 +306,6 @@
   <string name="chat_page_export_share_via">分享方式</string>
   <string name="chat_page_export_success">已导出为%1$s</string>
   <string name="chat_page_history">聊天历史</string>
-  <string name="chat_page_menu_ai_translator">AI翻译</string>
   <string name="chat_page_menu_image_generation">图像生成</string>
   <string name="chat_page_menu_video_generation">视频生成</string>
   <string name="chat_page_message_count">%d 条消息</string>
@@ -425,43 +424,6 @@
   <string name="imggen_page_settings_title">图片生成设置</string>
   <string name="imggen_page_title">图片生成</string>
 
-  <string name="videogen_page_title">视频生成</string>
-  <string name="videogen_page_tab_generate">生成</string>
-  <string name="videogen_page_tab_gallery">媒体库</string>
-  <string name="videogen_page_prompt_placeholder">描述你想要的视频：主体、动作、运镜、风格…</string>
-  <string name="videogen_page_generate">生成视频</string>
-  <string name="videogen_page_generating_hint">生成中…通常需要一到数分钟。</string>
-  <string name="videogen_page_settings_title">视频生成设置</string>
-  <string name="videogen_page_model_selection">模型</string>
-  <string name="videogen_page_model_selection_desc">用于生成的视频模型。请先配置 DashScope（万相）、火山方舟（Seedance）、MiniMax（海螺）、智谱（CogVideoX）或硅基流动 provider。</string>
-  <string name="videogen_page_duration">时长</string>
-  <string name="videogen_page_duration_desc">期望的视频时长（秒，2–15）。部分模型固定为 5 秒并忽略此项。</string>
-  <string name="videogen_page_count">生成数量</string>
-  <string name="videogen_page_count_desc">一次生成几个视频（1–4）。每个视频都是独立且耗时的任务。</string>
-  <string name="videogen_page_first_frame">首帧（图生视频）</string>
-  <string name="videogen_page_remove_first_frame">移除首帧</string>
-  <string name="videogen_page_save">保存到相册</string>
-  <string name="videogen_page_save_success">已保存到相册</string>
-  <string name="videogen_page_save_failed">保存失败：%1$s</string>
-  <string name="videogen_page_aspect_ratio">画幅</string>
-  <string name="videogen_page_aspect_ratio_desc">生成视频的宽高比。</string>
-  <string name="videogen_page_aspect_ratio_landscape">横屏</string>
-  <string name="videogen_page_aspect_ratio_portrait">竖屏</string>
-  <string name="videogen_page_aspect_ratio_square">方形</string>
-  <string name="videogen_page_cancel">取消</string>
-  <string name="videogen_page_confirm">确定</string>
-  <string name="videogen_page_cancel_generation_title">取消生成</string>
-  <string name="videogen_page_cancel_generation_message">您确定要取消视频生成吗？</string>
-  <string name="videogen_page_no_generated_videos">暂无生成的视频</string>
-  <string name="videogen_page_video_missing">视频文件丢失，可能未从备份中恢复</string>
-  <string name="videogen_page_open">打开</string>
-  <string name="videogen_page_delete">删除</string>
-  <string name="videogen_page_delete_videos_title">删除视频</string>
-  <string name="videogen_page_delete_videos_message">删除选定的视频（%1$d）？此操作无法撤销。</string>
-  <string name="videogen_page_delete_videos_success">已删除 %1$d 个视频</string>
-  <string name="videogen_page_delete_videos_failed">已删除：%1$d。失败：%2$d。请重试。</string>
-  <string name="videogen_page_deleting">删除中…</string>
-  <string name="videogen_page_selected_count">已选择：%1$d</string>
   <string name="language_english">🇺🇸 English</string>
   <string name="language_french">🇫🇷 Français</string>
   <string name="language_german">🇩🇪 Deutsch</string>
@@ -1190,11 +1152,6 @@
   <string name="translation_clear">清空翻译</string>
   <string name="translation_language_selection_title">选择翻译语言</string>
   <string name="translation_text">译文</string>
-  <string name="translator_page_cancel">取消</string>
-  <string name="translator_page_input_placeholder">请输入要翻译的文本...</string>
-  <string name="translator_page_result_placeholder">翻译结果将显示在这里</string>
-  <string name="translator_page_title">翻译</string>
-  <string name="translator_page_translate">翻译</string>
   <string name="tts">语音</string>
   <string name="unpin_chat">取消置顶聊天</string>
   <string name="update_card_check_failed">检查更新失败</string>
@@ -1748,9 +1705,6 @@
   <string name="skill_webview_card_direct">直接查看器</string>
   <string name="skill_webview_card_embedded">内嵌查看器</string>
   <string name="skill_webview_card_open">在浏览器中打开</string>
-  <string name="translator_copy_result">复制翻译结果</string>
-  <string name="translator_error_generic">错误</string>
-  <string name="translator_paste_text">粘贴文本</string>
   <string name="update_download_description">正在下载更新包…</string>
   <string name="assistant_page_gradient_background">渐变背景</string>
   <string name="assistant_page_gradient_background_desc">在聊天页面使用动态渐变背景</string>
@@ -2590,4 +2544,7 @@
 
   <string name="chat_page_continuing">连接中断，正在续写回复（%1$d/%2$d）</string>
   <string name="chat_page_subagents_running">子 agent %1$d 个运行中 · %2$s</string>
+  <string name="adaptive_settings_choose_option">选择要查看的设置。</string>
+  <string name="adaptive_settings_choose_provider">选择供应商以查看连接设置与模型。</string>
+  <string name="adaptive_memory_choose_entry">选择一条记忆或待确认的变更。</string>
 </resources>

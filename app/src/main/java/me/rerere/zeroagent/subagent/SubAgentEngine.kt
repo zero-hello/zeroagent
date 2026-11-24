@@ -1,7 +1,9 @@
 package me.rerere.zeroagent.subagent
 
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -581,6 +583,7 @@ class SubAgentEngine(
             folderId = archiveFolder,
         )
         conversationRepo.insertConversation(conv)
+        registry.update(runId) { it.copy(childConversationId = conv.id.toString()) }
         chatService.initializeConversation(conv.id)
         HeadlessConversations.mark(conv.id)
         // P2-12d — attribute this run's model calls to it, so the ledger can price the
@@ -674,11 +677,18 @@ class SubAgentEngine(
             }
             notifyParentIfBackground(parentChatId, registry.get(runId))
         } catch (t: Throwable) {
+            if (t is CancellationException) {
+                withContext(NonCancellable) {
+                    runCatching { chatService.stopGeneration(conv.id) }
+                        .onFailure { Log.w(TAG, "sub-agent cancellation failed to stop generation", it) }
+                }
+                throw t
+            }
             Log.w(TAG, "sub-agent run failed", t)
             attachRunUsage(runId, conv.id.toString())
-            // CancellationException → CANCELLED, anything else → FAILED.
-            val terminal = if (t is kotlinx.coroutines.CancellationException) SubAgentStatus.CANCELLED else SubAgentStatus.FAILED
-            markTerminal(runId, terminal, "${t::class.simpleName}: ${t.message.orEmpty()}")
+
+
+            markTerminal(runId, SubAgentStatus.FAILED, "${t::class.simpleName}: ${t.message.orEmpty()}")
             notifyParentIfBackground(parentChatId, registry.get(runId))
         } finally {
             HeadlessConversations.unmark(conv.id)

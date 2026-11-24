@@ -16,6 +16,8 @@ import me.rerere.zeroagent.data.files.FilesManager
 import me.rerere.zeroagent.data.files.saveUploadFromBytes
 import me.rerere.zeroagent.data.repository.ConversationRepository
 import me.rerere.zeroagent.data.sync.BackupItem
+import me.rerere.zeroagent.data.sync.PortableTemplate
+import me.rerere.zeroagent.data.sync.importTemplate
 import me.rerere.zeroagent.data.sync.importer.ChatboxImporter
 import me.rerere.zeroagent.data.sync.importer.CherryStudioProviderImporter
 import me.rerere.zeroagent.data.sync.webdav.WebDavBackupItem
@@ -53,6 +55,10 @@ class BackupVM(
         viewModelScope.launch {
             settingsStore.update(transform)
         }
+    }
+
+    internal suspend fun importPortableTemplate(template: PortableTemplate) {
+        settingsStore.update { it.importTemplate(template) }
     }
 
     fun updateLocalBackupItems(items: List<BackupItem>) {

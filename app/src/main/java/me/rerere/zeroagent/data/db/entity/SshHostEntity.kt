@@ -6,9 +6,8 @@ import androidx.room.PrimaryKey
 /**
  * A saved SSH host the LLM (or user) can reference by name.
  *
- * Secrets (password, privateKey, passphrase) are stored in plaintext in Room. This is the
- * same posture as the rest of the app's stored credentials (provider API keys, etc.).
- * Encryption-at-rest via Android Keystore would be a future hardening.
+ * Room stores password, private key and passphrase as device-bound ciphertext.
+ * SshHostRepository encrypts writes and decrypts values for authorized callers.
  */
 @Entity(tableName = "ssh_hosts")
 data class SshHostEntity(

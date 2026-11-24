@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="template_export">Export a template</string>
+    <string name="template_summary">Share a provider, MCP server or role prompt by file or QR code. Configured credentials are excluded. Review the text before sharing.</string>
+    <string name="template_scan">Scan a template QR code</string>
+    <string name="template_open">Open a template file</string>
+    <string name="template_invalid">This template is invalid, unsupported or too long.</string>
+    <string name="template_scan_failed">Could not scan the code. Check camera permission or open a template file.</string>
+    <string name="template_saved">Template saved.</string>
+    <string name="template_save_failed">Could not save the template file.</string>
+    <string name="template_empty">No shareable templates found. Set up a supported provider, MCP server or role prompt first.</string>
+    <string name="template_preview_import">Review imported template</string>
+    <string name="template_preview_export">Review exported template</string>
+    <string name="template_disabled_import">This adds a disabled entry. Enable it from its settings after reviewing the address.</string>
+    <string name="template_prompt_review">This prompt will be used when you select the new role. Review its instructions before importing.</string>
+    <string name="template_confirm_import">Import as new</string>
+    <string name="template_generate_qr">Generate QR code</string>
+    <string name="template_imported">Template imported.</string>
+    <string name="template_import_failed">Could not save the imported template.</string>
+    <string name="template_export_rejected">This template could not be shared. Check its address for credentials or shorten the name, model list or prompt.</string>
+    <string name="template_qr_title">Template QR code</string>
+    <string name="template_save">Save template file</string>
+    <string name="template_provider">AI provider</string>
+    <string name="template_mcp">MCP server</string>
+    <string name="template_prompt">Role prompt</string>
+</resources>

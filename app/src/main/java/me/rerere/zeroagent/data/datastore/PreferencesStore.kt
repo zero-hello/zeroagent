@@ -25,10 +25,7 @@ import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Transient
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.decodeFromJsonElement
 import me.rerere.ai.core.MessageRole
 import me.rerere.ai.core.ReasoningLevel
 import me.rerere.ai.provider.Model
@@ -84,37 +81,6 @@ const val DEFAULT_CONTEXT_COMPACTION_TARGET_PERCENT = 1
 private const val TAG = "PreferencesStore"
 
 /**
- * Per-entry tolerant decode for the persisted `providers` list.
- *
- * Why this exists: the providers list is stored in DataStore as a single JSON array of
- * polymorphic [ProviderSetting] entries. A single-shot `decodeFromString<List<ProviderSetting>>`
- * throws on the entire list as soon as one element has an unknown polymorphic discriminator.
- *
- * Concrete trigger that motivated this: the never-shipped Phase-22A scaffolding seeded a
- * `"type":"local_llamacpp"` entry into DEFAULT_PROVIDERS for early test installs. Deleting
- * the `LlamaCppLocal` subclass would otherwise make decode-of-list throw on those entries
- * → user loses ALL their saved providers (API keys, custom models, the lot).
- *
- * Per-entry decode lets surviving entries land while the unknown one is logged and skipped.
- * Keep this even though `local_llamacpp` now ships: it's good hygiene for any future
- * polymorphic schema change (renamed types, removed types, etc).
- */
-private fun decodeProvidersTolerant(raw: String): List<ProviderSetting> {
-    if (raw.isBlank()) return emptyList()
-    val array = runCatching {
-        JsonInstant.parseToJsonElement(raw) as? JsonArray
-    }.getOrNull() ?: return emptyList()
-    return array.mapNotNull { element ->
-        try {
-            JsonInstant.decodeFromJsonElement<ProviderSetting>(element)
-        } catch (e: SerializationException) {
-            Log.w(TAG, "Skipping unrecognised provider entry during decode: ${e.message}")
-            null
-        }
-    }
-}
-
-/**
  * `models` transform for the GeminiOAuth normalization branch below: de-duplicate by id, then
  * drop any entry whose modelId is in [DENIED_MODEL_IDS].
  *
@@ -143,14 +109,9 @@ private val Context.settingsStore: DataStore<Preferences>
 private fun createSettingsDataStore(context: Context): DataStore<Preferences> {
     val file = context.preferencesDataStoreFile(SETTINGS_STORE_NAME)
     return PreferenceDataStoreFactory.create(
-        corruptionHandler = ReplaceFileCorruptionHandler { exception ->
-            // 文件已损坏无法解析, 先留一份原文件用于排查/抢救, 再重建为空
-            Log.e(TAG, "Settings datastore corrupted, resetting", exception)
-            runCatching {
-                file.copyTo(File(file.parentFile, "${file.name}.corrupt-${System.currentTimeMillis()}"))
-            }.onFailure {
-                Log.e(TAG, "Failed to backup corrupted settings file", it)
-            }
+        corruptionHandler = ReplaceFileCorruptionHandler { error ->
+            // Legacy settings files may contain plaintext credentials. Never copy them on failure.
+            Log.e(TAG, "Settings datastore corrupted (${error.javaClass.simpleName}), resetting")
             emptyPreferences()
         },
         migrations = listOf(
@@ -161,6 +122,7 @@ private fun createSettingsDataStore(context: Context): DataStore<Preferences> {
             PreferenceStoreV4Migration(),
             PreferenceStoreV5Migration(),
             PreferenceStoreV6Migration(),
+            ProviderCredentialsMigration(),
         ),
         produceFile = { file },
     )
@@ -294,19 +256,9 @@ class SettingsStore(
             preserveLocalCredentials: Boolean = false,
         ) {
             dataStore.edit { preferences ->
-                preferences[VOICE_CONVERSATION] = JsonInstant.encodeToString(settings.voiceConversation)
-                preferences[DYNAMIC_COLOR] = settings.dynamicColor
-                preferences[THEME_ID] = settings.themeId
-                preferences[CUSTOM_THEMES] = JsonInstant.encodeToString(settings.customThemes)
-                preferences[DEVELOPER_MODE] = settings.developerMode
-                preferences[DEVELOPER_DISPLAY_OPTIONS] = JsonInstant.encodeToString(settings.developerDisplayOptions)
-                preferences[DISPLAY_SETTING] = JsonInstant.encodeToString(
-                    settings.displaySetting.copy(
-                        pasteLongTextThreshold = settings.displaySetting.pasteLongTextThreshold.coerceIn(100, 10000)
-                    )
-                )
-                if (!preserveLocalCredentials) preferences[NETWORK_SETTING] = JsonInstant.encodeToString(settings.networkSetting)
-
+                ProviderPrefs.writeVoice(preferences, settings)
+                ChatUiPrefs.writeAppearance(preferences, settings)
+                PrivacyPrefs.writeNetwork(preferences, settings, preserveLocalCredentials)
                 preferences[FAVORITE_MODELS] = JsonInstant.encodeToString(settings.favoriteModels)
                 preferences[SELECT_MODEL] = settings.chatModelId.toString()
                 preferences[FAST_MODEL] = settings.fastModelId.toString()
@@ -337,18 +289,7 @@ class SettingsStore(
                 } ?: preferences.remove(CONTEXT_COMPACTION_TARGET_TOKENS_K)
                 preferences[RESPONSE_STREAM_MAX_RETRIES] = settings.responseStreamMaxRetries.coerceIn(0, 10)
 
-                if (preserveLocalCredentials) {
-                    val incoming = JsonInstant.parseToJsonElement(JsonInstant.encodeToString(settings.providers)) as kotlinx.serialization.json.JsonArray
-                    val retained = preferences[PROVIDERS]?.let {
-                        runCatching { JsonInstant.parseToJsonElement(it) as kotlinx.serialization.json.JsonArray }.getOrNull()
-                    } ?: kotlinx.serialization.json.JsonArray(emptyList())
-                    preferences[PROVIDERS] = me.rerere.zeroagent.data.sync.mergeLocalProviderCredentials(incoming, retained).toString()
-                } else {
-                    preferences[PROVIDERS] = JsonInstant.encodeToString(settings.providers)
-                }
-                preferences[DELETED_BUILTIN_PROVIDER_IDS] = JsonInstant.encodeToString(
-                    settings.deletedBuiltInProviderIds.map { it.toString() }.toSet()
-                )
+                ProviderPrefs.write(preferences, settings, preserveLocalCredentials)
                 preferences[DELETED_BUNDLED_SKILLS] = JsonInstant.encodeToString(settings.deletedBundledSkills)
 
                 preferences[ASSISTANTS] = JsonInstant.encodeToString(settings.assistants)
@@ -364,7 +305,7 @@ class SettingsStore(
                         SubAgentDefaults.MAX_GLOBAL_CONCURRENCY_CAP,
                     )
 
-                if (!preserveLocalCredentials) preferences[SEARCH_SERVICES] = JsonInstant.encodeToString(settings.searchServices)
+                PrivacyPrefs.writeSearch(preferences, settings, preserveLocalCredentials)
                 preferences[SEARCH_COMMON] = JsonInstant.encodeToString(settings.searchCommonOptions)
                 // maxOf(0, size - 1) guards the empty-list case: a persisted "[]" for
                 // search_services leaves searchServices empty (the ?: default only fires on a
@@ -375,25 +316,12 @@ class SettingsStore(
                 preferences[ENABLE_WEB_FETCH_TOOLS] = settings.enableWebFetchTools
                 preferences[PARSE_TEXT_TOOL_CALLS] = settings.parseTextToolCalls
 
-                if (!preserveLocalCredentials) {
-                    preferences[MCP_SERVERS] = JsonInstant.encodeToString(settings.mcpServers)
-                    preferences[WEBDAV_CONFIG] = JsonInstant.encodeToString(settings.webDavConfig)
-                    preferences[S3_CONFIG] = JsonInstant.encodeToString(settings.s3Config)
-                    preferences[TTS_PROVIDERS] = JsonInstant.encodeToString(settings.ttsProviders)
-                    settings.selectedTTSProviderId?.let {
-                        preferences[SELECTED_TTS_PROVIDER] = it.toString()
-                    } ?: preferences.remove(SELECTED_TTS_PROVIDER)
-                }
+                PrivacyPrefs.writeIntegrations(preferences, settings, preserveLocalCredentials)
                 preferences[DEFAULT_TTS_PLAYBACK_SPEED] = settings.defaultTTSPlaybackSpeed.coerceIn(0.5f, 2.0f)
                 preferences[MODE_INJECTIONS] = JsonInstant.encodeToString(settings.modeInjections)
                 preferences[LOREBOOKS] = JsonInstant.encodeToString(settings.lorebooks)
                 preferences[QUICK_MESSAGES] = JsonInstant.encodeToString(settings.quickMessages)
-                preferences[FLOATING_BALL_ENABLED] = settings.floatingBallEnabled
-                preferences[FLOATING_BALL_IDLE_SECONDS] = settings.floatingBallIdleSeconds.coerceIn(0, 60)
-                preferences[FLOATING_BALL_HIDDEN_ALPHA] = settings.floatingBallHiddenAlpha.coerceIn(10, 100)
-                preferences[FLOATING_BALL_COLOR] = settings.floatingBallColor?.toString() ?: ""
-                preferences[FLOATING_BALL_ICON_PATH] = settings.floatingBallIconPath
-                preferences[AI_LOG_LEVEL] = settings.aiLogLevel.preferenceName
+                ChatUiPrefs.writeOverlayAndDiagnostics(preferences, settings)
                 preferences[BACKUP_REMINDER_CONFIG] = JsonInstant.encodeToString(settings.backupReminderConfig)
                 preferences[LAUNCH_COUNT] = settings.launchCount
             }
@@ -405,19 +333,8 @@ class SettingsStore(
     // 读取失败时绝不能回退为空配置, 否则默认值会被当成用户数据写回, 覆盖全部设置
     // 偶发 IO 错误重试, 仍失败则向上抛出 (文件损坏由 corruptionHandler 处理)
     val settingsFlowRaw = dataStore.data
-        .retryWhen { cause, attempt ->
-            val shouldRetry = cause is IOException && cause !is CorruptionException && attempt < READ_MAX_RETRIES
-            if (shouldRetry) {
-                Log.w(TAG, "Failed to read settings, retrying (${attempt + 1}/$READ_MAX_RETRIES)", cause)
-                delay((100L shl attempt.toInt()).milliseconds)
-            }
-            shouldRetry
-        }.map { preferences ->
-            val oldVoice = migrateLegacyVoiceAccount(
-                decodeProvidersTolerant(preferences[PROVIDERS] ?: "[]"),
-                preferences[VOICE_CONVERSATION]?.let { raw -> runCatching { JsonInstant.decodeFromString<me.rerere.ai.provider.RealtimeVoiceSetting>(raw) }.getOrNull() } ?: me.rerere.ai.provider.RealtimeVoiceSetting(),
-                preferences[stringPreferencesKey("asr_providers")], preferences[stringPreferencesKey("selected_asr_provider")],
-            )
+        .map { preferences ->
+            val oldVoice = ProviderPrefs.readVoiceAccount(preferences)
             Settings(
                 favoriteModels = preferences[FAVORITE_MODELS]?.let { raw ->
                     runCatching { JsonInstant.decodeFromString<List<Uuid>>(raw) }.getOrElse {
@@ -468,14 +385,7 @@ class SettingsStore(
                     }
                 } ?: emptyList(),
                 providers = oldVoice.providers,
-                deletedBuiltInProviderIds = preferences[DELETED_BUILTIN_PROVIDER_IDS]
-                    ?.let { raw ->
-                        runCatching {
-                            JsonInstant.decodeFromString<Set<String>>(raw)
-                                .mapNotNull { runCatching { Uuid.parse(it) }.getOrNull() }
-                                .toSet()
-                        }.getOrNull()
-                    } ?: emptySet(),
+                deletedBuiltInProviderIds = ProviderPrefs.deletedBuiltInProviderIds(preferences),
                 deletedBundledSkills = preferences[DELETED_BUNDLED_SKILLS]?.let { raw ->
                     runCatching { JsonInstant.decodeFromString<Set<String>>(raw) }.getOrElse {
                         Log.w(TAG, "Failed to decode deletedBundledSkills, using default", it)
@@ -506,39 +416,15 @@ class SettingsStore(
                         SubAgentDefaults.MIN_GLOBAL_CONCURRENCY_CAP,
                         SubAgentDefaults.MAX_GLOBAL_CONCURRENCY_CAP,
                     ),
-                themeId = preferences[THEME_ID] ?: PresetThemes[0].id,
+                themeId = ChatUiPrefs.themeId(preferences),
                 voiceConversation = oldVoice.voice,
-                dynamicColor = preferences[DYNAMIC_COLOR] ?: false,
-                customThemes = preferences[CUSTOM_THEMES]?.let { raw ->
-                    runCatching { JsonInstant.decodeFromString<List<CustomTheme>>(raw) }.getOrElse {
-                        Log.w(TAG, "Failed to decode customThemes, using default", it)
-                        emptyList()
-                    }
-                } ?: emptyList(),
-                developerMode = preferences[DEVELOPER_MODE] == true,
-                developerDisplayOptions = preferences[DEVELOPER_DISPLAY_OPTIONS]
-                    ?.let { DeveloperDisplayOptions.fromPreference(it) } ?: DeveloperDisplayOptions(),
-                // `enableLatexRendering` is forced on: rendering LaTeX is strictly better than
-                // showing the raw `$...$` source, so the switch was removed and the stored value
-                // ignored. The field is kept on DisplaySetting so old blobs still decode.
-                displaySetting = runCatching {
-                    JsonInstant.decodeFromString<DisplaySetting>(preferences[DISPLAY_SETTING] ?: "{}")
-                }.getOrElse {
-                    Log.w(TAG, "Failed to decode displaySetting, using default", it)
-                    DisplaySetting()
-                }.copy(enableLatexRendering = true),
-                networkSetting = runCatching {
-                    JsonInstant.decodeFromString<NetworkSetting>(preferences[NETWORK_SETTING] ?: "{}")
-                }.getOrElse {
-                    Log.w(TAG, "Failed to decode networkSetting, using default", it)
-                    NetworkSetting()
-                },
-                searchServices = preferences[SEARCH_SERVICES]?.let { raw ->
-                    runCatching { JsonInstant.decodeFromString<List<SearchServiceOptions>>(raw) }.getOrElse {
-                        Log.w(TAG, "Failed to decode searchServices, using default", it)
-                        listOf(SearchServiceOptions.DEFAULT)
-                    }
-                } ?: listOf(SearchServiceOptions.DEFAULT),
+                dynamicColor = ChatUiPrefs.dynamicColor(preferences),
+                customThemes = ChatUiPrefs.customThemes(preferences),
+                developerMode = ChatUiPrefs.developerMode(preferences),
+                developerDisplayOptions = ChatUiPrefs.developerDisplayOptions(preferences),
+                displaySetting = ChatUiPrefs.displaySetting(preferences),
+                networkSetting = PrivacyPrefs.networkSetting(preferences),
+                searchServices = PrivacyPrefs.searchServices(preferences),
                 searchCommonOptions = preferences[SEARCH_COMMON]?.let { raw ->
                     runCatching { JsonInstant.decodeFromString<SearchCommonOptions>(raw) }.getOrElse {
                         Log.w(TAG, "Failed to decode searchCommonOptions, using default", it)
@@ -548,32 +434,11 @@ class SettingsStore(
                 searchServiceSelected = preferences[SEARCH_SELECTED] ?: 0,
                 enableWebFetchTools = preferences[ENABLE_WEB_FETCH_TOOLS] != false,
                 parseTextToolCalls = preferences[PARSE_TEXT_TOOL_CALLS] != false,
-                mcpServers = preferences[MCP_SERVERS]?.let { raw ->
-                    runCatching { JsonInstant.decodeFromString<List<McpServerConfig>>(raw) }.getOrElse {
-                        Log.w(TAG, "Failed to decode mcpServers, using default", it)
-                        emptyList()
-                    }
-                } ?: emptyList(),
-                webDavConfig = preferences[WEBDAV_CONFIG]?.let { raw ->
-                    runCatching { JsonInstant.decodeFromString<WebDavConfig>(raw) }.getOrElse {
-                        Log.w(TAG, "Failed to decode webDavConfig, using default", it)
-                        WebDavConfig()
-                    }
-                } ?: WebDavConfig(),
-                s3Config = preferences[S3_CONFIG]?.let { raw ->
-                    runCatching { JsonInstant.decodeFromString<S3Config>(raw) }.getOrElse {
-                        Log.w(TAG, "Failed to decode s3Config, using default", it)
-                        S3Config()
-                    }
-                } ?: S3Config(),
-                ttsProviders = preferences[TTS_PROVIDERS]?.let { raw ->
-                    runCatching { JsonInstant.decodeFromString<List<TTSProviderSetting>>(raw) }.getOrElse {
-                        Log.w(TAG, "Failed to decode ttsProviders, using default", it)
-                        emptyList()
-                    }
-                } ?: emptyList(),
-                selectedTTSProviderId = preferences[SELECTED_TTS_PROVIDER]?.let { runCatching { Uuid.parse(it) }.getOrNull() }
-                    ?: DEFAULT_SYSTEM_TTS_ID,
+                mcpServers = PrivacyPrefs.mcpServers(preferences),
+                webDavConfig = PrivacyPrefs.webDavConfig(preferences),
+                s3Config = PrivacyPrefs.s3Config(preferences),
+                ttsProviders = PrivacyPrefs.ttsProviders(preferences),
+                selectedTTSProviderId = PrivacyPrefs.selectedTTSProviderId(preferences),
                 defaultTTSPlaybackSpeed = preferences[DEFAULT_TTS_PLAYBACK_SPEED]?.coerceIn(0.5f, 2.0f) ?: 1.0f,
                 modeInjections = preferences[MODE_INJECTIONS]?.let { raw ->
                     runCatching { JsonInstant.decodeFromString<List<PromptInjection.ModeInjection>>(raw) }.getOrElse {
@@ -593,12 +458,12 @@ class SettingsStore(
                         emptyList()
                     }
                 } ?: emptyList(),
-                floatingBallEnabled = preferences[FLOATING_BALL_ENABLED] == true,
-                floatingBallIdleSeconds = preferences[FLOATING_BALL_IDLE_SECONDS] ?: 3,
-                floatingBallHiddenAlpha = preferences[FLOATING_BALL_HIDDEN_ALPHA] ?: 50,
-                floatingBallColor = preferences[FLOATING_BALL_COLOR]?.takeIf { it.isNotBlank() }?.toIntOrNull(),
-                floatingBallIconPath = preferences[FLOATING_BALL_ICON_PATH] ?: "",
-                aiLogLevel = AiLogLevel.fromPreference(preferences[AI_LOG_LEVEL]),
+                floatingBallEnabled = ChatUiPrefs.floatingBallEnabled(preferences),
+                floatingBallIdleSeconds = ChatUiPrefs.floatingBallIdleSeconds(preferences),
+                floatingBallHiddenAlpha = ChatUiPrefs.floatingBallHiddenAlpha(preferences),
+                floatingBallColor = ChatUiPrefs.floatingBallColor(preferences),
+                floatingBallIconPath = ChatUiPrefs.floatingBallIconPath(preferences),
+                aiLogLevel = ChatUiPrefs.aiLogLevel(preferences),
                 backupReminderConfig = preferences[BACKUP_REMINDER_CONFIG]?.let { raw ->
                     runCatching { JsonInstant.decodeFromString<BackupReminderConfig>(raw) }.getOrElse {
                         Log.w(TAG, "Failed to decode backupReminderConfig, using default", it)
@@ -607,6 +472,14 @@ class SettingsStore(
                 } ?: BackupReminderConfig(),
                 launchCount = preferences[LAUNCH_COUNT] ?: 0,
             )
+        }
+        .retryWhen { cause, attempt ->
+            val shouldRetry = cause is IOException && cause !is CorruptionException && attempt < READ_MAX_RETRIES
+            if (shouldRetry) {
+                Log.w(TAG, "Failed to read settings, retrying (${attempt + 1}/$READ_MAX_RETRIES)")
+                delay((100L shl attempt.toInt()).milliseconds)
+            }
+            shouldRetry
         }
         .map {
             val deletedDefaultIds = it.deletedBuiltInProviderIds

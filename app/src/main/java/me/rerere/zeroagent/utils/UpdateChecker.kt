@@ -1,6 +1,11 @@
 package me.rerere.zeroagent.utils
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import android.widget.Toast
+import androidx.core.net.toUri
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.SystemClock
@@ -97,8 +102,25 @@ class UpdateChecker(
     private val downloadStatus = MutableStateFlow<UpdateTransfer?>(null)
     internal val transfer = downloadStatus.asStateFlow()
 
-    suspend fun downloadUpdate(context: Context, download: UpdateDownload) {
-        if (!downloadMutex.tryLock()) return
+    suspend fun downloadUpdate(context: Context, download: UpdateDownload): Boolean {
+        if (!context.packageManager.canRequestPackageInstalls()) {
+            withContext(Dispatchers.Main) {
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    "package:${context.packageName}".toUri(),
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                try {
+                    context.startActivity(intent)
+                    Toast.makeText(context, R.string.permission_privacy_install_retry, Toast.LENGTH_LONG).show()
+                } catch (_: ActivityNotFoundException) {
+                    error(context.getString(R.string.zeroagent_permission_open_failed))
+                } catch (_: SecurityException) {
+                    error(context.getString(R.string.zeroagent_permission_open_failed))
+                }
+            }
+            return false
+        }
+        if (!downloadMutex.tryLock()) return false
         val manager = context.getSystemService(NotificationManager::class.java)
         val channel = "zeroagent-app-updates"
         val notificationId = 12013
@@ -120,6 +142,7 @@ class UpdateChecker(
             manager?.createNotificationChannel(NotificationChannel(channel, context.getString(R.string.update_card_downloading), NotificationManager.IMPORTANCE_LOW))
             publish(DownloadProgress(0, download.sizeBytes), false)
             SignedUpdateInstaller(client).downloadAndRequestInstall(context, download, ::publish)
+            return true
         } finally {
             manager?.cancel(notificationId)
             downloadStatus.value = null

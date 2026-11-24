@@ -21,9 +21,12 @@ internal class PendingRestore(
 ) {
     private val pending get() = File(root, "pending")
 
+    fun hasPending(): Boolean = pending.isDirectory
+
     fun createStagingDirectory(): File {
         check(!pending.exists()) { "A backup restore is already pending. Restart the app first." }
         check(root.isDirectory || root.mkdirs()) { "Cannot create backup staging directory" }
+        cleanAbandonedStages()
         return Files.createTempDirectory(root.toPath(), "preparing-").toFile()
     }
 
@@ -32,12 +35,16 @@ internal class PendingRestore(
         move(staging, pending)
     }
 
-    suspend fun apply(restoreSettings: suspend (String) -> Unit): Boolean {
-        // Completed restores must never be replayed, even if cleanup was interrupted.
+    private fun cleanAbandonedStages() {
+        // These directories can only be cleaned under the restore mutex or during startup.
         root.listFiles()?.filter {
             it.name.startsWith("completed-") || it.name.startsWith("preparing-")
         }?.forEach { it.deleteRecursively() }
-        if (!pending.isDirectory) return false
+    }
+
+    suspend fun apply(restoreSettings: suspend (String) -> Unit): Boolean {
+        cleanAbandonedStages()
+        if (!hasPending()) return false
 
         val journal = File(pending, "journal.json")
         val entries = if (journal.exists()) {

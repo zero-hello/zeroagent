@@ -321,7 +321,9 @@ private fun createShellTool(
             ?.coerceIn(1L, SHELL_TIMEOUT_MAX_SECONDS)
             ?.times(1_000L)
             ?: WorkspaceManager.DEFAULT_COMMAND_TIMEOUT_MS
-        val result = workspaceRepository.executeCommand(workspaceId, command, cwd, timeoutMillis)
+        val result = workspaceRepository.executeCommand(
+            workspaceId, command, cwd, timeoutMillis, trackWorkspaceChanges = true,
+        )
         listOf(
             UIMessagePart.Text(
                 buildJsonObject {
@@ -529,27 +531,31 @@ private suspend fun WorkspaceRepository.writeTextInRootfs(
     text: String,
     overwrite: Boolean,
 ): WorkspaceFileEntry {
-    val pathArg = path.shellQuote()
-    val result = runRootfsCommand(
-        workspaceId = workspaceId,
-        action = "Write file",
-        command = """
-            if [ -e $pathArg ] && [ ${(!overwrite).shellFlag()} = 1 ]; then
-              printf '%s\n' ${"File already exists: $path".shellQuote()} >&2
-              exit 1
-            fi
-            if [ -e $pathArg ] && [ ! -f $pathArg ]; then
-              printf '%s\n' ${"Path is not a file: $path".shellQuote()} >&2
-              exit 1
-            fi
-            parent=${'$'}(dirname -- $pathArg) || exit 1
-            mkdir -p -- "${'$'}parent" || exit 1
-            cat > $pathArg || exit 1
-            ${statEntryCommand(path)}
-        """.trimIndent(),
-        stdin = text.toByteArray(Charsets.UTF_8),
-    )
-    return result.stdout.parseRootfsEntry()
+    suspend fun write(): WorkspaceFileEntry {
+        val pathArg = path.shellQuote()
+        val result = runRootfsCommand(
+            workspaceId = workspaceId,
+            action = "Write file",
+            command = """
+                if [ -e $pathArg ] && [ ${(!overwrite).shellFlag()} = 1 ]; then
+                  printf '%s\n' ${"File already exists: $path".shellQuote()} >&2
+                  exit 1
+                fi
+                if [ -e $pathArg ] && [ ! -f $pathArg ]; then
+                  printf '%s\n' ${"Path is not a file: $path".shellQuote()} >&2
+                  exit 1
+                fi
+                parent=${'$'}(dirname -- $pathArg) || exit 1
+                mkdir -p -- "${'$'}parent" || exit 1
+                cat > $pathArg || exit 1
+                ${statEntryCommand(path)}
+            """.trimIndent(),
+            stdin = text.toByteArray(Charsets.UTF_8),
+        )
+        return result.stdout.parseRootfsEntry()
+    }
+    if (!path.startsWith("/workspace/")) return write()
+    return withWorkspaceTextChange(workspaceId, path.removePrefix("/workspace/")) { write() }
 }
 
 private suspend fun WorkspaceRepository.createFolderInRootfs(

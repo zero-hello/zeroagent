@@ -100,11 +100,8 @@
     <string name="text_area_import_failed">파일을 가져오지 못했습니다</string>
     <string name="tool_ui_delete_failed">%s을(를) 삭제하지 못했습니다</string>
     <string name="tool_ui_shell_timeout">시간 초과</string>
-    <string name="translator_error_generic">오류</string>
     <string name="update_card_check_failed">업데이트를 확인하지 못했습니다</string>
     <string name="update_card_unknown_error">알 수 없는 오류</string>
-    <string name="videogen_page_delete_videos_failed">삭제됨: %1$d개. 실패: %2$d개. 다시 시도하세요.</string>
-    <string name="videogen_page_save_failed">저장 실패: %1$s</string>
     <string name="workspace_cwd_new_folder_invalid">슬래시가 없는 폴더 이름 하나를 입력하세요.</string>
     <string name="workspace_detail_rootfs_install_failed">Rootfs 설치에 실패했습니다</string>
     <string name="workspace_detail_settings_save_failed">설정을 저장하지 못했습니다</string>

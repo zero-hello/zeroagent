@@ -28,7 +28,7 @@ import me.rerere.zeroagent.data.db.SQLiteConfiguration
 @Database(
     entities = [UsageRecordEntity::class],
     version = 2,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class UsageLedgerDatabase : RoomDatabase() {
     abstract fun usageRecordDao(): UsageRecordDao

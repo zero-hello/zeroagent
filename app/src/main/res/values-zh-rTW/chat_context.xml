@@ -1,0 +1,5 @@
+<resources>
+    <string name="chat_context_usage_estimate">對話上下文 · 約 %1$d / %2$d 個詞元</string>
+    <string name="chat_context_usage_compact">摘要</string>
+    <string name="chat_branch_position">%1$d / %2$d</string>
+</resources>

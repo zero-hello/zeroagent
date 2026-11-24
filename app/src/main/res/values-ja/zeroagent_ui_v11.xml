@@ -63,8 +63,6 @@
     <string name="zeroagent_permission_background_location_hint">アプリ設定の「権限 → 位置情報」で「常に許可」を選んでください（表示される場合）。先にアプリ使用中の位置情報を許可してください。</string>
     <string name="zeroagent_permission_all_files">すべてのファイルへのアクセス</string>
     <string name="zeroagent_permission_all_files_hint">選択したファイルツールによる共有ファイルへのアクセスを許可します。</string>
-    <string name="zeroagent_permission_usage">使用状況へのアクセス</string>
-    <string name="zeroagent_permission_usage_hint">使用中のアプリを確認できるようにします。</string>
     <string name="zeroagent_permission_other">その他のアプリ権限</string>
     <string name="zeroagent_permission_keyboard">キーボード連携</string>
     <string name="zeroagent_permission_shizuku">Shizuku へのアクセス</string>

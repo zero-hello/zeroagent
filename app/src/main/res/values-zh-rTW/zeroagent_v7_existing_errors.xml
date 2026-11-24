@@ -13,7 +13,5 @@
     <string name="setting_page_preferences_network_stall_timeout">回覆中途停頓逾時</string>
     <string name="setting_page_preferences_network_stall_timeout_desc">串流開始後，若這段秒數內沒有任何資料，會視為停滯：已有部分內容就接續回答，否則重新請求。每收到一段資料都會重新計時，因此不會中斷仍持續回應的慢速模型。設為 0 可關閉監測。</string>
     <string name="setting_page_tool_approvals_load_failed">無法載入工具清單。</string>
-    <string name="videogen_page_delete_videos_failed">已刪除 %1$d 項，失敗 %2$d 項，請再試一次。</string>
-    <string name="videogen_page_save_failed">儲存失敗：%1$s</string>
     <string name="workspace_cwd_new_folder_invalid">請輸入單一資料夾名稱，不可包含斜線。</string>
 </resources>

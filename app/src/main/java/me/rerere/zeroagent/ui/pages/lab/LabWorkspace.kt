@@ -40,9 +40,12 @@ import kotlin.uuid.Uuid
 
 @Composable
 internal fun LabWorkspace(key: String, modifier: Modifier, openArtifact: () -> Unit) {
+    if (key == "memory_drawer") {
+        MemoryDrawerWorkspace(modifier.imePadding())
+        return
+    }
     Column(modifier.imePadding().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         when (key) {
-            "memory_drawer" -> MemoryDrawerWorkspace()
             "handoff" -> ConversationNotesWorkspace(false)
             "todo_capture" -> ConversationNotesWorkspace(true)
             "practice" -> PracticeWorkspace()

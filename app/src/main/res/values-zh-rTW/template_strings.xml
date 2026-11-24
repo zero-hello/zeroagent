@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="template_export">匯出範本</string>
+    <string name="template_summary">用檔案或 QR 碼分享供應商、MCP 伺服器或角色提示詞。已設定的憑證會排除，分享前請確認文字內容。</string>
+    <string name="template_scan">掃描範本 QR 碼</string>
+    <string name="template_open">開啟範本檔案</string>
+    <string name="template_invalid">範本格式有誤、不支援或內容太長。</string>
+    <string name="template_scan_failed">無法掃描。請檢查相機權限，或改用範本檔案。</string>
+    <string name="template_saved">已儲存範本。</string>
+    <string name="template_save_failed">無法儲存範本檔案。</string>
+    <string name="template_empty">目前沒有可分享的範本。請先設定支援的供應商、MCP 伺服器或角色提示詞。</string>
+    <string name="template_preview_import">確認匯入內容</string>
+    <string name="template_preview_export">確認匯出內容</string>
+    <string name="template_disabled_import">這筆設定會以停用狀態加入。確認網址後，可前往對應設定啟用。</string>
+    <string name="template_prompt_review">選用新角色後會套用這段提示詞，請先確認內容。</string>
+    <string name="template_confirm_import">匯入為新項目</string>
+    <string name="template_generate_qr">產生 QR 碼</string>
+    <string name="template_imported">已匯入範本。</string>
+    <string name="template_import_failed">無法儲存匯入的範本。</string>
+    <string name="template_export_rejected">無法分享。請檢查網址是否包含憑證，或縮短名稱、模型清單及提示詞。</string>
+    <string name="template_qr_title">範本 QR 碼</string>
+    <string name="template_save">儲存範本檔案</string>
+    <string name="template_provider">AI 供應商</string>
+    <string name="template_mcp">MCP 伺服器</string>
+    <string name="template_prompt">角色提示詞</string>
+</resources>

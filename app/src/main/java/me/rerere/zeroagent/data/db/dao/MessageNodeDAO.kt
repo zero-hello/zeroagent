@@ -12,6 +12,8 @@ import me.rerere.zeroagent.data.db.entity.MessageNodeEntity
 
 @Dao
 interface MessageNodeDAO {
+    @Query("SELECT EXISTS(SELECT 1 FROM message_node WHERE conversation_id = :conversationId)")
+    suspend fun hasNodes(conversationId: String): Boolean
     // 使用与 messages 相同的 JSON 编码，保守保留所有分支中出现的 URL。
     @Query("SELECT EXISTS(SELECT 1 FROM message_node WHERE instr(messages, :encodedFileUrl) > 0)")
     suspend fun hasFileReference(encodedFileUrl: String): Boolean
@@ -19,24 +21,33 @@ interface MessageNodeDAO {
     @Query("SELECT * FROM message_node WHERE conversation_id = :conversationId ORDER BY node_index ASC")
     suspend fun getNodesOfConversation(conversationId: String): List<MessageNodeEntity>
 
-    /**
-     * Nodes holding a part whose `finishedAt` is still null, i.e. a stream that was cut off before
-     * it could close the part (a killed process). Matches on the serialized marker so the scan
-     * stays an `instr()` over the blob instead of a JSON parse of every row; the caller parses only
-     * the rows this returns. Same trick as [hasFileReference].
-     */
-    @Query("SELECT * FROM message_node WHERE instr(messages, '\"finishedAt\":null') > 0")
-    suspend fun getNodesWithOpenFinishedAt(): List<MessageNodeEntity>
+    // Bound CursorWindow rows. Oversized legacy data is read separately in byte chunks.
+    @Query(
+        "SELECT $BOUNDED_NODE_COLUMNS FROM message_node WHERE conversation_id = :conversationId " +
+            "ORDER BY node_index ASC, id ASC LIMIT :limit OFFSET :offset"
+    )
+    suspend fun getBoundedNodes(conversationId: String, limit: Int, offset: Int): List<BoundedMessageNode>
+
+    @Query("SELECT id FROM message_node WHERE instr(messages, '\"finishedAt\":null') > 0")
+    suspend fun getOpenFinishedAtNodeIds(): List<String>
+
+    @Query("SELECT $BOUNDED_NODE_COLUMNS FROM message_node WHERE id = :id")
+    suspend fun getBoundedNode(id: String): BoundedMessageNode?
+
+    @Query("SELECT substr(CAST(messages AS BLOB), :offset, :length) FROM message_node WHERE id = :id")
+    suspend fun readPayloadBytes(id: String, offset: Long, length: Int): ByteArray?
+
+    @Query("SELECT DISTINCT payload_sha256 FROM message_node WHERE conversation_id = :conversationId AND payload_sha256 IS NOT NULL")
+    suspend fun getPayloadReferences(conversationId: String): List<String>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM message_node WHERE payload_sha256 = :digest)")
+    suspend fun hasPayloadReference(digest: String): Boolean
 
     @Query(
-        "SELECT * FROM message_node WHERE conversation_id = :conversationId " +
-            "ORDER BY node_index ASC LIMIT :limit OFFSET :offset"
+        "SELECT id FROM message_node WHERE id > :after AND payload_sha256 IS NULL AND " +
+            "length(CAST(messages AS BLOB)) > :threshold ORDER BY id LIMIT 16"
     )
-    suspend fun getNodesOfConversationPaged(
-        conversationId: String,
-        limit: Int,
-        offset: Int
-    ): List<MessageNodeEntity>
+    suspend fun getLargeInlineNodeIds(after: String, threshold: Int): List<String>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(nodes: List<MessageNodeEntity>)
@@ -59,6 +70,46 @@ interface MessageNodeDAO {
 
     @RawQuery
     suspend fun getMessageCountPerDayRaw(query: SupportSQLiteQuery): List<MessageDayCount>
+}
+
+private const val MESSAGE_READ_BYTES = 128 * 1024
+private const val MESSAGE_BYTES_EXPRESSION = "length(CAST(messages AS BLOB))"
+private const val BOUNDED_NODE_COLUMNS =
+    "id, conversation_id AS conversationId, node_index AS nodeIndex, select_index AS selectIndex, " +
+        "payload_sha256 AS payloadSha256, " +
+        "$MESSAGE_BYTES_EXPRESSION AS payloadBytes, " +
+        "CASE WHEN $MESSAGE_BYTES_EXPRESSION <= $MESSAGE_READ_BYTES THEN messages END AS inlineMessages"
+
+data class BoundedMessageNode(
+    val id: String,
+    val conversationId: String,
+    val nodeIndex: Int,
+    val selectIndex: Int,
+    val payloadBytes: Int,
+    val inlineMessages: String?,
+    val payloadSha256: String?,
+)
+
+// Call inside a Room transaction so all chunks describe the same row version.
+internal suspend fun MessageNodeDAO.readMessagePayload(node: BoundedMessageNode): String =
+    node.inlineMessages ?: assembleMessagePayload(node.payloadBytes) { offset, length ->
+        readPayloadBytes(node.id, offset, length)
+    }
+
+internal inline fun assembleMessagePayload(
+    totalBytes: Int,
+    read: (offset: Long, length: Int) -> ByteArray?,
+): String {
+    val bytes = ByteArray(totalBytes)
+    var copied = 0
+    while (copied < totalBytes) {
+        val length = minOf(MESSAGE_READ_BYTES, totalBytes - copied)
+        val chunk = read(copied.toLong() + 1, length)
+        check(chunk != null && chunk.size == length) { "Incomplete stored message payload" }
+        chunk.copyInto(bytes, copied)
+        copied += length
+    }
+    return bytes.decodeToString(throwOnInvalidSequence = true)
 }
 
 data class MessageTokenStats(

@@ -63,8 +63,6 @@
     <string name="zeroagent_permission_background_location_hint">افتح الأذونات ← الموقع في إعدادات التطبيق واختر السماح طوال الوقت إن توفر. اسمح أولاً بالوصول إلى الموقع أثناء استخدام التطبيق.</string>
     <string name="zeroagent_permission_all_files">الوصول إلى جميع الملفات</string>
     <string name="zeroagent_permission_all_files_hint">يسمح لأدوات الملفات التي تختارها بالوصول إلى الملفات المشتركة.</string>
-    <string name="zeroagent_permission_usage">الوصول إلى بيانات الاستخدام</string>
-    <string name="zeroagent_permission_usage_hint">يسمح للوكيل بمعرفة التطبيق المستخدم حالياً.</string>
     <string name="zeroagent_permission_other">إذن تطبيق آخر</string>
     <string name="zeroagent_permission_keyboard">تكامل لوحة المفاتيح</string>
     <string name="zeroagent_permission_shizuku">الوصول إلى Shizuku</string>

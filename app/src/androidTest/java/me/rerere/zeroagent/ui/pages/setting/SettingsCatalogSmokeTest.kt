@@ -73,7 +73,6 @@ class SettingsCatalogSmokeTest {
                     Screen.Log -> R.string.zeroagent6s_logs
                     Screen.SettingRoot -> R.string.zeroagent6s_root_title
                     Screen.ImageGen -> R.string.imggen_page_title
-                    Screen.VideoGen -> R.string.videogen_page_title
                     Screen.GettingStarted -> R.string.getting_started_title
                     is Screen.ModelMemory -> if (settings.getCurrentChatModel() == null) {
                         // ModelMemory intentionally opens model settings when no chat model exists.

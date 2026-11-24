@@ -5,6 +5,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import me.rerere.zeroagent.data.db.fts.SimpleDictManager
+import java.io.File
+import me.rerere.zeroagent.data.db.migrations.EncryptSshCredentialsMigration
 import me.rerere.zeroagent.data.db.migrations.Migration_6_7
 import me.rerere.zeroagent.data.db.migrations.Migration_11_12
 import me.rerere.zeroagent.data.db.migrations.Migration_13_14
@@ -16,12 +18,30 @@ import me.rerere.zeroagent.data.db.migrations.Migration_30_31
 
 /** Shared schema, migrations and extensions for the app and staged backup validation. */
 internal object AppDatabaseFactory {
-    fun create(context: Context, name: String = SQLiteConfiguration.DATABASE_NAME): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, name)
+    fun create(context: Context, name: String = SQLiteConfiguration.DATABASE_NAME): AppDatabase {
+        val checkpointMarker = if (name == SQLiteConfiguration.DATABASE_NAME) {
+            File(context.noBackupFilesDir, "ssh-credentials-checkpoint-v33")
+        } else null // Staged restores checkpoint their own database before publishing it.
+        val credentialMigration = EncryptSshCredentialsMigration(markCheckpointPending = {
+            // Keep this outside the transaction so a process restart can finish the checkpoint.
+            checkpointMarker?.createNewFile()
+        })
+        return Room.databaseBuilder(context, AppDatabase::class.java, name)
             .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
-            .addMigrations(Migration_6_7, Migration_11_12, Migration_13_14, Migration_14_15, Migration_15_16, Migration_23_24, Migration_30_31, Migration_31_32)
+            .addMigrations(Migration_6_7, Migration_11_12, Migration_13_14, Migration_14_15, Migration_15_16, Migration_23_24, Migration_30_31, Migration_31_32, credentialMigration)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
+                    if (checkpointMarker?.exists() == true) {
+                        // Room has committed its upgrade here. Truncate any pre-encryption WAL frames.
+                        val checkpointed = runCatching {
+                            db.query("PRAGMA wal_checkpoint(TRUNCATE)").use { cursor ->
+                                cursor.moveToFirst() && cursor.getInt(0) == 0
+                            }
+                        }.getOrDefault(false)
+                        if (!checkpointed || !checkpointMarker.delete()) {
+                            android.util.Log.w("DataSourceModule", "SSH credential checkpoint will retry on next database open")
+                        }
+                    }
                     // Both steps below are best-effort FTS setup: a failure here (missing dict
                     // assets, FTS5 module unavailable, native lib not loaded yet) must degrade
                     // search, not crash every single app launch by throwing out of onOpen and
@@ -54,4 +74,5 @@ internal object AppDatabaseFactory {
             })
             .openHelperFactory(SQLiteConfiguration.openHelperFactory(context))
             .build()
+    }
 }

@@ -1,5 +1,6 @@
 package me.rerere.zeroagent.ui.pages.setting
 
+import me.rerere.zeroagent.ui.components.nav.BackButton
 import me.rerere.zeroagent.ui.motion.*
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -30,7 +31,7 @@ import org.koin.compose.koinInject
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
 
 @Composable
-fun SettingPage(vm: SettingVM = koinViewModel()) {
+fun SettingPage(vm: SettingVM = koinViewModel(), showBackButton: Boolean = false) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val nav = LocalNavController.current
     val appDrawer = LocalAppDrawer.current
@@ -56,7 +57,9 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
             LargeFlexibleTopAppBar(
                 title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
-                    if (!appDrawer.isPermanent) {
+                    if (showBackButton) {
+                        BackButton()
+                    } else if (!appDrawer.isPermanent) {
                         IconButton(onClick = appDrawer::open) {
                             Icon(HugeIcons.Menu03, stringResource(R.string.menu))
                         }
@@ -169,9 +172,7 @@ internal fun settingsEntryIcon(route: Screen) = when (route) {
     Screen.SettingWorkflows -> HugeIcons.Connect
     Screen.SettingScheduledJobs, Screen.TaskCenter -> HugeIcons.Clock02
     Screen.Workspaces -> HugeIcons.Folder01
-    Screen.Translator -> HugeIcons.LanguageCircle
     Screen.ImageGen -> HugeIcons.Image02
-    Screen.VideoGen -> HugeIcons.Video01
     Screen.Favorite -> HugeIcons.InLove
     Screen.Stats -> HugeIcons.ChartColumn
     Screen.SettingAccessibility -> HugeIcons.SmartPhone01

@@ -1,0 +1,9 @@
+<resources>
+    <string name="workspace_diff_action">File changes</string>
+    <string name="workspace_diff_restore">Undo change</string>
+    <string name="workspace_diff_remove_note">This change created the file. Undoing it will remove the file.</string>
+    <string name="workspace_diff_conflict">The file changed after this edit. Its current contents were kept.</string>
+    <string name="workspace_diff_created_file_removed">The newly created file was removed.</string>
+    <string name="workspace_diff_restored">Previous contents restored.</string>
+    <string name="workspace_diff_unavailable">No recent text change to preview. Only small text edits from this session are available.</string>
+</resources>

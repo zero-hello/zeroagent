@@ -2,6 +2,7 @@ package me.rerere.zeroagent.data.ai.tools
 
 import me.rerere.zeroagent.data.ai.tools.local.imageProvidersFor
 import android.content.Context
+import com.whl.quickjs.android.QuickJSLoader
 import com.whl.quickjs.wrapper.QuickJSContext
 import com.whl.quickjs.wrapper.QuickJSObject
 import kotlinx.coroutines.CompletableDeferred
@@ -26,7 +27,6 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
-import me.rerere.ai.core.InputSchema
 import me.rerere.ai.provider.supportsImageGeneration
 import me.rerere.ai.core.Tool
 import me.rerere.ai.ui.UIMessagePart
@@ -388,6 +388,8 @@ class LocalTools(
     private val filesManager: me.rerere.zeroagent.data.files.FilesManager,
     private val genMediaRepository: me.rerere.zeroagent.data.repository.GenMediaRepository,
 ) {
+    private val quickJsReady by lazy { QuickJSLoader.init() }
+
     val javascriptTool by lazy {
         Tool(
             name = "eval_javascript",
@@ -399,17 +401,7 @@ class LocalTools(
                 No DOM or Node.js APIs available.
                 Example: '1 + 2' returns 3; 'const x = 5; x * 2' returns 10.
             """.trimIndent().replace("\n", " "),
-            parameters = {
-                InputSchema.Obj(
-                    properties = buildJsonObject {
-                        put("code", buildJsonObject {
-                            put("type", "string")
-                            put("description", "The JavaScript code to execute")
-                        })
-                    },
-                    required = listOf("code")
-                )
-            },
+            parameters = { LocalToolSchemas.evalJavaScript() },
             execute = {
                 val code = it.jsonObject["code"]?.jsonPrimitive?.contentOrNull
 
@@ -426,6 +418,7 @@ class LocalTools(
                     val logs = arrayListOf<String>()
                     var context: QuickJSContext? = null
                     try {
+                        quickJsReady
                         context = QuickJSContext.create()
                         // Sane bounds so a runaway script can't OOM or blow the native stack
                         // before the wall-clock timeout fires. 64 MiB heap / 512 KiB stack.
@@ -513,11 +506,7 @@ class LocalTools(
                 Get the current local date and time info from the device.
                 Returns year/month/day, weekday, ISO date/time strings, timezone, and timestamp.
             """.trimIndent().replace("\n", " "),
-            parameters = {
-                InputSchema.Obj(
-                    properties = buildJsonObject { }
-                )
-            },
+            parameters = { LocalToolSchemas.deviceTime() },
             execute = {
                 val now = ZonedDateTime.now()
                 val date = now.toLocalDate()
@@ -550,28 +539,7 @@ class LocalTools(
                 Use action: read or write. For write, provide text.
                 Do NOT write to the clipboard unless the user has explicitly requested it.
             """.trimIndent().replace("\n", " "),
-            parameters = {
-                InputSchema.Obj(
-                    properties = buildJsonObject {
-                        put("action", buildJsonObject {
-                            put("type", "string")
-                            put(
-                                "enum",
-                                kotlinx.serialization.json.buildJsonArray {
-                                    add("read")
-                                    add("write")
-                                }
-                            )
-                            put("description", "Operation to perform: read or write")
-                        })
-                        put("text", buildJsonObject {
-                            put("type", "string")
-                            put("description", "Text to write to the clipboard (required for write)")
-                        })
-                    },
-                    required = listOf("action")
-                )
-            },
+            parameters = { LocalToolSchemas.clipboard() },
             execute = {
                 val params = it.jsonObject
                 val action = params["action"]?.jsonPrimitive?.contentOrNull ?: error("action is required")
@@ -622,17 +590,7 @@ class LocalTools(
                 The tool returns immediately; audio plays in the background on the device.
                 Provide natural, readable text without markdown formatting.
             """.trimIndent().replace("\n", " "),
-            parameters = {
-                InputSchema.Obj(
-                    properties = buildJsonObject {
-                        put("text", buildJsonObject {
-                            put("type", "string")
-                            put("description", "The text to speak aloud")
-                        })
-                    },
-                    required = listOf("text")
-                )
-            },
+            parameters = { LocalToolSchemas.speak() },
             execute = {
                 val text = it.jsonObject["text"]?.jsonPrimitive?.contentOrNull
                     ?: error("text is required")
@@ -654,59 +612,7 @@ class LocalTools(
                 The user may select an option or provide their own free-text answer for each question.
                 The answers will be returned as a JSON object mapping question IDs to the user's responses.
             """.trimIndent().replace("\n", " "),
-            parameters = {
-                InputSchema.Obj(
-                    properties = buildJsonObject {
-                        put("questions", buildJsonObject {
-                            put("type", "array")
-                            put("description", "List of questions to ask the user")
-                            put("items", buildJsonObject {
-                                put("type", "object")
-                                put("properties", buildJsonObject {
-                                    put("id", buildJsonObject {
-                                        put("type", "string")
-                                        put("description", "Unique identifier for this question")
-                                    })
-                                    put("question", buildJsonObject {
-                                        put("type", "string")
-                                        put("description", "The question text to display to the user")
-                                    })
-                                    put("options", buildJsonObject {
-                                        put("type", "array")
-                                        put(
-                                            "description",
-                                            "Optional list of suggested options for the user to choose from"
-                                        )
-                                        put("items", buildJsonObject {
-                                            put("type", "string")
-                                        })
-                                    })
-                                    put("selection_type", buildJsonObject {
-                                        put("type", "string")
-                                        put(
-                                            "enum",
-                                            kotlinx.serialization.json.buildJsonArray {
-                                                add("text")
-                                                add("single")
-                                                add("multi")
-                                            }
-                                        )
-                                        put(
-                                            "description",
-                                            "Answer type: text (free text input, default), single (select exactly one option), multi (select one or more options)"
-                                        )
-                                    })
-                                })
-                                put("required", kotlinx.serialization.json.buildJsonArray {
-                                    add("id")
-                                    add("question")
-                                })
-                            })
-                        })
-                    },
-                    required = listOf("questions")
-                )
-            },
+            parameters = { LocalToolSchemas.askUser() },
             needsApproval = { true },
             execute = {
                 // Reached only when no human-in-the-loop surface intercepted this call. The

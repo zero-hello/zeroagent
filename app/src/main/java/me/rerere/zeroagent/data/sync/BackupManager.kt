@@ -14,9 +14,11 @@ import me.rerere.zeroagent.data.datastore.SettingsStore
 import me.rerere.zeroagent.data.datastore.migration.SettingsJsonMigrator
 import me.rerere.zeroagent.data.db.AppDatabaseFactory
 import me.rerere.zeroagent.data.db.AppDatabase
+import me.rerere.zeroagent.data.db.ChatPayloadStore
 import me.rerere.zeroagent.data.db.ImportedDatabaseReconciler
 import me.rerere.zeroagent.data.db.SQLiteConfiguration
 import java.io.File
+import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.time.LocalDateTime
@@ -51,7 +53,12 @@ class BackupManager(
                 }
                 if (BackupItem.DATABASE in selected) {
                     val snapshot = File(staging, SQLiteConfiguration.DATABASE_NAME)
-                    DatabaseBackup.createSnapshot(database.openHelper.writableDatabase, snapshot)
+                    val payloads = ChatPayloadStore(context, database)
+                    payloads.withStableFiles {
+                        DatabaseBackup.createSnapshot(database.openHelper.writableDatabase, snapshot)
+                        DatabaseBackup.inlineChatPayloads(context, snapshot, payloads::readFile)
+                    }
+                    DatabaseBackup.removeSshCredentials(context, snapshot)
                     addFile(zip, snapshot, DatabaseBackup.ARCHIVE_DATABASE)
                     val preferenceDirectory = File(context.applicationInfo.dataDir, BackupLayout.PORTABLE_PREFERENCES_DIR)
                     val lockMarkers = File(preferenceDirectory, BackupLayout.CHAT_PRIVACY_FILE)
@@ -173,7 +180,10 @@ class BackupManager(
                             if (isSettings) requireSettingsSize(entry.size)
                             var entryBytes = 0L
                             zip.getInputStream(entry).use { input ->
-                                FileOutputStream(target).use { output ->
+                                // Older archives may contain plaintext keys. Sanitize before any disk write.
+                                val settingsBytes = if (isSettings) ByteArrayOutputStream() else null
+                                val output = if (settingsBytes == null) FileOutputStream(target) else settingsBytes
+                                output.use {
                                     while (true) {
                                         currentCoroutineContext().ensureActive()
                                         val count = input.read(buffer)
@@ -184,9 +194,16 @@ class BackupManager(
                                         }
                                         extractedBytes += count
                                         require(extractedBytes <= extractionBudget) { "備份解壓後超出可用儲存空間。" }
-                                        output.write(buffer, 0, count)
+                                        it.write(buffer, 0, count)
                                     }
-                                    output.fd.sync()
+                                    if (it is FileOutputStream) it.fd.sync()
+                                }
+                                if (settingsBytes != null) {
+                                    val raw = settingsBytes.toString(Charsets.UTF_8.name())
+                                    val migrated = SettingsJsonMigrator.migrate(raw)
+                                    val sanitized = stripBackupCredentials(json.parseToJsonElement(migrated)).toString()
+                                    requireSettingsSize(sanitized.toByteArray(Charsets.UTF_8).size.toLong())
+                                    PendingRestore.writeDurably(target, sanitized)
                                 }
                             }
                             restoredEntries++
@@ -205,7 +222,11 @@ class BackupManager(
                         // Reject unsupported schemas before publishing; run supported old migrations on the copy.
                         val room = AppDatabaseFactory.create(context, stagedDatabase.absolutePath)
                         try {
-                            DatabaseBackup.checkpoint(room.openHelper.writableDatabase)
+                            val restoredDatabase = room.openHelper.writableDatabase
+                            restoredDatabase.query("SELECT 1 FROM message_node WHERE payload_sha256 IS NOT NULL LIMIT 1").use {
+                                require(!it.moveToFirst()) { "Backup has an incomplete chat record" }
+                            }
+                            DatabaseBackup.checkpoint(restoredDatabase)
                         } finally {
                             room.close()
                         }
@@ -214,7 +235,7 @@ class BackupManager(
 
                     val settingsFile = File(staging, "settings.json")
                     if (settingsFile.exists()) {
-                        val settings = json.decodeFromString<Settings>(SettingsJsonMigrator.migrate(settingsFile.readText()))
+                        val settings = json.decodeFromString<Settings>(settingsFile.readText())
                         require(!settings.init) { "Backup contains uninitialized settings" }
                         // Persist the migrated value once, including generated IDs, for restart/retry consistency.
                         val migrated = json.encodeToString(settings)
@@ -246,6 +267,8 @@ class BackupManager(
             filesDir = context.filesDir,
             sharedPreferencesDir = File(context.applicationInfo.dataDir, BackupLayout.PORTABLE_PREFERENCES_DIR),
         )
+
+        internal fun hasPendingRestore(context: Context): Boolean = pendingRestore(context).hasPending()
 
         /** Must finish before Koin, Room, SettingsStore or any background consumers are initialized. */
         suspend fun applyPendingRestore(context: Context, json: Json): Boolean = withContext(Dispatchers.IO) {

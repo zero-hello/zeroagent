@@ -37,6 +37,7 @@ data class SubAgentRun(
     val usageCalls: Int = 0,
     /** D3 — how many parent audio/video attachments travelled with this dispatch (0 = none). */
     val mediaParts: Int = 0,
+    val childConversationId: String? = null,
 )
 
 @Serializable

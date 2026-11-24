@@ -2,7 +2,20 @@ package me.rerere.zeroagent.ui.pages.assistant.detail
 
 import androidx.compose.material3.ButtonDefaults
 
+import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import me.rerere.zeroagent.data.ai.tools.local.PermissionHelper
+import me.rerere.zeroagent.data.permissions.PermissionInventory
+import me.rerere.zeroagent.utils.getActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -109,6 +122,32 @@ private fun AssistantLocalToolContent(
     onUpdateAssistant: ((Assistant) -> Assistant) -> Unit,
 ) {
     val ctx = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var permissionRevision by remember { mutableIntStateOf(0) }
+    val requestedPermissions = remember { mutableSetOf<String>() }
+    val requestToolPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { permissionRevision++ }
+    val missingToolPermissions = remember(ctx, permissionRevision) {
+        buildSet {
+            for (permission in listOf(
+                Manifest.permission.READ_CONTACTS,
+                Manifest.permission.READ_CALL_LOG,
+                Manifest.permission.READ_SMS,
+                Manifest.permission.SEND_SMS,
+            )) {
+                if (!PermissionHelper.hasRuntime(ctx, listOf(permission))) add(permission)
+            }
+            if (!PermissionHelper.hasAllFilesAccess(ctx)) add(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
+        }
+    }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) permissionRevision++
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val localToolFactory = koinInject<LocalTools>()
 
@@ -289,6 +328,45 @@ private fun AssistantLocalToolContent(
                 )
 
                 if (opened) {
+                    val requiredPermission = when (option) {
+                        LocalToolOption.Contacts -> Manifest.permission.READ_CONTACTS
+                        LocalToolOption.CallLog -> Manifest.permission.READ_CALL_LOG
+                        LocalToolOption.SmsInbox -> Manifest.permission.READ_SMS
+                        LocalToolOption.SmsSend -> Manifest.permission.SEND_SMS
+                        LocalToolOption.Files -> Manifest.permission.MANAGE_EXTERNAL_STORAGE
+                        else -> null
+                    }
+                    if (requiredPermission != null && requiredPermission in missingToolPermissions) {
+                        item(
+                            modifier = Modifier.padding(start = 24.dp),
+                            headlineContent = { Text(stringResource(R.string.permission_tool_access_title)) },
+                            supportingContent = { Text(stringResource(R.string.permission_tool_access_detail)) },
+                            trailingContent = {
+                                TextButton(shapes = ButtonDefaults.shapes(), onClick = {
+                                    val settings = when {
+                                        requiredPermission == Manifest.permission.MANAGE_EXTERNAL_STORAGE ->
+                                            PermissionHelper.allFilesAccessIntent(ctx)
+                                        requiredPermission in requestedPermissions &&
+                                            ctx.getActivity()?.shouldShowRequestPermissionRationale(requiredPermission) == false ->
+                                            PermissionInventory.appDetailsIntent(ctx)
+                                        else -> null
+                                    }
+                                    if (settings == null) {
+                                        requestedPermissions.add(requiredPermission)
+                                        requestToolPermission.launch(requiredPermission)
+                                    } else {
+                                        try {
+                                            ctx.startActivity(settings)
+                                        } catch (_: ActivityNotFoundException) {
+                                            Toast.makeText(ctx, R.string.zeroagent_permission_open_failed, Toast.LENGTH_LONG).show()
+                                        } catch (_: SecurityException) {
+                                            Toast.makeText(ctx, R.string.zeroagent_permission_open_failed, Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                }) { Text(stringResource(R.string.permission_tool_access_action)) }
+                            },
+                        )
+                    }
                     tools.forEach { toolName ->
                         item(
                             modifier = Modifier.padding(start = 24.dp),

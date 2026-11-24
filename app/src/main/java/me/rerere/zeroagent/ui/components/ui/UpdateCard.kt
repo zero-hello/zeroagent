@@ -58,7 +58,6 @@ import kotlin.time.toJavaInstant
 fun UpdateCard(updateChecker: UpdateChecker) {
     val state by updateChecker.updateState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val toaster = LocalToaster.current
     state.onError {
         Card {
@@ -134,9 +133,7 @@ fun UpdateCard(updateChecker: UpdateChecker) {
                 if (!downloading) {
                     withNotifications { scope.launch {
                         try {
-                            toaster.show(localizedResources.getString(R.string.update_card_downloading), type = ToastType.Info)
-                            updateChecker.downloadUpdate(context, item)
-                            showDetail = false
+                            if (updateChecker.downloadUpdate(context, item)) showDetail = false
                         } catch (exception: CancellationException) {
                             throw exception
                         } catch (exception: Exception) {

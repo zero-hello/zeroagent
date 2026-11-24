@@ -20,7 +20,6 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
-import me.rerere.ai.core.InputSchema
 import me.rerere.ai.core.Tool
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.zeroagent.browser.BrowserAiActionKind
@@ -167,17 +166,7 @@ private suspend fun trackJsonAction(
 fun browserOpenTool(context: Context, invocationContext: ToolInvocationContext? = null): Tool = Tool(
     name = BrowserToolDefaults.OPEN,
     description = "Navigate the in-app browser to a URL. Launches the browser if it isn't open. Returns {success, current_url, title}. Resets the per-task 5-minute timer.$TELEGRAM_HEADLESS_CUE",
-    parameters = {
-        InputSchema.Obj(
-            properties = buildJsonObject {
-                put("url", buildJsonObject {
-                    put("type", "string")
-                    put("description", "The full URL to navigate to (https://...)")
-                })
-            },
-            required = listOf("url"),
-        )
-    },
+    parameters = { BrowserToolSchemas.open() },
     execute = { input ->
         val url = input.jsonObject["url"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
         // Heuristic exfil-shape check: if the URL's QUERY (not path — CDN asset hashes
@@ -305,7 +294,7 @@ fun browserOpenTool(context: Context, invocationContext: ToolInvocationContext? 
 fun browserCurrentUrlTool(): Tool = Tool(
     name = BrowserToolDefaults.CURRENT_URL,
     description = "Return the browser's current URL and page title. {url, title}. browser_not_open if the browser isn't open.$TELEGRAM_HEADLESS_CUE",
-    parameters = { InputSchema.Obj(properties = buildJsonObject { }) },
+    parameters = { BrowserToolSchemas.currentUrl() },
     execute = {
         val out = withTimeoutOrNull(toolTimeoutMs) {
             BrowserControllerHandle.withController {
@@ -322,16 +311,7 @@ fun browserCurrentUrlTool(): Tool = Tool(
 fun browserScreenshotTool(context: Context): Tool = Tool(
     name = BrowserToolDefaults.SCREENSHOT,
     description = "Capture the visible viewport of the browser as a PNG vision attachment. Use browser_get_text first if you only need the page's text — screenshots cost vision tokens. full_page=true is best-effort and currently captures the viewport only (viewport_only:true in the response).$TELEGRAM_HEADLESS_CUE",
-    parameters = {
-        InputSchema.Obj(
-            properties = buildJsonObject {
-                put("full_page", buildJsonObject {
-                    put("type", "boolean")
-                    put("description", "If true, attempt to capture the entire scroll height (currently no-op; viewport-only)")
-                })
-            },
-        )
-    },
+    parameters = { BrowserToolSchemas.screenshot() },
     execute = { input ->
         val fullPage = input.jsonObject["full_page"]?.jsonPrimitive?.booleanOrNull == true
         val parts = mutableListOf<UIMessagePart>()
@@ -380,14 +360,14 @@ fun browserScreenshotTool(context: Context): Tool = Tool(
 fun browserGetTextTool(): Tool = Tool(
     name = BrowserToolDefaults.GET_TEXT,
     description = "Returns the main article content via Readability.js by default, falling back to selector-based extraction if Readability fails. Pass extract_mode:'raw' for the unfiltered text. Pass selector (e.g. 'article', 'main', '.content') for explicit scoping — selectors override Readability. max_chars (default 8000) caps the result. Use this BEFORE screenshot if you only need text content. {text, truncated, extract_mode}.$TELEGRAM_HEADLESS_CUE",
-    parameters = { getTextSchema(defaultMax = 8000) },
+    parameters = { BrowserToolSchemas.getText() },
     execute = { input -> textPart(runGetText(input)) },
 )
 
 fun browserGetDomTool(): Tool = Tool(
     name = BrowserToolDefaults.GET_DOM,
     description = "Extract a simplified outerHTML of a CSS selector (default 'body'). Strips <script>/<style>. Truncates at max_chars (default 4000). Use scoped selectors like 'article' / 'main' rather than 'body' for relevance — body usually includes nav and footer chrome that costs tokens without value. {html, truncated}.$TELEGRAM_HEADLESS_CUE",
-    parameters = { selectorAndMaxCharsSchema(defaultMax = 4000, required = false) },
+    parameters = { BrowserToolSchemas.getDom() },
     execute = { input -> textPart(runReadHelper(input, BrowserToolDefaults.GET_DOM, defaultMax = 4000) { selector, maxChars ->
         """(function(){
             try {
@@ -407,14 +387,7 @@ fun browserGetDomTool(): Tool = Tool(
 fun browserGetLinksTool(): Tool = Tool(
     name = BrowserToolDefaults.GET_LINKS,
     description = "List up to 100 anchor links inside a CSS selector (default 'body') as {links:[{href, text}], count}. {error:'selector_not_found'} if the root selector doesn't match.$TELEGRAM_HEADLESS_CUE",
-    parameters = {
-        InputSchema.Obj(properties = buildJsonObject {
-            put("selector", buildJsonObject {
-                put("type", "string")
-                put("description", "Root selector to search inside (default 'body')")
-            })
-        })
-    },
+    parameters = { BrowserToolSchemas.getLinks() },
     execute = { input ->
         val selector = (input.jsonObject["selector"]?.jsonPrimitive?.contentOrNull
             ?.takeIf { it.isNotBlank() }) ?: "body"
@@ -446,14 +419,14 @@ fun browserGetLinksTool(): Tool = Tool(
 fun browserBackTool(): Tool = Tool(
     name = BrowserToolDefaults.BACK,
     description = "Navigate the browser one step back in history. {success, current_url}.$TELEGRAM_HEADLESS_CUE",
-    parameters = { InputSchema.Obj(properties = buildJsonObject { }) },
+    parameters = { BrowserToolSchemas.back() },
     execute = { textPart(runHistoryNav(BrowserToolDefaults.BACK, forward = false)) },
 )
 
 fun browserForwardTool(): Tool = Tool(
     name = BrowserToolDefaults.FORWARD,
     description = "Navigate the browser one step forward in history. {success, current_url}.$TELEGRAM_HEADLESS_CUE",
-    parameters = { InputSchema.Obj(properties = buildJsonObject { }) },
+    parameters = { BrowserToolSchemas.forward() },
     execute = { textPart(runHistoryNav(BrowserToolDefaults.FORWARD, forward = true)) },
 )
 
@@ -514,27 +487,7 @@ internal fun buildWaitForPredicate(selector: String, state: String, containsText
 fun browserWaitForTool(): Tool = Tool(
     name = BrowserToolDefaults.WAIT_FOR,
     description = "Pause until a CSS selector reaches a target state. Polls every 200 ms up to timeout_ms (default 10_000). state is one of attached (default — element present in DOM), detached (element gone), visible (present AND rendered), hidden (none rendered). Optional contains_text waits until a matching element contains that text. {found, elapsed_ms}.$TELEGRAM_HEADLESS_CUE",
-    parameters = {
-        InputSchema.Obj(properties = buildJsonObject {
-            put("selector", buildJsonObject {
-                put("type", "string")
-                put("description", "CSS selector to wait for")
-            })
-            put("timeout_ms", buildJsonObject {
-                put("type", "integer")
-                put("description", "Max wait in ms (default 10000, capped at the configured per-tool timeout)")
-            })
-            put("contains_text", buildJsonObject {
-                put("type", "string")
-                put("description", "Optional — wait until an element matching the selector contains this text (case-sensitive substring). Ignored for state=detached/hidden.")
-            })
-            put("state", buildJsonObject {
-                put("type", "string")
-                put("enum", buildJsonArray { add("attached"); add("detached"); add("visible"); add("hidden") })
-                put("description", "Target state to wait for (default 'attached', the original presence-in-DOM behavior)")
-            })
-        }, required = listOf("selector"))
-    },
+    parameters = { BrowserToolSchemas.waitFor() },
     execute = { input ->
         val selector = input.jsonObject["selector"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
         val rawState = input.jsonObject["state"]?.jsonPrimitive?.contentOrNull?.lowercase()
@@ -584,7 +537,7 @@ fun browserWaitForTool(): Tool = Tool(
 fun browserClickTool(): Tool = Tool(
     name = BrowserToolDefaults.CLICK,
     description = "Click an element matching a CSS selector. Returns the diff between the page before and after the action by default ({added, removed, added_chars, removed_chars, truncated} truncated to 4000 chars total). Pass full:true to skip the diff and get post_click_url only — use when the click navigates to an entirely new page. Waits up to 8 s for readyState=complete.$TELEGRAM_HEADLESS_CUE",
-    parameters = { selectorWithFullSchema("CSS selector to click") },
+    parameters = { BrowserToolSchemas.click() },
     execute = { input ->
         val selector = input.jsonObject["selector"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
         val full = parseFullArg(input)
@@ -682,14 +635,7 @@ internal fun buildTypeScript(selector: String, text: String, clear: Boolean): St
 fun browserTypeTool(): Tool = Tool(
     name = BrowserToolDefaults.TYPE,
     description = "Type text into an input/textarea/contenteditable matching a CSS selector. Focuses, optionally clears, sets the value + dispatches an 'input' event so SPA frameworks observe the change. Returns the diff between the page before and after by default; pass full:true to skip the diff. {success, [diff]}.$TELEGRAM_HEADLESS_CUE",
-    parameters = {
-        InputSchema.Obj(properties = buildJsonObject {
-            put("selector", buildJsonObject { put("type","string"); put("description","CSS selector of the input") })
-            put("text", buildJsonObject { put("type","string"); put("description","Text to type") })
-            put("clear", buildJsonObject { put("type","boolean"); put("description","Clear the field first (default true)") })
-            put("full", buildJsonObject { put("type","boolean"); put("description","If true, return the action envelope without the page-text diff (default false)") })
-        }, required = listOf("selector","text"))
-    },
+    parameters = { BrowserToolSchemas.type() },
     execute = { input ->
         val selector = input.jsonObject["selector"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
         val text = input.jsonObject["text"]?.jsonPrimitive?.contentOrNull
@@ -721,15 +667,7 @@ fun browserTypeTool(): Tool = Tool(
 fun browserScrollTool(): Tool = Tool(
     name = BrowserToolDefaults.SCROLL,
     description = "Scroll the page in a direction (up/down/top/bottom). amount is in pixels (default 600, ignored for top/bottom). {success, scroll_y}.$TELEGRAM_HEADLESS_CUE",
-    parameters = {
-        InputSchema.Obj(properties = buildJsonObject {
-            put("direction", buildJsonObject {
-                put("type","string")
-                put("enum", buildJsonArray { add("up"); add("down"); add("top"); add("bottom") })
-            })
-            put("amount", buildJsonObject { put("type","integer"); put("description","Scroll distance in px (default 600)") })
-        }, required = listOf("direction"))
-    },
+    parameters = { BrowserToolSchemas.scroll() },
     execute = { input ->
         val direction = input.jsonObject["direction"]?.jsonPrimitive?.contentOrNull
         val amount = input.jsonObject["amount"]?.jsonPrimitive?.intOrNull ?: 600
@@ -777,7 +715,7 @@ fun browserScrollTool(): Tool = Tool(
 fun browserSubmitTool(): Tool = Tool(
     name = BrowserToolDefaults.SUBMIT,
     description = "Submit a form. If the selector is a <button type=submit> click it; otherwise locates the enclosing <form> and calls .submit(). Awaits the post-navigation readyState. Returns the diff between the page before and after by default; pass full:true to skip the diff (recommended when submission navigates to a brand-new page). {success, post_submit_url, [diff]}.$TELEGRAM_HEADLESS_CUE",
-    parameters = { selectorWithFullSchema("CSS selector of a submit button or any element inside the target form") },
+    parameters = { BrowserToolSchemas.submit() },
     execute = { input ->
         val selector = input.jsonObject["selector"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
         val full = parseFullArg(input)
@@ -825,13 +763,7 @@ fun browserSubmitTool(): Tool = Tool(
 fun browserSelectTool(): Tool = Tool(
     name = BrowserToolDefaults.SELECT,
     description = "Set a <select> element's value. Dispatches 'change' so framework listeners fire. Returns the diff between the page before and after by default; pass full:true to skip the diff. {success, [diff]}.$TELEGRAM_HEADLESS_CUE",
-    parameters = {
-        InputSchema.Obj(properties = buildJsonObject {
-            put("selector", buildJsonObject { put("type","string"); put("description","CSS selector of the <select>") })
-            put("value", buildJsonObject { put("type","string"); put("description","The option value to set") })
-            put("full", buildJsonObject { put("type","boolean"); put("description","If true, return the action envelope without the page-text diff (default false)") })
-        }, required = listOf("selector","value"))
-    },
+    parameters = { BrowserToolSchemas.select() },
     execute = { input ->
         val selector = input.jsonObject["selector"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
         val value = input.jsonObject["value"]?.jsonPrimitive?.contentOrNull
@@ -871,15 +803,7 @@ fun browserSelectTool(): Tool = Tool(
 fun browserPressKeyTool(): Tool = Tool(
     name = BrowserToolDefaults.PRESS_KEY,
     description = "Synthesize keydown + keyup events on the active element. Use KeyboardEvent.key values like 'Enter', 'Escape', 'ArrowDown', 'Tab'. Returns the diff between the page before and after by default; pass full:true to skip the diff (recommended when Enter triggers a navigation). {success, [diff]}.$TELEGRAM_HEADLESS_CUE",
-    parameters = {
-        InputSchema.Obj(properties = buildJsonObject {
-            put("key", buildJsonObject {
-                put("type","string")
-                put("description","KeyboardEvent.key value (e.g. 'Enter', 'Escape', 'ArrowDown')")
-            })
-            put("full", buildJsonObject { put("type","boolean"); put("description","If true, return the action envelope without the page-text diff (default false)") })
-        }, required = listOf("key"))
-    },
+    parameters = { BrowserToolSchemas.pressKey() },
     execute = { input ->
         // Cap at 32 chars — KeyboardEvent.key values like "ArrowDown" are short. A multi-KB
         // string here suggests model misuse; clamp before splicing into the JS payload.
@@ -920,14 +844,7 @@ fun browserPressKeyTool(): Tool = Tool(
 fun browserEvalJsTool(): Tool = Tool(
     name = BrowserToolDefaults.EVAL_JS,
     description = "Run arbitrary JavaScript in the page and return its last expression. HARDLINE-checked: shell-shaped strings, document.cookie writes, eval/Function constructors, and string-form setTimeout are all blocked at the tool dispatcher BEFORE the JS executes. Always asks for approval; never eligible for 'Always Allow'.$TELEGRAM_HEADLESS_CUE",
-    parameters = {
-        InputSchema.Obj(properties = buildJsonObject {
-            put("code", buildJsonObject {
-                put("type","string")
-                put("description","JavaScript to evaluate. The string returned by the WebView is the value of the last expression, JSON-encoded.")
-            })
-        }, required = listOf("code"))
-    },
+    parameters = { BrowserToolSchemas.evalJs() },
     execute = { input ->
         // HARDLINE has already run via GenerationHandler before we get here. The execute
         // body just dispatches the JS and forwards whatever the WebView returns. Any
@@ -1003,23 +920,7 @@ fun browserEvalJsTool(): Tool = Tool(
 fun browserClickAndReadTool(): Tool = Tool(
     name = BrowserToolDefaults.CLICK_AND_READ,
     description = "One-shot click + read in a single round trip. Click an element, await readyState, then return either the diff (default extract_mode:'diff') or the extracted text (auto/readability/raw — same semantics as browser_get_text). Use this instead of browser_click + browser_get_text when you want to minimise tokens. {success, post_click_url, page_title, [diff], [text]}.$TELEGRAM_HEADLESS_CUE",
-    parameters = {
-        InputSchema.Obj(properties = buildJsonObject {
-            put("selector", buildJsonObject {
-                put("type","string")
-                put("description","CSS selector to click")
-            })
-            put("extract_mode", buildJsonObject {
-                put("type","string")
-                put("enum", buildJsonArray { add("diff"); add("auto"); add("readability"); add("raw") })
-                put("description","diff (default) returns a before/after diff; auto/readability/raw return the extracted page text")
-            })
-            put("max_chars", buildJsonObject {
-                put("type","integer")
-                put("description","Caps the returned text length (default 4000)")
-            })
-        }, required = listOf("selector"))
-    },
+    parameters = { BrowserToolSchemas.clickAndRead() },
     execute = { input ->
         val selector = input.jsonObject["selector"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
         val mode = input.jsonObject["extract_mode"]?.jsonPrimitive?.contentOrNull?.lowercase()
@@ -1117,18 +1018,7 @@ fun browserClickAndReadTool(): Tool = Tool(
 fun browserDoneTool(invocationContext: ToolInvocationContext? = null): Tool = Tool(
     name = BrowserToolDefaults.DONE,
     description = "Signal that the AI has finished its current browser task. Clears the per-task 5-minute timer so the next browser_open starts fresh. The browser session ITSELF stays alive — subsequent turns can navigate, click, scroll without re-opening; only `/new` (Telegram) or the in-app reset closes it. result_url is optional; pass the page URL the user should look at if any. {success}.$TELEGRAM_HEADLESS_CUE",
-    parameters = {
-        InputSchema.Obj(properties = buildJsonObject {
-            put("summary", buildJsonObject {
-                put("type","string")
-                put("description","One-sentence summary of what was accomplished")
-            })
-            put("result_url", buildJsonObject {
-                put("type","string")
-                put("description","Optional URL the user should look at")
-            })
-        }, required = listOf("summary"))
-    },
+    parameters = { BrowserToolSchemas.done() },
     execute = { input ->
         val summary = input.jsonObject["summary"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
         val out = if (summary == null) {
@@ -1151,73 +1041,6 @@ fun browserDoneTool(invocationContext: ToolInvocationContext? = null): Tool = To
 )
 
 // ---- Internal helpers ---------------------------------------------------------------------
-
-private fun selectorOnlySchema(description: String): InputSchema = InputSchema.Obj(
-    properties = buildJsonObject {
-        put("selector", buildJsonObject {
-            put("type", "string")
-            put("description", description)
-        })
-    },
-    required = listOf("selector"),
-)
-
-/**
- * selector + optional full flag — used by the state-changing tools (click / submit)
- * that gain the diff-after-action toggle. selector remains required; `full` defaults
- * to false (i.e. return diff). The naming matches the spec verbatim.
- */
-private fun selectorWithFullSchema(description: String): InputSchema = InputSchema.Obj(
-    properties = buildJsonObject {
-        put("selector", buildJsonObject {
-            put("type", "string")
-            put("description", description)
-        })
-        put("full", buildJsonObject {
-            put("type", "boolean")
-            put("description", "If true, return the action envelope without the page-text diff (default false)")
-        })
-    },
-    required = listOf("selector"),
-)
-
-private fun selectorAndMaxCharsSchema(defaultMax: Int, required: Boolean): InputSchema = InputSchema.Obj(
-    properties = buildJsonObject {
-        put("selector", buildJsonObject {
-            put("type", "string")
-            put("description", "CSS selector (default 'body')")
-        })
-        put("max_chars", buildJsonObject {
-            put("type", "integer")
-            put("description", "Truncation cap (default $defaultMax)")
-        })
-    },
-    required = if (required) listOf("selector") else null,
-)
-
-/**
- * Schema for browser_get_text. Adds the [extract_mode] enum (auto / readability /
- * raw) to the standard selector + max_chars surface. Defaults are documented inline
- * so the LLM doesn't need to hunt through the spec to know the fallback behaviour.
- */
-private fun getTextSchema(defaultMax: Int): InputSchema = InputSchema.Obj(
-    properties = buildJsonObject {
-        put("selector", buildJsonObject {
-            put("type", "string")
-            put("description", "Optional CSS selector — when set, overrides Readability and reads the selector's innerText directly")
-        })
-        put("max_chars", buildJsonObject {
-            put("type", "integer")
-            put("description", "Truncation cap (default $defaultMax)")
-        })
-        put("extract_mode", buildJsonObject {
-            put("type", "string")
-            put("enum", buildJsonArray { add("auto"); add("readability"); add("raw") })
-            put("description", "auto (default) tries Readability then falls back; readability forces it; raw uses selector-based innerText")
-        })
-    },
-)
-
 
 /**
  * Snapshot the page's `document.body.innerText` for the diff-after-action path.

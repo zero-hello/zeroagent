@@ -63,8 +63,6 @@
     <string name="zeroagent_permission_background_location_hint">앱 설정의 권한 → 위치에서 항상 허용을 선택하세요(표시되는 경우). 먼저 앱 사용 중 위치 접근을 허용하세요.</string>
     <string name="zeroagent_permission_all_files">모든 파일 접근</string>
     <string name="zeroagent_permission_all_files_hint">선택한 파일 도구가 공유 파일에 접근하도록 허용합니다.</string>
-    <string name="zeroagent_permission_usage">사용 정보 접근</string>
-    <string name="zeroagent_permission_usage_hint">에이전트가 사용 중인 앱을 확인하도록 허용합니다.</string>
     <string name="zeroagent_permission_other">기타 앱 권한</string>
     <string name="zeroagent_permission_keyboard">키보드 연동</string>
     <string name="zeroagent_permission_shizuku">Shizuku 접근</string>

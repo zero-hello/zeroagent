@@ -60,8 +60,6 @@
     <string name="zeroagent_permission_background_location_hint">前往應用程式設定的「權限 → 位置」，選擇「一律允許」（若系統提供）。請先允許使用 App 時存取位置。</string>
     <string name="zeroagent_permission_all_files">所有檔案存取權</string>
     <string name="zeroagent_permission_all_files_hint">允許你選用的檔案工具存取共用檔案。</string>
-    <string name="zeroagent_permission_usage">使用情況存取權</string>
-    <string name="zeroagent_permission_usage_hint">允許助理查看目前使用的 App。</string>
     <string name="zeroagent_permission_other">其他應用程式權限</string>
     <string name="zeroagent_permission_keyboard">鍵盤整合</string>
     <string name="zeroagent_permission_shizuku">Shizuku 存取權</string>

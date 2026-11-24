@@ -4,8 +4,6 @@
     <string name="zeroagent_permission_background_location_hint">前往应用设置的“权限 → 位置”，选择“始终允许”（若系统提供）。请先允许使用应用时访问位置。</string>
     <string name="zeroagent_permission_all_files">所有文件访问权限</string>
     <string name="zeroagent_permission_all_files_hint">允许你选用的文件工具访问共享文件。</string>
-    <string name="zeroagent_permission_usage">使用情况访问权限</string>
-    <string name="zeroagent_permission_usage_hint">允许助手查看当前使用的应用。</string>
     <string name="zeroagent_permission_other">其他应用权限</string>
     <string name="zeroagent_permission_keyboard">键盘集成</string>
     <string name="zeroagent_permission_shizuku">Shizuku 访问权限</string>

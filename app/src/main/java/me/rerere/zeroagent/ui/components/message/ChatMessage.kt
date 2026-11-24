@@ -432,11 +432,31 @@ private fun MessagePartsBlock(
                         it is ThinkingStep.ToolStep &&
                             it.tool.approvalState is ToolApprovalState.Pending
                     }
+                    val toolCount = block.steps.count { it is ThinkingStep.ToolStep || it is ThinkingStep.ServerToolStep }
+                    val showSummary = toolCount >= 2 && block.steps.any { it is ThinkingStep.ReasoningStep }
+                    val summary = if (showSummary) {
+                        val durations = block.steps.mapNotNull { step ->
+                            val metadata = when (step) {
+                                is ThinkingStep.ToolStep -> step.tool.metadata
+                                is ThinkingStep.ServerToolStep -> step.tool.metadata
+                                is ThinkingStep.ReasoningStep -> null
+                            }
+                            (metadata?.get("zeroagent.execution_ms") as? kotlinx.serialization.json.JsonPrimitive)
+                                ?.content?.toLongOrNull()?.takeIf { it >= 0 }
+                        }
+                        when {
+                            durations.size == toolCount -> stringResource(R.string.chat_tool_timeline_duration, toolCount, durations.sumOf { it / 1000.0 })
+                            durations.isNotEmpty() -> stringResource(R.string.chat_tool_timeline_partial, toolCount, durations.sumOf { it / 1000.0 })
+                            else -> stringResource(R.string.chat_tool_timeline_count, toolCount)
+                        }
+                    } else null
                     ChainOfThought(
                         modifier = Modifier.contentReveal(),
                         steps = block.steps,
                         collapsedAdaptiveWidth = isReasoningOnlyBlock,
                         forceExpanded = hasPendingApproval,
+                        collapsedVisibleCount = if (showSummary) 0 else 2,
+                        collapsedSummary = summary,
                         cardColors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = settings.displaySetting.bubbleOpacity),
                         ),

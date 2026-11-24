@@ -1,0 +1,13 @@
+<resources>
+    <string name="chat_setup_title">Set up your first model</string>
+    <string name="chat_setup_body">Add an API key for a cloud provider or install a GGUF model on this device.</string>
+    <string name="chat_setup_provider">Set up a cloud provider</string>
+    <string name="chat_setup_local">Download %1$s (%2$s)</string>
+    <string name="chat_composer_shortcuts">Shortcuts</string>
+    <string name="chat_composer_workspace">\@ Workspace files</string>
+    <string name="chat_tool_timeline_count">%1$d tool calls</string>
+    <string name="chat_tool_timeline_duration">%1$d tool calls · %2$.1f s total</string>
+    <string name="chat_tool_timeline_partial">%1$d tool calls · %2$.1f s recorded</string>
+    <string name="chat_setup_all_providers">All providers</string>
+    <string name="chat_setup_local_unavailable">GGUF models cannot run on this device.</string>
+</resources>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_privacy_intro">Review what ZeroAgent can access. Android controls permissions separately from chat tool approvals.</string>
+    <string name="permission_privacy_section">Sensitive permissions and privacy</string>
+    <string name="permission_privacy_each_session">Ask each time</string>
+    <string name="permission_privacy_packages">Installed apps</string>
+    <string name="permission_privacy_install">Install app updates</string>
+    <string name="permission_privacy_capture">Screen capture</string>
+    <string name="permission_privacy_files_use">File tools can access shared storage beyond files you select, including private documents.</string>
+    <string name="permission_privacy_packages_use">App lookup can see installed apps, including apps without launcher icons. Android grants this during installation.</string>
+    <string name="permission_privacy_install_use">Opens the Android installer when you choose to install an update. Android asks you to confirm.</string>
+    <string name="permission_privacy_send_sms_use">The SMS tool can send texts, which may incur carrier charges.</string>
+    <string name="permission_privacy_read_sms_use">Message search can read SMS text and sender details, including private messages.</string>
+    <string name="permission_privacy_call_log_use">Call history can include phone numbers, call direction and time.</string>
+    <string name="permission_privacy_contacts_use">Contact search can read names and contact information saved on this device.</string>
+    <string name="permission_privacy_location_use">Geofence triggers can check when the device enters or leaves an area even while ZeroAgent is closed.</string>
+    <string name="permission_privacy_overlay_use">Floating chat and automation status can appear over other apps.</string>
+    <string name="permission_privacy_capture_use">Visual assistance can capture what is visible on the chosen screen. Android asks for consent at the start of each capture.</string>
+    <string name="permission_privacy_install_retry">Allow ZeroAgent to install updates here, then return and tap Download and install again.</string>
+    <string name="permission_geofence_title">Allow location for this workflow</string>
+    <string name="permission_geofence_foreground">This workflow needs precise location to tell when you enter or leave the area. First allow location while using the app. Then allow background location in Android settings and try enabling the workflow again.</string>
+    <string name="permission_geofence_request">Request location</string>
+    <string name="permission_tool_access_title">Android permission</string>
+    <string name="permission_tool_access_detail">Grant only if you plan to use these tools. You can revoke access in Android settings.</string>
+    <string name="permission_tool_access_action">Grant access</string>
+</resources>

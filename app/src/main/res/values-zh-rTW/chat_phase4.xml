@@ -1,0 +1,13 @@
+<resources>
+    <string name="chat_setup_title">設定第一個模型</string>
+    <string name="chat_setup_body">加入雲端供應商的 API 金鑰，或在這台裝置安裝 GGUF 模型。</string>
+    <string name="chat_setup_provider">設定雲端供應商</string>
+    <string name="chat_setup_local">下載 %1$s（%2$s）</string>
+    <string name="chat_composer_shortcuts">快捷指令</string>
+    <string name="chat_composer_workspace">\@ 工作區檔案</string>
+    <string name="chat_tool_timeline_count">%1$d 次工具呼叫</string>
+    <string name="chat_tool_timeline_duration">%1$d 次工具呼叫 · 合計 %2$.1f 秒</string>
+    <string name="chat_tool_timeline_partial">%1$d 次工具呼叫 · 已記錄 %2$.1f 秒</string>
+    <string name="chat_setup_all_providers">所有供應商</string>
+    <string name="chat_setup_local_unavailable">這台裝置無法執行 GGUF 模型。</string>
+</resources>

@@ -4,8 +4,6 @@
     <string name="zeroagent_permission_background_location_hint">Open Permissions → Location in app settings and choose Allow all the time, if available. Allow location while using the app first.</string>
     <string name="zeroagent_permission_all_files">All files access</string>
     <string name="zeroagent_permission_all_files_hint">Allow access to shared files for the file tools you choose to use.</string>
-    <string name="zeroagent_permission_usage">Usage access</string>
-    <string name="zeroagent_permission_usage_hint">Allow the agent to check which app is in use.</string>
     <string name="zeroagent_permission_other">Other app permission</string>
     <string name="zeroagent_permission_keyboard">Keyboard integration</string>
     <string name="zeroagent_permission_shizuku">Shizuku access</string>

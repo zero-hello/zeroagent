@@ -13,11 +13,11 @@ val Migration_13_14 = object : Migration(13, 14) {
         DatabaseMigrationTracker.onMigrationStart(13, 14)
         db.beginTransaction()
         try {
-            val cursor = db.query("SELECT id, messages FROM message_node")
+            val cursor = db.query("SELECT id FROM message_node")
             var updatedCount = 0
             while (cursor.moveToNext()) {
                 val id = cursor.getString(0)
-                val messagesJson = cursor.getString(1)
+                val messagesJson = db.readLegacyMessage(LegacyMessageColumn.NODE_MESSAGES, id)
                 val migratedJson = migrateMessagesJson(messagesJson)
                 if (migratedJson != messagesJson) {
                     db.execSQL(

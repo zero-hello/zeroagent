@@ -287,7 +287,6 @@
   <string name="chat_page_export_share_via">共有方法</string>
   <string name="chat_page_export_success">%1$sにエクスポートしました</string>
   <string name="chat_page_history">チャット履歴</string>
-  <string name="chat_page_menu_ai_translator">AI翻訳</string>
   <string name="chat_page_menu_image_generation">画像生成</string>
   <string name="chat_page_message_count">%d件のメッセージ</string>
   <string name="chat_page_move_to_assistant">アシスタントに移動</string>
@@ -1034,11 +1033,6 @@
   <string name="translation_clear">翻訳をクリア</string>
   <string name="translation_language_selection_title">翻訳言語を選択</string>
   <string name="translation_text">訳文</string>
-  <string name="translator_page_cancel">キャンセル</string>
-  <string name="translator_page_input_placeholder">翻訳するテキストを入力してください...</string>
-  <string name="translator_page_result_placeholder">翻訳結果がここに表示されます</string>
-  <string name="translator_page_title">翻訳</string>
-  <string name="translator_page_translate">翻訳</string>
   <string name="tts">音声</string>
   <string name="unpin_chat">チャットのピン留めを解除</string>
   <string name="update_card_check_failed">更新チェックに失敗しました</string>
@@ -1555,9 +1549,6 @@
   <string name="skill_webview_card_direct">直接ビューア</string>
   <string name="skill_webview_card_embedded">埋め込みビューア</string>
   <string name="skill_webview_card_open">ブラウザで開く</string>
-  <string name="translator_copy_result">翻訳をコピー</string>
-  <string name="translator_error_generic">エラー</string>
-  <string name="translator_paste_text">テキストを貼り付け</string>
   <string name="update_download_description">アップデートをダウンロード中…</string>
   <string name="assistant_page_gradient_background">グラデーション背景</string>
   <string name="assistant_page_gradient_background_desc">チャットページで動的なグラデーション背景を使用します</string>

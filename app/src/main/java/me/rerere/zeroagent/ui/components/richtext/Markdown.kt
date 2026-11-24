@@ -19,15 +19,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
@@ -66,7 +61,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
@@ -78,7 +72,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
@@ -102,7 +95,6 @@ import me.rerere.hugeicons.stroke.Download04
 import me.rerere.hugeicons.stroke.Tick01
 import me.rerere.zeroagent.R
 import me.rerere.zeroagent.data.datastore.Settings
-import me.rerere.zeroagent.ui.components.table.DataTable
 import me.rerere.zeroagent.ui.context.LocalSettings
 import me.rerere.zeroagent.ui.modifier.onClick
 import me.rerere.zeroagent.ui.theme.JetbrainsMono
@@ -540,13 +532,9 @@ private fun MarkdownNode(
                 modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // 这里可以使用Coil等图片加载库加载图片
-                ZoomableAsyncImage(
+                MarkdownImage(
                     model = imageUrl,
                     contentDescription = altText,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .widthIn(min = 120.dp)
-                        .heightIn(min = 120.dp),
                 )
             }
         }
@@ -626,9 +614,7 @@ private fun MarkdownNode(
             HighlightCodeBlock(
                 code = code,
                 language = language,
-                modifier = Modifier
-                    .padding(bottom = 4.dp)
-                    .fillMaxWidth(),
+                modifier = MarkdownCodeBlockLayout,
                 completeCodeBlock = hasEnd
             )
         }
@@ -982,11 +968,9 @@ private fun TableNode(node: ASTNode, content: String, modifier: Modifier = Modif
                 )
             }
         }
-        DataTable(
+        MarkdownTable(
             headers = headers,
             rows = rowComposables,
-            columnMinWidths = List(columnCount) { 80.dp },
-            columnMaxWidths = List(columnCount) { 200.dp },
             outerBorder = null,
             shape = RectangleShape,
         )
@@ -1027,11 +1011,7 @@ private fun AnnotatedString.Builder.appendMarkdownNodeContent(
 
         node.type == GFMTokenTypes.GFM_AUTOLINK -> {
             val link = node.getTextInNode(content)
-            withLink(LinkAnnotation.Url(link)) {
-                withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
-                    append(link)
-                }
-            }
+            withMarkdownLink(link, SpanStyle(fontStyle = FontStyle.Italic)) { append(link) }
         }
 
         node is LeafASTNode -> {
@@ -1107,62 +1087,24 @@ private fun AnnotatedString.Builder.appendMarkdownNodeContent(
             val linkText = node.findChildOfTypeRecursive(MarkdownElementTypes.LINK_TEXT)?.getTextInNode(content)
                 ?.trim { it == '[' || it == ']' } ?: linkDest
             if (linkText.startsWith("citation,")) {
-                // 如果是引用，则特殊处理
-                val domain = linkText.substringAfter("citation,")
-                val id = linkDest
-                if (id.length == 6) {
-                    inlineContents.putIfAbsent(
-                        "citation:$linkDest", InlineTextContent(
-                            placeholder = Placeholder(
-                                width = (domain.length * 7).sp,
-                                height = 1.em,
-                                placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
-                            ), children = {
-                                Box(
-                                    modifier = Modifier
-                                        .clickable {
-                                            onClickCitation(id.trim())
-                                        }
-                                        .fillMaxSize()
-                                        .clip(CircleShape)
-                                        .background(colorScheme.tertiaryContainer.copy(0.2f)),
-                                    contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = domain,
-                                        modifier = Modifier.wrapContentSize(),
-                                        style = TextStyle(
-                                            fontSize = 10.sp,
-                                            lineHeight = 10.sp,
-                                            fontFamily = JetbrainsMono,
-                                            color = colorScheme.onTertiaryContainer,
-                                            fontWeight = FontWeight.Thin
-                                        ),
-                                    )
-                                }
-                            })
-                    )
-                    appendInlineContent("citation:$linkDest")
-                }
+                appendMarkdownCitation(
+                    domain = linkText.substringAfter("citation,"),
+                    id = linkDest,
+                    inlineContents = inlineContents,
+                    colorScheme = colorScheme,
+                    onClickCitation = onClickCitation,
+                )
             } else {
-                withLink(LinkAnnotation.Url(linkDest)) {
-                    withStyle(
-                        SpanStyle(
-                            color = colorScheme.primary, textDecoration = TextDecoration.Underline
-                        )
-                    ) {
-                        append(linkText)
-                    }
-                }
+                withMarkdownLink(linkDest, markdownLinkStyle(colorScheme)) { append(linkText) }
             }
         }
 
         node.type == MarkdownElementTypes.AUTOLINK -> {
             val links = node.children.trim(MarkdownTokenTypes.LT, 1).trim(MarkdownTokenTypes.GT, 1)
             links.fastForEach { link ->
-                withLink(LinkAnnotation.Url(link.getTextInNode(content))) {
-                    withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
-                        append(link.getTextInNode(content))
-                    }
+                val destination = link.getTextInNode(content)
+                withMarkdownLink(destination, SpanStyle(fontStyle = FontStyle.Italic)) {
+                    append(destination)
                 }
             }
         }

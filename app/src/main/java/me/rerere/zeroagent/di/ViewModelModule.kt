@@ -11,7 +11,6 @@ import me.rerere.zeroagent.ui.pages.search.SearchVM
 import me.rerere.zeroagent.ui.pages.history.HistoryVM
 import me.rerere.zeroagent.ui.pages.stats.StatsVM
 import me.rerere.zeroagent.ui.pages.imggen.ImgGenVM
-import me.rerere.zeroagent.ui.pages.videogen.VideoGenVM
 import me.rerere.zeroagent.ui.pages.extensions.PromptVM
 import me.rerere.zeroagent.ui.pages.extensions.QuickMessagesVM
 import me.rerere.zeroagent.ui.pages.extensions.skills.SkillDetailVM
@@ -25,7 +24,6 @@ import me.rerere.zeroagent.ui.pages.setting.browser.SettingBrowserViewModel
 import me.rerere.zeroagent.ui.pages.setting.termux.SettingTermuxViewModel
 import me.rerere.zeroagent.ui.pages.setting.locallm.SettingLocalLlmViewModel
 import me.rerere.zeroagent.ui.pages.share.handler.ShareHandlerVM
-import me.rerere.zeroagent.ui.pages.translator.TranslatorVM
 import me.rerere.zeroagent.ui.pages.setting.doctor.DoctorViewModel
 import me.rerere.zeroagent.ui.pages.setting.scheduledjobs.ScheduledJobsViewModel
 import me.rerere.zeroagent.workflow.ui.WorkflowsViewModel
@@ -64,7 +62,6 @@ val viewModelModule = module {
             folderRepository = get(),
         )
     }
-    viewModelOf(::TranslatorVM)
     viewModel<ShareHandlerVM> {
         ShareHandlerVM(
             text = it.get(),
@@ -73,7 +70,6 @@ val viewModelModule = module {
     }
     viewModelOf(::BackupVM)
     viewModelOf(::ImgGenVM)
-    viewModelOf(::VideoGenVM)
     viewModelOf(::PromptVM)
     viewModelOf(::QuickMessagesVM)
     viewModel<SkillsVM> {

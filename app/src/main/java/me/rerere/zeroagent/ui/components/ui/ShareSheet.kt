@@ -18,10 +18,12 @@ import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -29,6 +31,11 @@ import me.rerere.ai.provider.ProviderSetting
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Share03
 import me.rerere.zeroagent.R
+import me.rerere.zeroagent.data.datastore.Settings
+import me.rerere.zeroagent.data.sync.PortableTemplateCodec
+import me.rerere.zeroagent.data.sync.encodeTemplate
+import me.rerere.zeroagent.data.sync.toDisabledProvider
+import me.rerere.zeroagent.data.sync.toPortableTemplateOrNull
 import me.rerere.zeroagent.utils.JsonInstant
 import kotlin.io.encoding.Base64
 
@@ -38,6 +45,8 @@ fun ShareSheet(
 ) {
     val context = LocalContext.current
     if (state.isShow) {
+        val provider = state.currentProvider
+        val payload = remember(provider) { runCatching { provider?.encodeForShare() }.getOrNull() }
         ModalBottomSheet(
             onDismissRequest = {
                 state.dismiss()
@@ -58,12 +67,13 @@ fun ShareSheet(
                     Text(stringResource(R.string.share_sheet_title), style = MaterialTheme.typography.titleLarge)
 
                     IconButton(
+                        enabled = payload != null,
                         onClick = {
                             val intent = Intent(Intent.ACTION_SEND)
                             intent.type = "text/plain"
                             intent.putExtra(
                                 Intent.EXTRA_TEXT,
-                                state.currentProvider?.encodeForShare() ?: ""
+                                payload ?: return@IconButton
                             )
                             try {
                                 context.startActivity(Intent.createChooser(intent, null))
@@ -76,30 +86,31 @@ fun ShareSheet(
                     }
                 }
 
-                QRCode(
-                    value = state.currentProvider?.encodeForShare() ?: "",
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                )
+                if (payload == null) {
+                    Text(stringResource(R.string.template_export_rejected))
+                } else {
+                    Text(stringResource(R.string.template_summary))
+                    QRCode(
+                        value = payload,
+                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).fillMaxWidth().aspectRatio(1f),
+                        color = Color.Black,
+                        backgroundColor = Color.White,
+                        description = stringResource(R.string.template_qr_title),
+                    )
+                }
             }
         }
     }
 }
 
 fun ProviderSetting.encodeForShare(): String {
-    return buildString {
-        append("ai-provider:")
-        append("v1:")
-
-        val value = JsonInstant.encodeToString(this@encodeForShare.copyProvider(models = emptyList()))
-        append(Base64.encode(value.encodeToByteArray()))
-    }
+    val template = requireNotNull(toPortableTemplateOrNull())
+    return Settings.dummy().copy(providers = listOf(this)).encodeTemplate(template)
 }
 
 fun decodeProviderSetting(value: String): ProviderSetting {
-    require(value.startsWith("ai-provider:v1:")) { "Invalid provider setting string" }
+    if (value.startsWith("ZA1:")) return PortableTemplateCodec.decode(value).toDisabledProvider()
+    require(value.length <= 16_384 && value.startsWith("ai-provider:v1:")) { "Invalid provider setting string" }
 
     // 去掉前缀
     val base64Str = value.removePrefix("ai-provider:v1:")
@@ -108,7 +119,8 @@ fun decodeProviderSetting(value: String): ProviderSetting {
     val jsonBytes = Base64.decode(base64Str)
     val jsonStr = jsonBytes.decodeToString()
 
-    return JsonInstant.decodeFromString<ProviderSetting>(jsonStr)
+    val legacy = JsonInstant.decodeFromString<ProviderSetting>(jsonStr)
+    return PortableTemplateCodec.decode(legacy.encodeForShare()).toDisabledProvider()
 }
 
 class ShareSheetState {

@@ -448,7 +448,7 @@ class WorkspaceDetailVM(
         if (previous.running) return
         viewModelScope.launch {
             runCatching {
-                repository.executeCommand(id, trimmed)
+                repository.executeCommand(id, trimmed, trackWorkspaceChanges = true)
             }.onSuccess { result ->
                 _terminalState.update {
                     it.copy(

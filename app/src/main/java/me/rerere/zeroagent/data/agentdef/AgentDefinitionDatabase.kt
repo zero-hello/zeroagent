@@ -31,7 +31,7 @@ import me.rerere.zeroagent.data.db.SQLiteConfiguration
 @Database(
     entities = [AgentDefinition::class],
     version = 1,
-    exportSchema = false,
+    exportSchema = true,
 )
 @TypeConverters(AgentDefinitionConverters::class)
 abstract class AgentDefinitionDatabase : RoomDatabase() {

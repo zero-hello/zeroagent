@@ -25,8 +25,6 @@
     <string name="setting_ssh_page_error_port_invalid">يجب أن يكون المنفذ من 1 إلى 65535</string>
     <string name="setting_ssh_page_error_user_blank">أدخل اسم المستخدم</string>
     <string name="setting_ssh_page_test_failed">فشل: %1$s</string>
-    <string name="videogen_page_delete_videos_failed">حُذف: %1$d. فشل: %2$d. حاول مجددًا.</string>
-    <string name="videogen_page_save_failed">فشل الحفظ: %1$s</string>
     <string name="workspace_cwd_new_folder_invalid">أدخل اسم مجلد واحدًا دون شرطات مائلة.</string>
     <string name="workspace_detail_settings_save_failed">تعذّر حفظ الإعدادات</string>
     <string name="zeroagent6s_root_denied">لم يُمنح الإذن. تحقق من مدير المستخدم الفائق وحاول مجددًا.</string>

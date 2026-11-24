@@ -63,8 +63,6 @@
     <string name="zeroagent_permission_background_location_hint">В настройках приложения откройте Разрешения → Местоположение и выберите «Разрешить всегда», если доступно. Сначала разрешите доступ при использовании приложения.</string>
     <string name="zeroagent_permission_all_files">Доступ ко всем файлам</string>
     <string name="zeroagent_permission_all_files_hint">Разрешает выбранным файловым инструментам работать с общими файлами.</string>
-    <string name="zeroagent_permission_usage">Доступ к статистике использования</string>
-    <string name="zeroagent_permission_usage_hint">Позволяет агенту определять используемое приложение.</string>
     <string name="zeroagent_permission_other">Другое разрешение приложения</string>
     <string name="zeroagent_permission_keyboard">Интеграция с клавиатурой</string>
     <string name="zeroagent_permission_shizuku">Доступ к Shizuku</string>

@@ -1,11 +1,20 @@
 package me.rerere.zeroagent.workflow.ui
 
+import android.Manifest
+import android.content.ActivityNotFoundException
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.platform.LocalContext
+import me.rerere.zeroagent.data.ai.tools.local.PermissionHelper
+import me.rerere.zeroagent.data.permissions.PermissionInventory
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -61,6 +70,68 @@ fun WorkflowsScreen(vm: WorkflowsViewModel = koinViewModel()) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showHowItWorks by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+    var geofenceRequirement by remember { mutableStateOf<GeofenceRequirement?>(null) }
+    val requestLocation = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { grants ->
+        if (grants[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
+            geofenceRequirement = GeofenceRequirement.Background
+        }
+    }
+    fun openAppPermissionSettings() {
+        try {
+            context.startActivity(PermissionInventory.appDetailsIntent(context))
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(context, R.string.zeroagent_permission_open_failed, Toast.LENGTH_LONG).show()
+        } catch (_: SecurityException) {
+            Toast.makeText(context, R.string.zeroagent_permission_open_failed, Toast.LENGTH_LONG).show()
+        }
+    }
+    geofenceRequirement?.let { requirement ->
+        AlertDialog(
+            onDismissRequest = { geofenceRequirement = null },
+            title = { Text(stringResource(R.string.permission_geofence_title)) },
+            text = {
+                Text(stringResource(if (requirement == GeofenceRequirement.Foreground) {
+                    R.string.permission_geofence_foreground
+                } else {
+                    R.string.zeroagent_permission_background_location_hint
+                }))
+            },
+            confirmButton = {
+                TextButton(shapes = ButtonDefaults.shapes(), onClick = {
+                    geofenceRequirement = null
+                    if (requirement == GeofenceRequirement.Foreground) {
+                        requestLocation.launch(arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                        ))
+                    } else {
+                        openAppPermissionSettings()
+                    }
+                }) {
+                    Text(stringResource(if (requirement == GeofenceRequirement.Foreground) {
+                        R.string.permission_geofence_request
+                    } else R.string.settings))
+                }
+            },
+            dismissButton = {
+                Row {
+                    if (requirement == GeofenceRequirement.Foreground) {
+                        TextButton(shapes = ButtonDefaults.shapes(), onClick = {
+                            geofenceRequirement = null
+                            openAppPermissionSettings()
+                        }) { Text(stringResource(R.string.settings)) }
+                    }
+                    TextButton(shapes = ButtonDefaults.shapes(), onClick = { geofenceRequirement = null }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            },
+        )
+    }
+
     if (showHowItWorks) {
         AlertDialog(
             onDismissRequest = { showHowItWorks = false },
@@ -110,7 +181,19 @@ fun WorkflowsScreen(vm: WorkflowsViewModel = koinViewModel()) {
                 items(workflows, key = { it.entity.id }) { loaded ->
                     WorkflowRow(
                         loaded = loaded,
-                        onToggle = { enabled -> vm.setEnabled(loaded.entity.id, enabled) },
+                        onToggle = { enabled ->
+                            val trigger = loaded.definition.trigger
+                            val geofence = trigger is TriggerSpec.GeofenceEnter || trigger is TriggerSpec.GeofenceExit
+                            if (!enabled || !geofence) {
+                                vm.setEnabled(loaded.entity.id, enabled)
+                            } else if (!PermissionHelper.hasRuntime(context, listOf(Manifest.permission.ACCESS_FINE_LOCATION))) {
+                                geofenceRequirement = GeofenceRequirement.Foreground
+                            } else if (!PermissionHelper.hasRuntime(context, listOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION))) {
+                                geofenceRequirement = GeofenceRequirement.Background
+                            } else {
+                                vm.setEnabled(loaded.entity.id, true)
+                            }
+                        },
                         onTap = { nav.navigate(Screen.WorkflowDetail(loaded.entity.id)) },
                     )
                 }
@@ -126,6 +209,8 @@ fun WorkflowsScreen(vm: WorkflowsViewModel = koinViewModel()) {
         }
     }
 }
+
+private enum class GeofenceRequirement { Foreground, Background }
 
 @Composable
 private fun WorkflowRow(

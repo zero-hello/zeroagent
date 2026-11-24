@@ -77,7 +77,6 @@ import me.rerere.locallm.litert.LiteRtCatalogEntry
 import me.rerere.zeroagent.R
 import me.rerere.zeroagent.data.api.HuggingFaceModelSearch
 import me.rerere.zeroagent.data.provider.googleBaseUrlHasError
-import me.rerere.zeroagent.data.provider.isValidProviderBaseUrl
 import me.rerere.hugeicons.stroke.View
 import me.rerere.hugeicons.stroke.ViewOff
 import me.rerere.zeroagent.ui.context.LocalToaster
@@ -144,29 +143,12 @@ private fun ProviderConfigureOpenAI(
 ) {
     provider.description()
 
-    ProviderFieldGroup(stringResource(R.string.provider_identity_title)) {
-    ProviderNameField(
-        value = provider.name,
-        onValueChange = { onEdit(provider.copy(name = it)) },
-        modifier = Modifier.fillMaxWidth(),
-    )
-    }
-
-    ProviderFieldGroup(stringResource(R.string.provider_credentials_title)) {
-    ProviderApiKeyField(
-        value = provider.apiKey,
-        onValueChange = { onEdit(provider.copy(apiKey = it)) },
-    )
-    }
-
-    ProviderFieldGroup(stringResource(R.string.provider_connection_title)) {
-    ProviderBaseUrlField(
-        value = provider.baseUrl,
-        onValueChange = { onEdit(provider.copy(baseUrl = it)) },
-        modifier = Modifier.fillMaxWidth(),
-        isError = provider.baseUrl.isNotBlank() && !provider.baseUrl.isValidProviderBaseUrl(),
-        supportingText = { Text(stringResource(R.string.provider_base_url_hint)) },
-    )
+    ProviderCloudConnectionForm(
+        name = ProviderTextField(provider.name) { onEdit(provider.copy(name = it)) },
+        apiKey = ProviderTextField(provider.apiKey) { onEdit(provider.copy(apiKey = it)) },
+        baseUrl = ProviderTextField(provider.baseUrl) { onEdit(provider.copy(baseUrl = it)) },
+        nameLines = Int.MAX_VALUE,
+    ) {
 
     if (provider.protocol != OpenAIProtocol.COHERE_V2) OutlinedTextField(
         value = if (provider.useResponseApi) provider.responsesPath else provider.chatCompletionsPath,
@@ -404,30 +386,12 @@ private fun ProviderConfigureClaude(
 ) {
     provider.description()
 
-    ProviderFieldGroup(stringResource(R.string.provider_identity_title)) {
-    ProviderNameField(
-        value = provider.name,
-        onValueChange = { onEdit(provider.copy(name = it)) },
-        modifier = Modifier.fillMaxWidth(),
-        maxLines = 3,
-    )
-    }
-
-    ProviderFieldGroup(stringResource(R.string.provider_credentials_title)) {
-    ProviderApiKeyField(
-        value = provider.apiKey,
-        onValueChange = { onEdit(provider.copy(apiKey = it)) },
-    )
-    }
-
-    ProviderFieldGroup(stringResource(R.string.provider_connection_title)) {
-    ProviderBaseUrlField(
-        value = provider.baseUrl,
-        onValueChange = { onEdit(provider.copy(baseUrl = it)) },
-        modifier = Modifier.fillMaxWidth(),
-        isError = provider.baseUrl.isNotBlank() && !provider.baseUrl.isValidProviderBaseUrl(),
-        supportingText = { Text(stringResource(R.string.provider_base_url_hint)) },
-    )
+    ProviderCloudConnectionForm(
+        name = ProviderTextField(provider.name) { onEdit(provider.copy(name = it)) },
+        apiKey = ProviderTextField(provider.apiKey) { onEdit(provider.copy(apiKey = it)) },
+        baseUrl = ProviderTextField(provider.baseUrl) { onEdit(provider.copy(baseUrl = it)) },
+        nameLines = 3,
+    ) {
     ProviderEndpointPreview(provider.baseUrl, "messages")
     }
 

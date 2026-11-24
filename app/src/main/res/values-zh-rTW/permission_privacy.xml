@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_privacy_intro">查看 ZeroAgent 可存取的資料。Android 權限和聊天工具核准是分開管理的。</string>
+    <string name="permission_privacy_section">敏感權限與隱私</string>
+    <string name="permission_privacy_each_session">每次詢問</string>
+    <string name="permission_privacy_packages">已安裝的 App</string>
+    <string name="permission_privacy_install">安裝 App 更新</string>
+    <string name="permission_privacy_capture">畫面擷取</string>
+    <string name="permission_privacy_files_use">檔案工具可存取共用儲存空間，包含未個別選取的檔案和私人文件。</string>
+    <string name="permission_privacy_packages_use">查找 App 時可看到已安裝的 App，包括沒有桌面圖示的項目。Android 在安裝時授予這項權限。</string>
+    <string name="permission_privacy_install_use">選擇安裝新版時會開啟 Android 安裝程式，由系統請你確認。</string>
+    <string name="permission_privacy_send_sms_use">簡訊工具可傳送簡訊，電信業者可能收費。</string>
+    <string name="permission_privacy_read_sms_use">搜尋簡訊時可讀取私人訊息內容和寄件人資料。</string>
+    <string name="permission_privacy_call_log_use">通話紀錄可能包含電話號碼、來電或去電，以及通話時間。</string>
+    <string name="permission_privacy_contacts_use">搜尋聯絡人時可讀取裝置上儲存的姓名和聯絡資料。</string>
+    <string name="permission_privacy_location_use">地理圍欄可在 ZeroAgent 關閉時得知裝置何時進出指定區域。</string>
+    <string name="permission_privacy_overlay_use">浮動聊天和自動化狀態可顯示在其他 App 上方。</string>
+    <string name="permission_privacy_capture_use">視覺輔助可擷取選定畫面上的內容。每次開始擷取時，Android 都會要求同意。</string>
+    <string name="permission_privacy_install_retry">在這裡允許 ZeroAgent 安裝更新，再返回並點選「下載並安裝」。</string>
+    <string name="permission_geofence_title">允許這個工作流程存取位置</string>
+    <string name="permission_geofence_foreground">這個工作流程需要精確位置，才能知道你是否進出指定區域。請先允許使用 App 時存取位置，再到 Android 設定允許背景位置，然後回來重新啟用。</string>
+    <string name="permission_geofence_request">要求位置權限</string>
+    <string name="permission_tool_access_title">Android 權限</string>
+    <string name="permission_tool_access_detail">需要使用這些工具時再授權。之後可在 Android 設定撤銷。</string>
+    <string name="permission_tool_access_action">授予權限</string>
+</resources>

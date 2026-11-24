@@ -160,12 +160,10 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
                             )
                         )
                     }
-                    ImportProviderButton {
-                        vm.updateSettings(
-                            settings.copy(
-                                providers = listOf(it.copyProvider(Uuid.random())) + settings.providers
-                            )
-                        )
+                    ImportProviderButton { imported ->
+                        vm.updateSettings { current ->
+                            current.copy(providers = listOf(imported) + current.providers)
+                        }
                     }
                     AddButton {
                         val addedProvider = it
@@ -412,16 +410,50 @@ private fun ImportProviderButton(
     val toaster = LocalToaster.current
     val context = LocalContext.current
     var showImportDialog by remember { mutableStateOf(false) }
+    var pendingProvider by remember { mutableStateOf<ProviderSetting?>(null) }
+
+    pendingProvider?.let { provider ->
+        val endpoint = when (provider) {
+            is ProviderSetting.OpenAI -> provider.baseUrl
+            is ProviderSetting.Google -> provider.baseUrl
+            is ProviderSetting.Claude -> provider.baseUrl
+            else -> null
+        }
+        AlertDialog(
+            onDismissRequest = { pendingProvider = null },
+            title = { Text(stringResource(R.string.template_preview_import)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(provider.name.take(80))
+                    if (endpoint != null) {
+                        val host = runCatching { java.net.URI(endpoint.take(2_048)).host }.getOrNull()
+                        if (host != null) Text(host)
+                    }
+                    Text(stringResource(R.string.template_disabled_import))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onAdd(provider.copyProvider(enabled = false))
+                    pendingProvider = null
+                    toaster.show(context.getString(R.string.setting_provider_page_import_success), type = ToastType.Success)
+                }) { Text(stringResource(R.string.template_confirm_import)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingProvider = null }) { Text(stringResource(R.string.cancel)) }
+            },
+        )
+    }
 
     val scanQrCodeLauncher = rememberLauncherForActivityResult(ScanQRCode()) { result ->
-        handleQRResult(result, onAdd, toaster, context)
+        handleQRResult(result, { pendingProvider = it }, toaster, context)
     }
 
     val pickImageLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         uri?.let {
-            handleImageQRCode(it, onAdd, toaster, context)
+            handleImageQRCode(it, { provider -> pendingProvider = provider }, toaster, context)
         }
     }
 
@@ -563,17 +595,13 @@ private fun handleQRResult(
             is QRResult.QRSuccess -> {
                 val setting = decodeProviderSetting(result.content.rawValue ?: "")
                 onAdd(setting)
-                toaster.show(
-                    context.getString(R.string.setting_provider_page_import_success),
-                    type = ToastType.Success
-                )
             }
 
             QRResult.QRUserCanceled -> {}
         }
     }.onFailure { error ->
         toaster.show(
-            context.getString(R.string.setting_provider_page_qr_decode_failed, error.message ?: ""),
+            context.getString(R.string.setting_provider_page_qr_decode_failed, ""),
             type = ToastType.Error
         )
     }
@@ -599,13 +627,9 @@ private fun handleImageQRCode(
 
         val setting = decodeProviderSetting(qrContent)
         onAdd(setting)
-        toaster.show(
-            context.getString(R.string.setting_provider_page_import_success),
-            type = ToastType.Success
-        )
     }.onFailure { error ->
         toaster.show(
-            context.getString(R.string.setting_provider_page_image_qr_decode_failed, error.message ?: ""),
+            context.getString(R.string.setting_provider_page_image_qr_decode_failed, ""),
             type = ToastType.Error
         )
     }
