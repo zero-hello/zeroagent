@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -68,6 +69,7 @@ fun DeveloperPage() {
     val logs by diagnostics.getLogs().collectAsStateWithLifecycle()
     val nav = LocalNavController.current
     val context = LocalContext.current
+    val resources = LocalResources.current
     val appContext = context.applicationContext
     val options = settings.developerDisplayOptions
     val requests = remember(logs) { logs.filterIsInstance<AILogging.Generation>() }
@@ -196,7 +198,7 @@ fun DeveloperPage() {
                         headlineContent = { Text(stringResource(R.string.developer_copy_snapshot)) },
                         supportingContent = { Text(stringResource(R.string.developer_copy_snapshot_desc)) },
                         onClick = {
-                            val counts = context.getString(R.string.developer_request_counts, requests.size, requests.count { it.stream })
+                            val counts = resources.getString(R.string.developer_request_counts, requests.size, requests.count { it.stream })
                             copySummary("$summary\n$counts")
                         },
                     )

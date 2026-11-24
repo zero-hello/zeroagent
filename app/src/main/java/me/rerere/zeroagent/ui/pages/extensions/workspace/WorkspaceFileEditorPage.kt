@@ -62,6 +62,7 @@ fun WorkspaceFileEditorPage(
 ) {
     val repository = koinInject<WorkspaceRepository>()
     val errorContext = androidx.compose.ui.platform.LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val toaster = LocalToaster.current
     val scope = rememberCoroutineScope()
     val editable = area == WorkspaceStorageArea.FILES
@@ -111,10 +112,10 @@ fun WorkspaceFileEditorPage(
                     try {
                         when (repository.restoreTextChange(id, path, change)) {
                             WorkspaceTextChanges.RestoreResult.Changed -> {
-                                restoreMessage = errorContext.getString(R.string.workspace_diff_conflict)
+                                restoreMessage = resources.getString(R.string.workspace_diff_conflict)
                             }
                             WorkspaceTextChanges.RestoreResult.Removed -> {
-                                loadError = errorContext.getString(R.string.workspace_diff_created_file_removed)
+                                loadError = resources.getString(R.string.workspace_diff_created_file_removed)
                                 diff = null
                             }
                             WorkspaceTextChanges.RestoreResult.Restored -> {
@@ -122,7 +123,7 @@ fun WorkspaceFileEditorPage(
                                 savedText = restored
                                 textState.setTextAndPlaceCursorAtEnd(restored)
                                 diff = null
-                                toaster.show(errorContext.getString(R.string.workspace_diff_restored), type = ToastType.Success)
+                                toaster.show(resources.getString(R.string.workspace_diff_restored), type = ToastType.Success)
                             }
                         }
                     } catch (cancelled: CancellationException) {
@@ -166,7 +167,7 @@ fun WorkspaceFileEditorPage(
                                         val change = repository.latestTextChange(id, path)
                                         val unified = withContext(Dispatchers.Default) { change?.unifiedDiff(path) }
                                         if (change == null || unified == null) {
-                                            toaster.show(errorContext.getString(R.string.workspace_diff_unavailable))
+                                            toaster.show(resources.getString(R.string.workspace_diff_unavailable))
                                         } else if (textState.text.toString() == savedText) {
                                             diff = change to unified
                                         }

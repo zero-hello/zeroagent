@@ -1,5 +1,6 @@
 package me.rerere.zeroagent.service
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
@@ -21,7 +22,6 @@ class ZeroAgentTileService : TileService() {
         if (isLocked) unlockAndRun(::openQuickChat) else openQuickChat()
     }
 
-    @Suppress("DEPRECATION")
     private fun openQuickChat() {
         val intent = QuickChatActivity.intent(this, voice = false, ballSide = "right", ballCenterY = 0)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -29,7 +29,12 @@ class ZeroAgentTileService : TileService() {
             startActivityAndCollapse(PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
         } else {
-            startActivityAndCollapse(intent)
+            openQuickChatLegacy(intent)
         }
     }
+
+    // API 31–33 only support this overload. API 34+ uses the PendingIntent above.
+    @SuppressLint("StartActivityAndCollapseDeprecated")
+    @Suppress("DEPRECATION")
+    private fun openQuickChatLegacy(intent: Intent) = startActivityAndCollapse(intent)
 }

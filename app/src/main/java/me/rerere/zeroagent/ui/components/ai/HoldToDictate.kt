@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -44,12 +45,13 @@ import me.rerere.zeroagent.ui.context.LocalToaster
 @Composable
 internal fun HoldToDictate(onText: (String) -> Unit) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val textCallback by rememberUpdatedState(onText)
     val toaster = LocalToaster.current
     var listening by remember { mutableStateOf(false) }
     var processing by remember { mutableStateOf(false) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (!granted) toaster.show(context.getString(R.string.dictate_permission), type = ToastType.Warning)
+        if (!granted) toaster.show(resources.getString(R.string.dictate_permission), type = ToastType.Warning)
     }
     val recognizer = remember(context) {
         if (SpeechRecognizer.isRecognitionAvailable(context)) SpeechRecognizer.createSpeechRecognizer(context) else null
@@ -65,7 +67,7 @@ internal fun HoldToDictate(onText: (String) -> Unit) {
                 listening = false
                 processing = false
                 if (error != SpeechRecognizer.ERROR_CLIENT) {
-                    toaster.show(context.getString(R.string.dictate_no_result), type = ToastType.Warning)
+                    toaster.show(resources.getString(R.string.dictate_no_result), type = ToastType.Warning)
                 }
             }
             override fun onResults(results: Bundle?) {
@@ -81,7 +83,7 @@ internal fun HoldToDictate(onText: (String) -> Unit) {
     }
     fun start(): Boolean {
         if (recognizer == null) {
-            toaster.show(context.getString(R.string.dictate_unavailable), type = ToastType.Warning)
+            toaster.show(resources.getString(R.string.dictate_unavailable), type = ToastType.Warning)
             return false
         }
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -97,7 +99,7 @@ internal fun HoldToDictate(onText: (String) -> Unit) {
             processing = true
             true
         } catch (_: RuntimeException) {
-            toaster.show(context.getString(R.string.dictate_unavailable), type = ToastType.Warning)
+            toaster.show(resources.getString(R.string.dictate_unavailable), type = ToastType.Warning)
             false
         }
     }

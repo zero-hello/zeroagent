@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,6 +49,7 @@ private enum class TemplatePanel { Pick, Export, Import, Code }
 internal fun TemplateBackupActions(vm: BackupVM) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val resources = LocalResources.current
     val toaster = LocalToaster.current
     val scope = rememberCoroutineScope()
     var panel by remember { mutableStateOf<TemplatePanel?>(null) }
@@ -70,7 +72,7 @@ internal fun TemplateBackupActions(vm: BackupVM) {
             error = null
             panel = TemplatePanel.Import
         }.onFailure {
-            toaster.show(context.getString(R.string.template_invalid), type = ToastType.Error)
+            toaster.show(resources.getString(R.string.template_invalid), type = ToastType.Error)
         }
     }
 
@@ -78,7 +80,7 @@ internal fun TemplateBackupActions(vm: BackupVM) {
         when (result) {
             is QRResult.QRSuccess -> readTemplate(result.content.rawValue.orEmpty())
             QRResult.QRUserCanceled -> Unit
-            else -> toaster.show(context.getString(R.string.template_scan_failed), type = ToastType.Error)
+            else -> toaster.show(resources.getString(R.string.template_scan_failed), type = ToastType.Error)
         }
     }
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
@@ -90,11 +92,11 @@ internal fun TemplateBackupActions(vm: BackupVM) {
                     val output = context.contentResolver.openOutputStream(uri, "wt") ?: error("Output unavailable")
                     output.use { it.write(export.toByteArray(Charsets.US_ASCII)) }
                 }
-                toaster.show(context.getString(R.string.template_saved), type = ToastType.Success)
+                toaster.show(resources.getString(R.string.template_saved), type = ToastType.Success)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                toaster.show(context.getString(R.string.template_save_failed), type = ToastType.Error)
+                toaster.show(resources.getString(R.string.template_save_failed), type = ToastType.Error)
             }
         }
     }
@@ -118,7 +120,7 @@ internal fun TemplateBackupActions(vm: BackupVM) {
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                toaster.show(context.getString(R.string.template_invalid), type = ToastType.Error)
+                toaster.show(resources.getString(R.string.template_invalid), type = ToastType.Error)
             }
         }
     }
@@ -197,11 +199,11 @@ internal fun TemplateBackupActions(vm: BackupVM) {
                                         vm.importPortableTemplate(current)
                                         importing = false
                                         close()
-                                        toaster.show(context.getString(R.string.template_imported), type = ToastType.Success)
+                                        toaster.show(resources.getString(R.string.template_imported), type = ToastType.Success)
                                     } catch (cancelled: CancellationException) {
                                         throw cancelled
                                     } catch (_: Exception) {
-                                        error = context.getString(R.string.template_import_failed)
+                                        error = resources.getString(R.string.template_import_failed)
                                     } finally {
                                         importing = false
                                     }
@@ -210,7 +212,7 @@ internal fun TemplateBackupActions(vm: BackupVM) {
                                 runCatching { settings.encodeTemplate(current) }.onSuccess {
                                     code = it
                                     panel = TemplatePanel.Code
-                                }.onFailure { error = context.getString(R.string.template_export_rejected) }
+                                }.onFailure { error = resources.getString(R.string.template_export_rejected) }
                             }
                         },
                     )

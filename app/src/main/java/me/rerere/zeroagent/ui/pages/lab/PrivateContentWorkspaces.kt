@@ -24,6 +24,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import me.rerere.zeroagent.data.ai.tools.local.readBounded
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.CancellationException
@@ -241,7 +242,7 @@ internal fun ImageExtractWorkspace() {
         val next = withContext(Dispatchers.IO) {
             val mime = context.contentResolver.getType(uri)
             require(mime in setOf("image/png", "image/jpeg", "image/webp")) { "請選擇 PNG、JPEG 或 WebP 圖片。" }
-            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readNBytes(8_000_001) }
+            val bytes = context.contentResolver.openInputStream(uri)?.use { readBounded(it, 8_000_000).first }
                 ?: error("無法開啟圖片。")
             require(bytes.isNotEmpty() && bytes.size <= 8_000_000) { "請使用小於 8 MB 的圖片。" }
             val part = UIMessagePart.Image("data:$mime;base64,${Base64.encodeToString(bytes, Base64.NO_WRAP)}")

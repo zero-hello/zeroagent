@@ -70,6 +70,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -409,6 +410,7 @@ private fun ImportProviderButton(
 ) {
     val toaster = LocalToaster.current
     val context = LocalContext.current
+    val resources = LocalResources.current
     var showImportDialog by remember { mutableStateOf(false) }
     var pendingProvider by remember { mutableStateOf<ProviderSetting?>(null) }
 
@@ -436,7 +438,7 @@ private fun ImportProviderButton(
                 TextButton(onClick = {
                     onAdd(provider.copyProvider(enabled = false))
                     pendingProvider = null
-                    toaster.show(context.getString(R.string.setting_provider_page_import_success), type = ToastType.Success)
+                    toaster.show(resources.getString(R.string.setting_provider_page_import_success), type = ToastType.Success)
                 }) { Text(stringResource(R.string.template_confirm_import)) }
             },
             dismissButton = {

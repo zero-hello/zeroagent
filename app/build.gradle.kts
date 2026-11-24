@@ -29,8 +29,8 @@ android {
         minSdk = 31
         // Package all existing translations for the language selector.
         targetSdk = 37
-        versionCode = 42
-        versionName = "2.3.0"
+        versionCode = 43
+        versionName = "2.3.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -144,6 +144,8 @@ android {
         // pattern as redundant; the runtime accepts it. Keep the rules; mute
         // the check.
         disable.add("FullBackupContent")
+        // Android falls back to the default strings for incomplete locales.
+        warning.add("MissingTranslation")
         // See skipLintVital above: the fast CI lane turns the release-build lint
         // pass off, everything else keeps it on.
         checkReleaseBuilds = !skipLintVital

@@ -38,7 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -83,7 +83,7 @@ fun SettingToolApprovalsPage() {
     val rulesReady = storedBlacklist != null && !rulesLoadFailed
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val toaster = LocalToaster.current
     var saving by remember { mutableStateOf(false) }
     fun saveRule(change: suspend () -> Unit) {
@@ -92,7 +92,7 @@ fun SettingToolApprovalsPage() {
         scope.launch {
             try { change() }
             catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { toaster.show(context.getString(R.string.ui_rule_save_failed), type = ToastType.Error) }
+            catch (_: Exception) { toaster.show(resources.getString(R.string.ui_rule_save_failed), type = ToastType.Error) }
             finally { saving = false }
         }
     }
@@ -164,7 +164,7 @@ fun SettingToolApprovalsPage() {
                                 if (selectionState == ToggleableState.On) prefs.removeAllFromBlacklist(adjustableNames)
                                 else prefs.addAllToBlacklist(adjustableNames)
                         } },
-                        modifier = Modifier.semantics { contentDescription = context.getString(R.string.ui_extra_approval_tools) },
+                        modifier = Modifier.semantics { contentDescription = resources.getString(R.string.ui_extra_approval_tools) },
                     )
                     Text(
                         text = if (rulesLoadFailed) stringResource(R.string.ui_rules_load_failed) else if (storedBlacklist == null) stringResource(R.string.ui_rules_loading) else if (saving) stringResource(R.string.ui_rules_saving) else when {
@@ -279,7 +279,7 @@ fun SettingToolApprovalsPage() {
                                                     enabled = !floor && !saving && rulesReady,
                                                     modifier = Modifier.semantics {
                                                         contentDescription = hit.name
-                                                        stateDescription = context.getString(if (checked) R.string.ui_extra_approval_on else R.string.ui_extra_approval_off)
+                                                        stateDescription = resources.getString(if (checked) R.string.ui_extra_approval_on else R.string.ui_extra_approval_off)
                                                     },
                                                     onCheckedChange = { next ->
                                                         saveRule { prefs.setBlacklisted(hit.name, next) }
