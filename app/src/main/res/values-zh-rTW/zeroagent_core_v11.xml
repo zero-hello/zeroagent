@@ -33,7 +33,7 @@
     <string name="zeroagent11_save">儲存</string>
     <string name="zeroagent11_notification_no_title">無標題</string>
     <string name="zeroagent11_notification_no_text">無文字內容</string>
-    <string name="gemini_safety_scope">這些篩選適用於模型支援的輸入與回覆。Google 仍會執行額外保護，例如兒少安全。ZeroAgent 的內建規範也會繼續生效。</string>
+    <string name="gemini_safety_scope">每類篩選可分開設定，適用於模型支援的輸入與回覆。即使此類篩選放行，其他分類和 Google 的強制保護仍可能攔截。模型也可能在回覆中婉拒部分要求。</string>
     <string name="gemini_safety_harassment_help">針對個人的惡意辱罵、霸凌或威脅。</string>
     <string name="gemini_safety_hate_help">因身分或群體特徵而攻擊、貶抑或鼓吹傷害。</string>
     <string name="gemini_safety_sexual_help">露骨的性描述或性行為描寫。</string>

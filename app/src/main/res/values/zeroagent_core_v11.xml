@@ -33,7 +33,7 @@
     <string name="zeroagent11_save">Save</string>
     <string name="zeroagent11_notification_no_title">No title</string>
     <string name="zeroagent11_notification_no_text">No text</string>
-    <string name="gemini_safety_scope">These filters apply to requests and replies supported by the model. Google can enforce additional safeguards, including child safety. ZeroAgent\'s built-in rules also apply.</string>
+    <string name="gemini_safety_scope">Each category can be adjusted separately and applies to requests and replies where the model supports it. Other categories and mandatory Google safeguards can still block content. The model may also decline part of a request in its reply.</string>
     <string name="gemini_safety_harassment_help">Insults, abusive bullying, or threats directed at people.</string>
     <string name="gemini_safety_hate_help">Hostility or dehumanization targeting people based on identity or group characteristics.</string>
     <string name="gemini_safety_sexual_help">Graphic sexual descriptions or depictions of sexual acts.</string>
