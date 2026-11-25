@@ -32,8 +32,7 @@ class ZeroAgentTileService : TileService() {
             openQuickChatLegacy(intent)
         }
     }
-
-    // API 31–33 only support this overload. API 34+ uses the PendingIntent above.
+    // Android 12 and 13 require the Intent overload.
     @SuppressLint("StartActivityAndCollapseDeprecated")
     @Suppress("DEPRECATION")
     private fun openQuickChatLegacy(intent: Intent) = startActivityAndCollapse(intent)

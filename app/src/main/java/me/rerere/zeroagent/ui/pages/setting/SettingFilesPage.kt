@@ -90,10 +90,19 @@ fun SettingFilesPage(
 
     var selectedFolder by remember { mutableStateOf(FileFolders.UPLOAD) }
     var pendingDelete by remember { mutableStateOf<ManagedFileEntity?>(null) }
+    var showStorageOverview by remember { mutableStateOf(false) }
+    val nav = me.rerere.zeroagent.ui.context.LocalNavController.current
     var showCleanSheet by remember { mutableStateOf(false) }
     var selectedCleanRange by remember { mutableStateOf(CleanRange.DAYS_7) }
     val files by filesManager.observe(selectedFolder).collectAsStateWithLifecycle(initialValue = emptyList())
 
+    if (showStorageOverview) StorageOverview(
+        onDismiss = { showStorageOverview = false },
+        onManageModels = {
+            showStorageOverview = false
+            nav.navigate(me.rerere.zeroagent.Screen.SettingProvider)
+        },
+    )
     if (pendingDelete != null) {
         val target = pendingDelete!!
         AlertDialog(
@@ -186,6 +195,7 @@ fun SettingFilesPage(
                     end = innerPadding.calculateEndPadding(layoutDirection),
                 )
         ) {
+            TextButton(onClick = { showStorageOverview = true }) { Text("儲存空間總覽") }
             FolderRow(
                 folders = folders,
                 selectedFolder = selectedFolder,

@@ -11,11 +11,12 @@ data class ConversationSearchFilter(
     val model: String? = null,
     val type: String? = null,
     val tag: String? = null,
+    val project: String? = null,
 ) {
     companion object {
         fun parse(query: String): ConversationSearchFilter {
             val values = mutableMapOf<String, String>()
-            val text = Regex("(after|before|model|type|tag):(?:\"([^\"]+)\"|(\\S+))", RegexOption.IGNORE_CASE)
+            val text = Regex("(after|before|model|type|tag|project):(?:\"([^\"]+)\"|(\\S+))", RegexOption.IGNORE_CASE)
                 .replace(query) { match ->
                     values[match.groupValues[1].lowercase()] = match.groupValues[2].ifBlank { match.groupValues[3] }
                     " "
@@ -28,7 +29,7 @@ data class ConversationSearchFilter(
             require(type == null || type in setOf("image", "document", "audio", "video", "text")) {
                 "附件類型請使用 image、document、audio、video 或 text。"
             }
-            return ConversationSearchFilter(text, date("after"), date("before"), values["model"], type, values["tag"])
+            return ConversationSearchFilter(text, date("after"), date("before"), values["model"], type, values["tag"], values["project"])
         }
     }
 }

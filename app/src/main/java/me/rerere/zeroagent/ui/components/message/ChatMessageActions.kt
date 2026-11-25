@@ -69,6 +69,7 @@ import me.rerere.zeroagent.utils.removeBracketedContent
 import me.rerere.zeroagent.utils.toLocalString
 import me.rerere.zeroagent.utils.toMessageTimeString
 import java.util.Locale
+import kotlin.uuid.Uuid
 
 @Composable
 fun ColumnScope.ChatMessageActionButtons(
@@ -263,8 +264,10 @@ fun ChatMessageActionsSheet(
     isFavorite: Boolean = false,
     onToggleFavorite: (() -> Unit)? = null,
     onWebViewPreview: () -> Unit,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
+    reviewNodeId: Uuid? = null,
 ) {
+    val review = LocalPendingMessageReview.current
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)),
@@ -283,6 +286,11 @@ fun ChatMessageActionsSheet(
                 }
                 if (onRegenerate != null) androidx.compose.material3.TextButton(onClick = { onDismissRequest(); onRegenerate() }) {
                     Text(stringResource(R.string.chat_regenerate_reply))
+                }
+            }
+            if (review != null && reviewNodeId != null) {
+                TextButton(onClick = { review.toggle(reviewNodeId); onDismissRequest() }) {
+                    Text(if (review.has(reviewNodeId)) "移除待處理標記" else "標為待處理")
                 }
             }
             // Select and Copy

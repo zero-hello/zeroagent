@@ -292,6 +292,7 @@ fun ChatMessage(
             },
             isFavorite = isFavorite,
             onToggleFavorite = onToggleFavorite,
+            reviewNodeId = node.id.takeUnless { generationActive },
             onWebViewPreview = {
                 val textContent = message.parts
                     .filterIsInstance<UIMessagePart.Text>()
@@ -539,6 +540,7 @@ private fun MessagePartsBlock(
                                                     scope = AssistantAffectScope.ASSISTANT,
                                                     visual = true,
                                                 ),
+                                                showOutline = !loading && role == MessageRole.ASSISTANT,
                                                 onClickCitation = handleClickCitation,
                                             )
                                         }
@@ -550,6 +552,7 @@ private fun MessagePartsBlock(
                                             scope = AssistantAffectScope.ASSISTANT,
                                             visual = true,
                                         ),
+                                        showOutline = !loading && role == MessageRole.ASSISTANT,
                                         onClickCitation = handleClickCitation,
                                         modifier = Modifier
                                             .contentReveal()
@@ -655,6 +658,9 @@ private fun MessagePartsBlock(
                     }
 
                     is UIMessagePart.Document -> {
+                        if (part.mime == "application/pdf" && part.url.startsWith("file:")) {
+                            ScannedPdfSearchButton(part)
+                        }
                         val statusLabel = when (part.readStatus()) {
                             DocumentReadStatus.COMPLETE -> R.string.attachment_status_complete
                             DocumentReadStatus.EXCERPT -> R.string.attachment_status_excerpt

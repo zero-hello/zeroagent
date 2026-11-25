@@ -109,7 +109,7 @@ internal class ConversationTransfer(
         val memory = if (PortableLabSection.MEMORY in selectedFeatures && PortableLabSection.MEMORY.available(context)) {
             val activeScopes = settings.settingsFlow.first().assistants.map { it.id.toString() }.toSet() +
                 ProjectStore.get(context).projects.value.map { it.id } + MemoryRepository.GLOBAL_MEMORY_ID
-            val sourceRecords = database.memoryDao().getAllMemories().filter { it.assistantId in activeScopes }
+            val sourceRecords = database.memoryDao().getAllMemories().filter { it.assistantId in activeScopes && it.expiresAt == null }
             require(sourceRecords.all { isPortableMemoryText(it.content) }) {
                 "部分記憶可能包含憑證、過長或無法匯出。請先在記憶抽屜整理，再勾選這項資料。"
             }

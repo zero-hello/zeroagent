@@ -95,6 +95,7 @@ import me.rerere.hugeicons.stroke.Sparkles
 import me.rerere.hugeicons.stroke.TransactionHistory
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentWorkspaceHeader
 import me.rerere.zeroagent.R
+import me.rerere.zeroagent.ui.components.ui.ChatPrivacy
 import me.rerere.zeroagent.Screen
 import me.rerere.zeroagent.data.datastore.Settings
 import me.rerere.zeroagent.data.model.Avatar
@@ -170,6 +171,45 @@ fun ChatDrawerContent(
 
     val conversationJobs by drawerVm.conversationJobs.collectAsStateWithLifecycle()
 
+    var showRunningChats by remember { mutableStateOf(false) }
+    if (showRunningChats) {
+        AlertDialog(
+            onDismissRequest = { showRunningChats = false },
+            title = { Text("正在回覆的聊天室") },
+            text = {
+                Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                    val runningIds = conversationJobs.keys.sortedBy { it.toString() }
+                    if (runningIds.isEmpty()) Text("目前沒有聊天室在回覆。")
+                    runningIds.forEach { id ->
+                        androidx.compose.runtime.key(id) {
+                            val locked = ChatPrivacy.chatLocked(context, id)
+                            val title by androidx.compose.runtime.produceState<String?>(null, id, locked) {
+                                if (!locked) value = drawerVm.runningConversationTitle(id)
+                            }
+                            Text(
+                                if (locked) "已上鎖的聊天室" else title?.takeIf(String::isNotBlank) ?: "未命名聊天室",
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            FlowRow {
+                                TextButton(onClick = {
+                                    showRunningChats = false
+                                    onNavigateFromDrawer()
+                                    navigateToChatPage(navController, id)
+                                }) { Text("開啟") }
+                                TextButton(enabled = !locked, onClick = { drawerVm.stopBackgroundConversation(id) }) {
+                                    Text("停止回覆")
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showRunningChats = false }) { Text("關閉") } },
+        )
+    }
+
     // 昵称编辑状态
     val nicknameEditState = useEditState<String> { newNickname ->
         drawerVm.updateSettings(
@@ -241,6 +281,11 @@ fun ChatDrawerContent(
                         Icon(HugeIcons.Message01, null, Modifier.padding(end = 8.dp).size(20.dp))
                         Text(stringResource(R.string.chat_page_new_chat))
                     }
+                    if (conversationJobs.isNotEmpty()) {
+                        TextButton(onClick = { showRunningChats = true }) {
+                            Text("正在回覆的聊天室（${conversationJobs.size}）")
+                        }
+                    }
                     DrawerActions(::navigateFromDrawer)
                     FolderBar(
                         protectedFolderId = protectedFolderId, folders = folders,
@@ -272,7 +317,7 @@ fun ChatDrawerContent(
                     onRename = { drawerVm.requestRenameConversation(it) },
                     onDelete = {
                         scope.launch {
-                            drawerVm.deleteConversation(it).join()
+                            if (!drawerVm.recycleConversation(it)) return@launch
                             conversations.refresh()
                             if (it.id == currentConversationId) navigateToChatPage(navController)
                         }

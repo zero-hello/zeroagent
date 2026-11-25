@@ -137,6 +137,21 @@ object ModelInstall {
         }
     }
 
+    /** Returns false while another transfer owns the destination. Installed models are untouched. */
+    fun discardPartialDownload(target: File): Boolean =
+        java.io.RandomAccessFile(File(target.absolutePath + ".lock"), "rw").use { handle ->
+            val lock = try {
+                handle.channel.tryLock()
+            } catch (_: java.nio.channels.OverlappingFileLockException) {
+                null
+            } ?: return false
+            lock.use {
+                java.nio.file.Files.deleteIfExists(File(target.absolutePath + ".partial").toPath())
+                java.nio.file.Files.deleteIfExists(File(target.absolutePath + ".partial.properties").toPath())
+                true
+            }
+        }
+
     fun deleteModelFiles(target: File) {
         target.parentFile?.mkdirs()
         java.io.RandomAccessFile(File(target.absolutePath + ".lock"), "rw").use { handle ->

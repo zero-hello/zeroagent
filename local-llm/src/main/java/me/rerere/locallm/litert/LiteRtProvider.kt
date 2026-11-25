@@ -162,6 +162,16 @@ class LiteRtProvider(
         providerSetting: ProviderSetting.LiteRtLocal,
         messages: List<UIMessage>,
         params: TextGenerationParams,
+    ): Flow<StreamChunk> = streamOrLoad(messages, params, warmOnly = false)
+
+    suspend fun warmModel(model: Model) {
+        streamOrLoad(emptyList(), TextGenerationParams(model = model), warmOnly = true).collect { }
+    }
+
+    private fun streamOrLoad(
+        messages: List<UIMessage>,
+        params: TextGenerationParams,
+        warmOnly: Boolean,
     ): Flow<StreamChunk> = flow {
         val installed = prefs.installedModels(LocalRuntime.LiteRT)
         val modelPath = installed[params.model.modelId]
@@ -413,6 +423,11 @@ class LiteRtProvider(
             runCatching {
                 prefs.setVisionUnavailable(LocalRuntime.LiteRT, params.model.modelId)
             }.onFailure { Log.w(TAG, "setVisionUnavailable failed", it) }
+        }
+
+        if (warmOnly) {
+            runtime.noteWarmUse(modelPath)
+            return@flow
         }
 
         // ---- Stream + cumulative→delta conversion ----

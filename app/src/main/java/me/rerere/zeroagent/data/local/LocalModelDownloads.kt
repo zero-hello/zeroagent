@@ -21,6 +21,17 @@ class LocalModelDownloads(context: Context) {
     private val saved = context.applicationContext.getSharedPreferences("local-download-requests", Context.MODE_PRIVATE)
     private val manager = WorkManager.getInstance(context.applicationContext)
 
+    internal enum class DownloadRestriction(val key: String) {
+        UNMETERED("unmetered"), BATTERY_NOT_LOW("battery_not_low"), CHARGING("charging"),
+    }
+
+    internal fun restrictions(): Set<DownloadRestriction> =
+        DownloadRestriction.entries.filterTo(mutableSetOf()) { saved.getBoolean(it.key, false) }
+
+    internal fun setRestriction(restriction: DownloadRestriction, enabled: Boolean) {
+        saved.edit().putBoolean(restriction.key, enabled).apply()
+    }
+
     fun observe(runtime: LocalRuntime) = manager.getWorkInfosForUniqueWorkFlow(tag(runtime)).map { infos ->
         val current = saved.getString("id:${tag(runtime)}", null)
         infos.filter { it.id.toString() == current || !it.state.isFinished }
@@ -29,10 +40,16 @@ class LocalModelDownloads(context: Context) {
     suspend fun enqueue(runtime: LocalRuntime, url: String, size: Long? = null, sha256: String? = null) = withContext(Dispatchers.IO) {
         if (manager.getWorkInfosForUniqueWork(tag(runtime)).get().any { !it.state.isFinished }) return@withContext
         val file = ModelInstall.extractFileNameFromUrl(url)
+        val limits = restrictions()
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(if (DownloadRestriction.UNMETERED in limits) NetworkType.UNMETERED else NetworkType.CONNECTED)
+            .setRequiresBatteryNotLow(DownloadRestriction.BATTERY_NOT_LOW in limits)
+            .setRequiresCharging(DownloadRestriction.CHARGING in limits)
+            .build()
         val request = OneTimeWorkRequestBuilder<LocalModelDownloadWorker>()
             .setInputData(workDataOf("runtime" to runtime.fileExtension, "url" to url,
                 "file" to file, "size" to (size ?: -1L), "sha256" to sha256))
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .setConstraints(constraints)
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .addTag(tag(runtime))
             .build()

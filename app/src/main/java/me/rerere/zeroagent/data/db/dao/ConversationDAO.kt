@@ -12,59 +12,77 @@ import me.rerere.zeroagent.data.repository.LightConversationEntity
 
 @Dao
 interface ConversationDAO {
-    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE folder_id = '' ORDER BY is_pinned DESC, update_at DESC")
+    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE trashed_at IS NULL AND folder_id = '' ORDER BY is_pinned DESC, update_at DESC")
     fun getUnfiledPaging(): PagingSource<Int, LightConversationEntity>
 
     @Query("UPDATE conversationentity SET chat_model_id = :modelId WHERE id = :id")
     suspend fun updateChatModel(id: String, modelId: String)
 
-    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity ORDER BY is_pinned DESC, update_at DESC")
+    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE trashed_at IS NULL ORDER BY is_pinned DESC, update_at DESC")
     fun getAll(): Flow<List<ConversationEntity>>
 
-    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity ORDER BY is_pinned DESC, update_at DESC")
+    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE trashed_at IS NULL ORDER BY is_pinned DESC, update_at DESC")
     fun getAllPaging(): PagingSource<Int, ConversationEntity>
 
-    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE assistant_id = :assistantId ORDER BY is_pinned DESC, update_at DESC")
+    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE trashed_at IS NULL AND assistant_id = :assistantId ORDER BY is_pinned DESC, update_at DESC")
     fun getConversationsOfAssistant(assistantId: String): Flow<List<ConversationEntity>>
 
-    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE assistant_id = :assistantId ORDER BY is_pinned DESC, update_at DESC")
+    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE trashed_at IS NULL AND assistant_id = :assistantId ORDER BY is_pinned DESC, update_at DESC")
     fun getConversationsOfAssistantPaging(assistantId: String): PagingSource<Int, LightConversationEntity>
 
-    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE assistant_id = :assistantId AND folder_id = '' ORDER BY is_pinned DESC, update_at DESC")
+    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE trashed_at IS NULL AND assistant_id = :assistantId AND folder_id = '' ORDER BY is_pinned DESC, update_at DESC")
     fun getUnfiledConversationsOfAssistantPaging(assistantId: String): PagingSource<Int, LightConversationEntity>
 
-    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE folder_id = :folderId ORDER BY is_pinned DESC, update_at DESC")
+    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE trashed_at IS NULL AND folder_id = :folderId ORDER BY is_pinned DESC, update_at DESC")
     fun getConversationsOfFolderPaging(folderId: String): PagingSource<Int, LightConversationEntity>
 
-    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE assistant_id = :assistantId ORDER BY is_pinned DESC, update_at DESC LIMIT :limit")
+    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE trashed_at IS NULL AND assistant_id = :assistantId ORDER BY is_pinned DESC, update_at DESC LIMIT :limit")
     suspend fun getRecentConversationsOfAssistant(assistantId: String, limit: Int): List<ConversationEntity>
 
-    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE title LIKE '%' || :searchText || '%' ORDER BY is_pinned DESC, update_at DESC")
+    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE trashed_at IS NULL AND title LIKE '%' || :searchText || '%' ORDER BY is_pinned DESC, update_at DESC")
     fun searchConversations(searchText: String): Flow<List<ConversationEntity>>
 
-    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE title LIKE '%' || :searchText || '%' ORDER BY is_pinned DESC, update_at DESC")
+    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE trashed_at IS NULL AND title LIKE '%' || :searchText || '%' ORDER BY is_pinned DESC, update_at DESC")
     fun searchConversationsPaging(searchText: String): PagingSource<Int, LightConversationEntity>
 
-    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE assistant_id = :assistantId AND title LIKE '%' || :searchText || '%' ORDER BY is_pinned DESC, update_at DESC")
+    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE trashed_at IS NULL AND assistant_id = :assistantId AND title LIKE '%' || :searchText || '%' ORDER BY is_pinned DESC, update_at DESC")
     fun searchConversationsOfAssistant(assistantId: String, searchText: String): Flow<List<ConversationEntity>>
 
-    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE assistant_id = :assistantId AND title LIKE '%' || :searchText || '%' ORDER BY is_pinned DESC, update_at DESC")
+    @Query("SELECT id, assistant_id as assistantId, title, is_pinned as isPinned, create_at as createAt, update_at as updateAt, folder_id as folderId FROM conversationentity WHERE trashed_at IS NULL AND assistant_id = :assistantId AND title LIKE '%' || :searchText || '%' ORDER BY is_pinned DESC, update_at DESC")
     fun searchConversationsOfAssistantPaging(assistantId: String, searchText: String): PagingSource<Int, LightConversationEntity>
 
-    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE id = :id")
+    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE trashed_at IS NULL AND id = :id")
     fun getConversationFlowById(id: String): Flow<ConversationEntity?>
 
-    @Query("SELECT id FROM conversationentity")
+    @Query("SELECT id FROM conversationentity WHERE trashed_at IS NULL")
     suspend fun getAllIds(): List<String>
 
-    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE id = :id")
+    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE trashed_at IS NULL AND id = :id")
     suspend fun getConversationById(id: String): ConversationEntity?
+
+    @Query("SELECT title FROM conversationentity WHERE trashed_at IS NULL AND id = :id")
+    suspend fun getTitleById(id: String): String?
 
     @Query("SELECT update_at FROM conversationentity WHERE id = :id")
     suspend fun getConversationUpdateAt(id: String): Long?
 
     @Query("SELECT EXISTS(SELECT 1 FROM conversationentity WHERE id = :id)")
     suspend fun existsById(id: String): Boolean
+
+    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE trashed_at IS NOT NULL ORDER BY trashed_at DESC")
+    fun observeTrash(): Flow<List<ConversationEntity>>
+
+    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE id = :id AND trashed_at IS NOT NULL")
+    suspend fun getTrashedConversation(id: String): ConversationEntity?
+
+    @Query("SELECT EXISTS(SELECT 1 FROM conversationentity WHERE id = :id AND trashed_at IS NOT NULL)")
+    suspend fun conversationInTrash(id: String): Boolean
+
+    @Query("UPDATE conversationentity SET trashed_at = :at WHERE id = :id AND trashed_at IS NULL")
+    suspend fun moveToTrash(id: String, at: Long): Int
+
+    @Query("UPDATE conversationentity SET trashed_at = NULL WHERE id = :id AND trashed_at IS NOT NULL")
+    suspend fun restoreFromTrash(id: String): Int
 
     @Insert
     suspend fun insert(conversation: ConversationEntity)
@@ -84,7 +102,7 @@ interface ConversationDAO {
     @Query("DELETE FROM conversationentity")
     suspend fun deleteAll()
 
-    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE is_pinned = 1 ORDER BY update_at DESC")
+    @Query("SELECT $CONVERSATION_METADATA FROM conversationentity WHERE trashed_at IS NULL AND is_pinned = 1 ORDER BY update_at DESC")
     fun getPinnedConversations(): Flow<List<ConversationEntity>>
 
     @Query("UPDATE conversationentity SET is_pinned = :isPinned WHERE id = :id")
@@ -107,24 +125,24 @@ interface ConversationDAO {
     suspend fun clearFolder(folderId: String)
 
     /** Number of conversations filed in [folderId] — the input to the folder delete guard. */
-    @Query("SELECT COUNT(*) FROM conversationentity WHERE folder_id = :folderId")
+    @Query("SELECT COUNT(*) FROM conversationentity WHERE trashed_at IS NULL AND folder_id = :folderId")
     suspend fun countInFolder(folderId: String): Int
 
     /** Flow form of [countInFolder], so the guard follows conversations coming and going. */
-    @Query("SELECT COUNT(*) FROM conversationentity WHERE folder_id = :folderId")
+    @Query("SELECT COUNT(*) FROM conversationentity WHERE trashed_at IS NULL AND folder_id = :folderId")
     fun countInFolderFlow(folderId: String): kotlinx.coroutines.flow.Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM conversationentity")
+    @Query("SELECT COUNT(*) FROM conversationentity WHERE trashed_at IS NULL")
     suspend fun countAll(): Int
 
-    @Query("SELECT assistant_id AS assistantId, COUNT(*) AS count FROM conversationentity GROUP BY assistant_id")
+    @Query("SELECT assistant_id AS assistantId, COUNT(*) AS count FROM conversationentity WHERE trashed_at IS NULL GROUP BY assistant_id")
     suspend fun countByAssistant(): List<AssistantConversationCount>
 
     @Query(
         "SELECT strftime('%Y-%m-%d', create_at/1000, 'unixepoch', 'localtime') AS day, " +
             "COUNT(*) AS count " +
             "FROM conversationentity " +
-            "WHERE create_at >= :startMillis " +
+            "WHERE trashed_at IS NULL AND create_at >= :startMillis " +
             "GROUP BY day"
     )
     suspend fun getConversationCountPerDay(startMillis: Long): List<ConversationDayCount>
@@ -137,4 +155,4 @@ data class AssistantConversationCount(val assistantId: String, val count: Int)
 // The retired nodes column can still contain legacy data and is never used by current readers.
 private const val CONVERSATION_METADATA =
     "id, assistant_id, title, '[]' AS nodes, create_at, update_at, suggestions, is_pinned, " +
-        "custom_system_prompt, mode_injection_ids, lorebook_ids, workspace_cwd, folder_id, chat_model_id"
+        "custom_system_prompt, mode_injection_ids, lorebook_ids, workspace_cwd, folder_id, chat_model_id, trashed_at"

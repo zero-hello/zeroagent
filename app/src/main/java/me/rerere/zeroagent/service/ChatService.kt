@@ -610,6 +610,13 @@ class ChatService(
     internal fun canReplacePortableConversation(id: Uuid): Boolean =
         sessions[id]?.isInUse != true && outgoingDrafts.readUnsent(id).isEmpty()
 
+    internal suspend fun recycleConversation(id: Uuid): Boolean {
+        if (sessions[id]?.isGenerating == true) return false
+        val moved = conversationRepo.moveToTrash(id)
+        if (moved) dropSession(id)
+        return moved
+    }
+
     fun dropSession(conversationId: Uuid) {
         val session = sessions.remove(conversationId) ?: return
         session.cleanup()
@@ -665,6 +672,19 @@ class ChatService(
     fun getConversationFlow(conversationId: Uuid): StateFlow<Conversation> {
         return getOrCreateSession(conversationId).state
     }
+
+    internal suspend fun replaceUnavailableModelForChat(chatId: Uuid, previous: Uuid, replacement: Uuid): Boolean =
+        streamingPersistence.withLock(chatId) {
+            val session = sessions[chatId]
+            if (session?.getJob()?.isActive == true) return@withLock false
+            val conversation = conversationRepo.getConversationSummary(chatId) ?: return@withLock false
+            if (conversation.chatModelId != previous) return@withLock false
+            conversationRepo.updateChatModel(chatId, replacement)
+            if (session?.state?.value?.chatModelId == previous) {
+                updateConversationState(chatId) { it.copy(chatModelId = replacement) }
+            }
+            true
+        }
 
     fun getGenerationJobStateFlow(conversationId: Uuid): Flow<Job?> {
         val session = sessions[conversationId] ?: return flowOf(null)
@@ -1049,7 +1069,7 @@ class ChatService(
      *  every future call of the same tool name in this conversation (until /new). There is no
      *  persistent "always" scope any more — the blacklist (Settings → Tool approvals) is where
      *  a tool stops asking for good. */
-    enum class ApprovalScope { Once, ChatScope }
+    enum class ApprovalScope { Once, ChatScope, TaskFolderRead }
 
     fun handleToolApproval(
         conversationId: Uuid,
@@ -1115,6 +1135,9 @@ class ChatService(
                         }
                         val updatedConversation = conversation.copy(messageNodes = updatedNodes)
                         saveConversation(conversationId, updatedConversation)
+                        if (approved && scope == ApprovalScope.TaskFolderRead) {
+                            registerTaskFolderRead(conversation, toolCallId, approvalAccess)
+                        }
                         if (approved && scope == ApprovalScope.ChatScope && toolName != null &&
                             conversation.currentMessages.any { message -> message.getTools().any {
                                 it.toolCallId == toolCallId && it.toolName == toolName && it.isPending
@@ -1148,6 +1171,29 @@ class ChatService(
         }
 
         session.setJob(job, cancelPrevious = false)
+    }
+
+    private suspend fun registerTaskFolderRead(
+        conversation: Conversation,
+        toolCallId: String,
+        access: me.rerere.zeroagent.data.ai.tools.ConversationAccessSnapshot,
+    ) {
+        val grants = me.rerere.zeroagent.data.ai.tools.WorkspaceReadGrants
+        if (me.rerere.zeroagent.data.ai.tools.HeadlessConversations.isHeadless(conversation.id)) return
+        val tool = conversation.currentMessages.asReversed().firstNotNullOfOrNull { message ->
+            message.getTools().firstOrNull { it.toolCallId == toolCallId && it.isPending }
+        } ?: return
+        if (!grants.canOffer(tool) || tool.toolName in toolApprovalPreferences.snapshot().blacklist) return
+        val folder = grants.path(tool) ?: return
+        val settings = settingsStore.settingsFlow.first()
+        val model = effectiveChatModel(settings, conversation) ?: return
+        val profile = me.rerere.zeroagent.data.productivity.ProjectStore.get(context)
+            .profile(conversation, settings.assistantForModel(model), settings.assistants)
+        val workspace = profile.workspaceId?.toString() ?: return
+        val turn = conversation.currentMessages.lastOrNull { it.role == MessageRole.USER }?.id ?: return
+        if (workspaceRepository.isScopedReadPath(workspace, folder, directory = true)) {
+            grants.grant(conversation.id, workspace, turn, folder, access)
+        }
     }
 
     /** Outcome of [rerunTool]. [Failure.message] is a short, non-localized diagnostic
@@ -1440,6 +1486,18 @@ class ChatService(
                 // for in-app conversations that didn't register one.
                 systemAddendum = me.rerere.zeroagent.data.ai.tools
                     .ConversationSystemAddendum.get(conversationId),
+                isScopedReadApproved = scopedRead@ { tool ->
+                    val grants = me.rerere.zeroagent.data.ai.tools.WorkspaceReadGrants
+                    val path = grants.path(tool) ?: return@scopedRead false
+                    val workspace = assistant.workspaceId?.toString() ?: return@scopedRead false
+                    val turn = conversation.currentMessages.lastOrNull { it.role == MessageRole.USER }?.id
+                        ?: return@scopedRead false
+                    if (!grants.allows(conversationId, workspace, turn, path) ||
+                        tool.toolName in toolApprovalPreferences.snapshot().blacklist
+                    ) return@scopedRead false
+                    workspaceRepository.isScopedReadPath(workspace, path, tool.toolName == "workspace_read_folder") &&
+                        grants.allows(conversationId, workspace, turn, path)
+                },
                 canReviewTool = { toolName ->
                     toolName !in toolApprovalPreferences.snapshot().blacklist
                 },
@@ -2556,6 +2614,7 @@ class ChatService(
 
     // 停止当前会话生成任务（不清理会话缓存）
     suspend fun stopGeneration(conversationId: Uuid) {
+        me.rerere.zeroagent.data.ai.tools.WorkspaceReadGrants.clear(conversationId)
         // Cancel BEFORE the mutex so the cancelled coroutines can drain their own writes
         // (which may try to acquire the same mutex via their save path). Also pause the
         // message queue so nothing auto-dispatches into the conversation we're stopping.

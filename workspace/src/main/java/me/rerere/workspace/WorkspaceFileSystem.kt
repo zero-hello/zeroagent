@@ -6,6 +6,7 @@ import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.LinkOption.NOFOLLOW_LINKS
 import java.nio.file.Path
 import kotlin.io.path.name
 
@@ -144,7 +145,7 @@ class WorkspaceFileSystem(
      * 通过 [WorkspaceTreeResult.truncated] 显式告知调用方。
      */
     fun tree(root: File, path: String = "", maxDepth: Int = 10): WorkspaceTreeResult {
-        val start = resolvePath(root, path)
+        val start = resolvePath(root, path).toPath().toRealPath().toFile()
         require(start.exists()) { "Path does not exist: $path" }
         require(start.isDirectory) { "Path is not a directory: $path" }
 
@@ -156,9 +157,13 @@ class WorkspaceFileSystem(
                 truncated = true
                 return
             }
+            if (!Files.isDirectory(dir.toPath(), NOFOLLOW_LINKS) || dir.canonicalFile != dir) return
             val children = dir.listFiles()
                 .orEmpty()
-                .filter { !it.name.startsWith(".l2s.") }
+                .filter { child ->
+                    !child.name.startsWith(".l2s.") &&
+                        (Files.isDirectory(child.toPath(), NOFOLLOW_LINKS) || Files.isRegularFile(child.toPath(), NOFOLLOW_LINKS))
+                }
                 .sortedWith(compareBy<File> { !it.isDirectory }.thenBy { it.name.lowercase() })
             for (child in children) {
                 if (entries.size >= config.maxListEntries) {

@@ -354,34 +354,36 @@ val dataSourceModule = module {
         )
     }
 
+    single { me.rerere.zeroagent.data.local.GenerationResourceLimits(get()) }
+    single {
+        val settingsStore: me.rerere.zeroagent.data.datastore.SettingsStore = get()
+        me.rerere.locallm.litert.LiteRtProvider(
+            context = get(), runtime = get(), prefs = get(),
+            settingsUpdater = { transform ->
+                settingsStore.update { old -> old.copy(providers = transform(old.providers)) }
+            },
+        )
+    }
+    single { me.rerere.llamacpp.LlamaCppProvider(context = get(), runtime = get(), prefs = get()) }
     single {
         val settingsStore: me.rerere.zeroagent.data.datastore.SettingsStore = get()
         val codexRepository: CodexAccountRepository = get()
         val json: Json = get()
         val usageLedger: UsageLedger = get()
+        val monthlyBudget = me.rerere.zeroagent.data.usage.ModelMonthlyBudget(get())
+        val resourceLimits: me.rerere.zeroagent.data.local.GenerationResourceLimits = get()
         ProviderManager(client = get(), context = get()).also { pm ->
             // P2-11c2 - every provider handed out gets wrapped, so each model round trip
             // writes one ledger row. Installed on the raw accessor so both getProvider and
             // getProviderByType are covered exactly once.
-            pm.providerDecorator = { provider -> decorateForUsage(provider, usageLedger) }
+            pm.providerDecorator = { provider -> decorateForUsage(provider, usageLedger, monthlyBudget, resourceLimits) }
             pm.registerProvider(
                 "local_litert",
-                me.rerere.locallm.litert.LiteRtProvider(
-                    context = get(),
-                    runtime = get(),
-                    prefs = get(),
-                    settingsUpdater = { transform ->
-                        settingsStore.update { old -> old.copy(providers = transform(old.providers)) }
-                    },
-                ),
+                get<me.rerere.locallm.litert.LiteRtProvider>(),
             )
             pm.registerProvider(
                 "local_llamacpp",
-                me.rerere.llamacpp.LlamaCppProvider(
-                    context = get(),
-                    runtime = get(),
-                    prefs = get(),
-                ),
+                get<me.rerere.llamacpp.LlamaCppProvider>(),
             )
             pm.registerProvider(
                 "codex",

@@ -125,6 +125,9 @@ import me.rerere.zeroagent.ui.components.ui.permission.rememberPermissionState
 import me.rerere.zeroagent.ui.context.LocalSettings
 import me.rerere.zeroagent.ui.context.LocalToaster
 import me.rerere.zeroagent.ui.hooks.ChatInputState
+import me.rerere.zeroagent.data.ai.ChatModelPreflight
+import me.rerere.zeroagent.data.datastore.findModelById
+import me.rerere.ai.provider.Modality
 import me.rerere.zeroagent.utils.SoundEffectPlayer
 import org.koin.compose.koinInject
 import kotlin.uuid.Uuid
@@ -162,7 +165,24 @@ fun ChatInput(
 
     var isFullScreen by remember { mutableStateOf(false) }
 
+    val ocrModel = settings.findModelById(settings.ocrModelId)
+    val hasOcrModel = ocrModel != null && Modality.IMAGE in ocrModel.inputModalities &&
+        ocrModel.findProvider(settings.providers)?.enabled == true
+    val mediaWarning = model?.let { selected ->
+        ChatModelPreflight.unsupportedMedia(selected, state.messageContent, hasOcrModel)
+    }.orEmpty()
+    fun warning(): String? = when {
+        mediaWarning.isNotEmpty() -> "目前的模型無法讀取「${mediaWarning.joinToString("、") { it.displayName() }}」。請切換模型或移除附件。"
+        model != null && ChatModelPreflight.fitsDraft(model, state.getContents()) == false ->
+            "這則訊息已超過模型的輸入上限，請縮短內容或切換模型。"
+        else -> null
+    }
+
     fun sendMessage() {
+        if (!state.isEmpty()) warning()?.let {
+            toaster.show(it, type = ToastType.Error)
+            return
+        }
         focusManager.clearFocus(force = true)
         keyboardController?.hide()
         if (loading && state.isEmpty()) onCancelClick() else onSendClick()
@@ -247,6 +267,22 @@ fun ChatInput(
                         MediaFileInputRow(state = state)
                     }
 
+                    if (mediaWarning.isNotEmpty()) {
+                        Text(
+                            "目前的模型無法讀取：${mediaWarning.joinToString("、") { it.displayName() }}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                    if (!state.isEmpty() && model != null && !ChatModelPreflight.toolsAvailable(model) &&
+                        (assistant.localTools.isNotEmpty() || assistant.mcpServers.isNotEmpty() || assistant.workspaceId != null)
+                    ) {
+                        Text(
+                            "這個模型可以回覆文字，但無法使用助理工具。",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     val quickPrompts = settings.getQuickMessagesOfAssistant(assistant)
                     if (quickPrompts.isNotEmpty() && !state.isEditing()) {
                         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -703,4 +739,11 @@ private fun FullScreenEditor(
             }
         }
     }
+}
+
+private fun Modality.displayName(): String = when (this) {
+    Modality.IMAGE -> "圖片"
+    Modality.AUDIO -> "音訊"
+    Modality.VIDEO -> "影片"
+    Modality.TEXT -> "文字"
 }

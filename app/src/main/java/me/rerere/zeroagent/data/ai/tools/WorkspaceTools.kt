@@ -65,6 +65,24 @@ suspend fun createWorkspaceTools(
     )
 }
 
+internal const val WORKSPACE_PROPOSAL_METADATA = "zeroagent.workspace.proposed_text"
+
+private fun workspaceProposal(workspace: String, path: String, before: String?, after: String): List<UIMessagePart> {
+    require((before?.length ?: 0).toLong() + after.length <= 64_000) { "Propose smaller changes for review." }
+    if (before == after) return listOf(UIMessagePart.Text("The file already contains the proposed text."))
+    return listOf(UIMessagePart.Text(
+        text = "Proposed changes for /workspace/$path. Waiting for user review. The file has not changed.",
+        metadata = buildJsonObject {
+            put(WORKSPACE_PROPOSAL_METADATA, buildJsonObject {
+                put("workspace", workspace)
+                put("path", path)
+                before?.let { put("before", it) }
+                put("after", after)
+            })
+        },
+    ))
+}
+
 private val IMAGE_EXTENSIONS = setOf(
     "png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "heic", "heif", "avif", "ico",
 )
@@ -142,8 +160,15 @@ private fun createWriteFileTool(
         val path = params.absolutePath("path")
         val text = params.string("text") ?: error("text is required")
         val overwrite = params["overwrite"]?.jsonPrimitive?.contentOrNull?.toBooleanStrictOrNull() ?: true
-        val entry = workspaceRepository.writeTextInRootfs(workspaceId, path, text, overwrite)
-        listOf(UIMessagePart.Text(entry.toJson().toString()))
+        if (path.startsWith("/workspace/")) {
+            val relative = path.removePrefix("/workspace/")
+            val before = workspaceRepository.readReviewBase(workspaceId, relative)
+            check(overwrite || before == null) { "File already exists: $path" }
+            workspaceProposal(workspaceId, relative, before, text)
+        } else {
+            val entry = workspaceRepository.writeTextInRootfs(workspaceId, path, text, overwrite)
+            listOf(UIMessagePart.Text(entry.toJson().toString()))
+        }
     },
 )
 
@@ -188,13 +213,17 @@ private fun createEditFileTool(
         val replaceAll = params["replace_all"]?.jsonPrimitive?.contentOrNull?.toBooleanStrictOrNull() ?: false
         require(oldText.isNotEmpty()) { "old_text must not be empty" }
 
-        val original = workspaceRepository.readTextInRootfs(workspaceId, path)
+        val relative = path.takeIf { it.startsWith("/workspace/") }?.removePrefix("/workspace/")
+        val original = if (relative != null) workspaceRepository.readReviewBase(workspaceId, relative)
+            ?: error("File does not exist: $path")
+        else workspaceRepository.readTextInRootfs(workspaceId, path)
         // 逐级尝试 exact -> line_trimmed -> block_anchor 替换器, 见 TextReplacers.kt
         val result = try {
             replaceText(original, oldText, newText, replaceAll)
         } catch (e: IllegalArgumentException) {
             error("${e.message} (path: $path)")
         }
+        if (relative != null) return@Tool workspaceProposal(workspaceId, relative, original, result.updated)
         val entry = workspaceRepository.writeTextInRootfs(workspaceId, path, result.updated, overwrite = true)
         val diff = generateUnifiedDiff(original, result.updated, entry.path)
         listOf(

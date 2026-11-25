@@ -142,6 +142,7 @@ private fun ModelSettingsPage(settings: Settings, vm: SettingVM, contentPadding:
                 onSelect = { vm.updateSettings { current -> current.copy(chatModelId = it.id) } },
             )
         }
+        item { ModelReplacementControl(settings) }
         if (selectedModel != null) item {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 me.rerere.zeroagent.ui.pages.setting.components.ModelGenerationControls(selectedModel, selectedModel.findProvider(settings.providers)) { edited ->

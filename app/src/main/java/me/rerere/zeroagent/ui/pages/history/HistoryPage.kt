@@ -70,6 +70,17 @@ fun HistoryPage(vm: HistoryVM = koinViewModel()) {
     var showDeleteAllDialog by remember { mutableStateOf(false) }
 
     val conversations by vm.conversations.collectAsStateWithLifecycle()
+    val recycled by vm.recycled.collectAsStateWithLifecycle()
+    var showTrash by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    if (showTrash) ConversationTrashDialog(
+        conversations = recycled,
+        locked = { me.rerere.zeroagent.ui.components.ui.ChatPrivacy.chatLocked(context, it.id) },
+        loadDetails = { vm.getRecycledDetails(it.id) },
+        restore = { vm.restoreRecycled(it.id) },
+        purge = vm::purgeRecycled,
+        onClose = { showTrash = false },
+    )
 
     Scaffold(
         topBar = {
@@ -82,6 +93,7 @@ fun HistoryPage(vm: HistoryVM = koinViewModel()) {
                     BackButton()
                 },
                 actions = {
+                    TextButton(onClick = { showTrash = true }) { Text("回收桶") }
                     IconButton(
                         onClick = {
                             navController.navigate(Screen.MessageSearch)
@@ -120,16 +132,17 @@ fun HistoryPage(vm: HistoryVM = koinViewModel()) {
                     },
                     onDelete = {
                         scope.launch {
-                            // 先获取完整的对话数据（包含 messageNodes），用于撤销恢复
-                            val fullConversation = vm.getFullConversation(conversation.id) ?: conversation
-                            vm.deleteConversation(conversation)
+                            if (!vm.recycleConversation(conversation)) {
+                                snackbarHostState.showSnackbar("請先停止這個聊天室的回覆，再移到回收桶。")
+                                return@launch
+                            }
                             val result = snackbarHostState.showSnackbar(
                                 message = snackMessageDeleted,
                                 actionLabel = snackMessageUndo,
                                 withDismissAction = true,
                             )
                             if (result == SnackbarResult.ActionPerformed) {
-                                vm.restoreConversation(fullConversation)
+                                vm.restoreRecycled(conversation.id)
                             }
                         }
                     },

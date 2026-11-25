@@ -29,8 +29,8 @@ android {
         minSdk = 31
         // Package all existing translations for the language selector.
         targetSdk = 37
-        versionCode = 43
-        versionName = "2.3.1"
+        versionCode = 44
+        versionName = "2.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -350,6 +350,7 @@ dependencies {
     implementation(libs.play.services.location)
     // kotlinx.coroutines.tasks.await for Task<*> (was previously transitive via Firebase)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
 
     // AndroidX Biometric (BiometricPrompt)
     implementation(libs.androidx.biometric)

@@ -189,6 +189,26 @@ class WorkspaceRepository(
         }
     }
 
+    internal suspend fun readReviewBase(id: String, path: String): String? = withContext(Dispatchers.IO) {
+        val target = trackedFile(id, path) ?: error("這個路徑無法安全預覽。")
+        if (Files.notExists(target.toPath(), NOFOLLOW_LINKS)) null
+        else WorkspaceTextChanges.snapshot(target)?.text ?: error("檔案太大或無法以文字讀取。")
+    }
+
+    internal suspend fun writeReviewedText(id: String, path: String, expected: String?, text: String) =
+        withContext(Dispatchers.IO) {
+            fileChangeMutex.withLock {
+                val workspace = dao.getById(id) ?: error("找不到工作區。")
+                val target = trackedFile(id, path) ?: error("這個路徑無法安全改寫。")
+                val snapshot = WorkspaceTextChanges.snapshot(target)
+                val unchanged = if (expected == null) Files.notExists(target.toPath(), NOFOLLOW_LINKS)
+                    else snapshot?.text == expected
+                check(unchanged) { "檔案已被其他操作更新，請重新整理後再提出變更。" }
+                manager.writeText(workspace.root, path, text, overwrite = expected != null)
+                fileChanges.record(id, target, snapshot, WorkspaceTextChanges.snapshot(target))
+            }
+        }
+
     /** Captures dedicated text edits in the files area, including approved Rootfs tool writes. */
     internal suspend fun <T> withWorkspaceTextChange(
         id: String,
@@ -226,6 +246,13 @@ class WorkspaceRepository(
             fileChanges.restore(id, target, change)
         }
     }
+
+    internal suspend fun isScopedReadPath(id: String, path: String, directory: Boolean): Boolean =
+        withContext(Dispatchers.IO) {
+            val file = trackedFile(id, path) ?: return@withContext false
+            if (directory) Files.isDirectory(file.toPath(), NOFOLLOW_LINKS)
+            else Files.isRegularFile(file.toPath(), NOFOLLOW_LINKS)
+        }
 
     // Skip links and ambiguous path syntax without changing how existing callers write files.
     private suspend fun trackedFile(id: String, path: String): File? {

@@ -79,6 +79,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import me.rerere.ai.provider.Model
+import me.rerere.ai.core.MessageRole
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.ai.ui.UIMessage
 import me.rerere.hugeicons.HugeIcons
@@ -89,6 +90,9 @@ import me.rerere.hugeicons.stroke.MessageAdd01
 import me.rerere.hugeicons.stroke.ComputerTerminal01
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.zeroagent.R
+import me.rerere.zeroagent.ui.components.message.LocalPendingMessageReview
+import me.rerere.zeroagent.ui.components.message.PendingMessageReview
+import me.rerere.zeroagent.ui.components.message.PendingMessageReviewButton
 import me.rerere.zeroagent.data.chat.ChatCommandEffect
 import me.rerere.zeroagent.data.chat.ChatSlashCommand
 import me.rerere.zeroagent.data.datastore.Settings
@@ -149,6 +153,7 @@ fun ChatPage(
     val loadingJob by vm.conversationJob.collectAsStateWithLifecycle()
     val processingStatus by vm.processingStatus.collectAsStateWithLifecycle()
     val currentChatModel by vm.currentChatModel.collectAsStateWithLifecycle()
+    WarmChatModel(id, currentChatModel, setting.providers, loadingJob != null)
     val errors by vm.errors.collectAsStateWithLifecycle()
     // U4 — the sub-agent registry is not collected anywhere in the UI today, so a parent turn that
     // dispatched background work had no live signal at all. Fold it into the status line the chat
@@ -307,6 +312,7 @@ private fun ChatPageContent(
     val toaster = LocalToaster.current
     val context = LocalContext.current
     val localizedResources = androidx.compose.ui.platform.LocalResources.current
+    val reviewStore = remember(context, conversation.id) { PendingMessageReview(context, conversation.id) }
     val workspaceRepository: WorkspaceRepository = koinInject()
     val turnFooters by vm.turnFooters.collectAsStateWithLifecycle()
     var previewMode by rememberSaveable { mutableStateOf(false) }
@@ -452,6 +458,33 @@ private fun ChatPageContent(
                             Text(subAgentStatus)
                         }
                     }
+                    CompositionLocalProvider(LocalPendingMessageReview provides reviewStore) {
+                        PendingMessageReviewButton(conversation.messageNodes) { nodeId ->
+                            val index = conversation.messageNodes.displayIndexOf(nodeId)
+                            if (index >= 0) {
+                                previewMode = false
+                                chatListState.requestScrollToItem(index)
+                            }
+                        }
+                    }
+                    if (loadingJob == null && currentChatModel != null && errors.any { canSuggestFallback(it.error) }) {
+                        FallbackModelButton(
+                            current = currentChatModel,
+                            settings = setting,
+                            hasAttachments = conversation.files.isNotEmpty(),
+                            onSwitch = { model, resume ->
+                                vm.setChatModel(model, updateDefault = false)
+                                if (resume) {
+                                    val last = conversation.currentMessages.lastOrNull()
+                                    if (last?.role == MessageRole.USER) {
+                                        vm.regenerateAtMessage(last)
+                                    } else {
+                                        vm.handleMessageSend(listOf(UIMessagePart.Text("請從上一則未完成的回覆接續，避免重複已完成的操作。")))
+                                    }
+                                }
+                            },
+                        )
+                    }
                     ChatContextMeter(
                         conversation = conversation,
                         contextLength = currentChatModel?.contextLength,
@@ -580,7 +613,10 @@ private fun ChatPageContent(
                         action = { androidx.compose.material3.TextButton(onClick = vm::undoDeleteMessage) { Text("復原") } },
                     ) { Text("這則訊息即將刪除") }
                 }
-                CompositionLocalProvider(LocalConversationReplyMotion provides liveReplyMotion) {
+                CompositionLocalProvider(
+                    LocalConversationReplyMotion provides liveReplyMotion,
+                    LocalPendingMessageReview provides reviewStore,
+                ) {
                 if (conversation.currentMessages.isNotEmpty() || loadingJob != null || errors.isNotEmpty()) ChatList(
                     innerPadding = listInset,
                     conversation = conversation,

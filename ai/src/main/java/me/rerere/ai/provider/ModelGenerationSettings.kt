@@ -14,6 +14,12 @@ data class ModelGenerationSettings(
     val reasoningLevel: ReasoningLevel = ReasoningLevel.AUTO,
     val streamOutput: Boolean = true,
     val contextMessageLimit: Int = 0,
+    val maxToolCallsPerTurn: Int? = null,
+    val monthlyBudgetUsd: Double? = null,
+    val taskBudgetUsd: Double? = null,
+    val taskOutputTokenLimit: Int? = null,
+    val fallbackModelIds: Set<String> = emptySet(),
+    val warmOnChatOpen: Boolean = false,
 )
 
 @Serializable

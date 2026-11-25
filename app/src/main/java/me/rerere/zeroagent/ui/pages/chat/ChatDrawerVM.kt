@@ -170,9 +170,14 @@ class ChatDrawerVM(
         settingsStore.update(settings)
     }
 
-    fun deleteConversation(conversation: Conversation) = viewModelScope.launch {
-        conversationRepo.deleteConversation(conversation)
+    suspend fun recycleConversation(conversation: Conversation): Boolean = chatService.recycleConversation(conversation.id)
+
+    fun stopBackgroundConversation(id: Uuid) = viewModelScope.launch {
+        chatService.stopGeneration(id)
     }
+
+    suspend fun runningConversationTitle(id: Uuid): String? =
+        conversationRepo.getConversationTitle(id)
 
     fun updatePinnedStatus(conversation: Conversation) = viewModelScope.launch {
         conversationRepo.togglePinStatus(conversation.id)

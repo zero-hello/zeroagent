@@ -156,7 +156,7 @@ fun SearchPage(vm: SearchVM = koinViewModel()) {
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .focusRequester(focusRequester),
                 placeholder = { Text(stringResource(R.string.search_page_placeholder)) },
-                supportingText = { Text("可搭配更新日期 after:2026-01-01 before:2027-01-01（UTC）、model:GPT、type:document、tag:工作。舊附件檔名請先重建索引。") },
+                supportingText = { Text("可搭配更新日期 after:2026-01-01 before:2027-01-01（UTC）、model:GPT、type:document、tag:工作、project:\"專案名稱\"。舊附件檔名請先重建索引。") },
                 isError = vm.searchError != null,
                 shape = RoundedCornerShape(50),
                 singleLine = true,

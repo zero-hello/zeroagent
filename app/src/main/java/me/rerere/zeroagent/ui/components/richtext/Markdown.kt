@@ -246,7 +246,8 @@ fun MarkdownBlock(
     content: String,
     modifier: Modifier = Modifier,
     style: TextStyle = LocalTextStyle.current,
-    onClickCitation: (String) -> Unit = {}
+    onClickCitation: (String) -> Unit = {},
+    showOutline: Boolean = false,
 ) {
     var (data, setData) = remember { mutableStateOf(parseMarkdown(content)) }
 
@@ -268,6 +269,7 @@ fun MarkdownBlock(
             modifier = modifier,
             style = style,
             onClickCitation = onClickCitation,
+            showOutline = showOutline,
         )
     } else {
         ProvideTextStyle(style) {
@@ -275,6 +277,16 @@ fun MarkdownBlock(
                 modifier = modifier.padding(horizontal = 4.dp)
             ) {
                 val replyMotion = LocalReplyMotion.current
+                val outline = remember(data, showOutline) {
+                    if (!showOutline) emptyMap() else buildMap {
+                        data.astTree.children.forEachIndexed { index, element ->
+                            val title = element.children.firstOrNull { it.type == MarkdownTokenTypes.ATX_CONTENT }
+                                ?.getTextInNode(data.preprocessed)?.trim()
+                            if (!title.isNullOrEmpty() && size < 50) put(index, OutlineEntry(title))
+                        }
+                    }
+                }
+                ReplyOutline(outline.values)
                 data.astTree.children.forEachIndexed { index, child ->
                     CompositionLocalProvider(LocalReplyMotion provides replyMotion.takeIf { index == data.astTree.children.lastIndex }) {
                         if (child.type in replyStructuredMarkdownTypes) {
@@ -283,7 +295,7 @@ fun MarkdownBlock(
                                     MarkdownNode(node = child, content = data.preprocessed, onClickCitation = onClickCitation)
                                 }
                             }
-                        } else MarkdownNode(node = child, content = data.preprocessed, onClickCitation = onClickCitation)
+                        } else MarkdownNode(node = child, content = data.preprocessed, modifier = Modifier.outlineAnchor(outline[index]), onClickCitation = onClickCitation)
                     }
                 }
             }

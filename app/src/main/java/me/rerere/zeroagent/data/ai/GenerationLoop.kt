@@ -136,6 +136,7 @@ class GenerationLoop(
         isToolAutoApproved: suspend (toolName: String) -> Boolean = { false },
         // Fresh blacklist eligibility for the separate reviewer. No callback means human approval.
         canReviewTool: suspend (toolName: String) -> Boolean = { false },
+        isScopedReadApproved: suspend (UIMessagePart.Tool) -> Boolean = { false },
         // Optional per-call addendum appended to the system prompt. Used by surfaces that
         // need the model to know runtime context (e.g. "you're talking via Telegram, the
         // chat_id is 12345") without polluting the user message body — without this the
@@ -216,6 +217,8 @@ class GenerationLoop(
             }
         })
 
+        val toolCallLimit = model.generation.maxToolCallsPerTurn?.takeIf { it > 0 }
+        val countedToolIds = toolsAlreadyStartedInTurn(messages).toMutableSet()
         val turnStartMs = android.os.SystemClock.elapsedRealtime()
         var loopGuardTripCount = 0
 
@@ -297,6 +300,7 @@ class GenerationLoop(
                 needsApproval = { tool -> toolsInternal.find { it.name == tool.toolName }?.needsApproval(tool.inputAsJson()) == true },
                 isToolAutoApproved = isToolAutoApproved,
                 canReview = canReviewTool,
+                isScopedReadApproved = isScopedReadApproved,
                 review = { tool ->
                     processingStatus.value = context.zeroAgentLocalizedContext().getString(
                         me.rerere.zeroagent.R.string.access_reviewing, tool.toolName,
@@ -550,7 +554,13 @@ class GenerationLoop(
             }
 
             // The same gate covers freshly proposed calls AND Auto siblings after a human resume.
-            val resolvedTools = toolsToProcess.map { approval.resolve(it) }
+            val remainingToolCalls = toolCallLimit?.let { (it - countedToolIds.size).coerceAtLeast(0) }
+            val rejectedToolIds = if (remainingToolCalls == null) emptySet() else toolsToProcess
+                .filter { it.executionStartedAt == null && !it.isExecuted }
+                .distinctBy { it.toolCallId }.drop(remainingToolCalls).mapTo(hashSetOf()) { it.toolCallId }
+            val resolvedTools = toolsToProcess.map { tool ->
+                if (tool.toolCallId in rejectedToolIds) denyToolAboveTurnLimit(tool) else approval.resolve(tool)
+            }
             if (resolvedTools != toolsToProcess) {
                 val last = messages.last()
                 messages = messages.dropLast(1) + last.copy(parts = last.parts.map { part ->
@@ -561,7 +571,7 @@ class GenerationLoop(
             if (resolvedTools.any { it.isPending }) break
 
             val batch = toolExecutor.execute(
-                resolvedTools = resolvedTools,
+                resolvedTools = resolvedTools.filterNot { it.toolCallId in rejectedToolIds },
                 initialMessages = messages,
                 toolsInternal = toolsInternal,
                 approval = approval,
@@ -575,6 +585,7 @@ class GenerationLoop(
             messages = batch.messages
             loopGuardTripCount = batch.loopGuardTripCount
             val executedTools = batch.executedTools
+            countedToolIds += executedTools.filter { it.executionStartedAt != null }.map { it.toolCallId }
             val waitingForFreshApproval = batch.waitingForFreshApproval
 
             if (executedTools.isEmpty()) {
@@ -603,6 +614,7 @@ class GenerationLoop(
             )
 
             if (waitingForFreshApproval) break
+            if (remainingToolCalls == 0 && rejectedToolIds.isNotEmpty()) break
 
             onAfterToolExecution(messages)?.let { compactedMessages ->
                 Log.i(TAG, "generateText: replacing request history after tool execution")

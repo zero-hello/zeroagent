@@ -121,6 +121,7 @@ private fun generateMarkdownHtml(content: String): String {
 
 // ---- Main composable ----
 
+private val htmlHeadingTags = setOf("h1", "h2", "h3", "h4", "h5", "h6")
 private val replyStructuredHtmlTags = setOf("pre", "ul", "ol", "blockquote", "table")
 
 @Composable
@@ -129,6 +130,7 @@ fun MarkdownNew(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalTextStyle.current,
     onClickCitation: (String) -> Unit = {},
+    showOutline: Boolean = false,
 ) {
     var html by remember {
         mutableStateOf(
@@ -154,6 +156,16 @@ fun MarkdownNew(
         Column(modifier = modifier.padding(start = 4.dp)) {
             val children = document.body().childNodes().filterNot { it is TextNode && it.isBlank }
             val replyMotion = LocalReplyMotion.current
+            val outline = remember(document, showOutline) {
+                if (!showOutline) emptyMap() else buildMap {
+                    children.forEachIndexed { index, node ->
+                        if (node is Element && node.normalName() in htmlHeadingTags && size < 50 && node.text().isNotBlank()) {
+                            put(index, OutlineEntry(node.text()))
+                        }
+                    }
+                }
+            }
+            ReplyOutline(outline.values)
             children.forEachIndexed { index, node ->
                 CompositionLocalProvider(LocalReplyMotion provides replyMotion.takeIf { index == children.lastIndex }) {
                     if (node is Element && node.normalName() in replyStructuredHtmlTags) {
@@ -162,7 +174,11 @@ fun MarkdownNew(
                                 HtmlBodyNode(node = node, onClickCitation = onClickCitation)
                             }
                         }
-                    } else HtmlBodyNode(node = node, onClickCitation = onClickCitation)
+                    } else {
+                        val entry = outline[index]
+                        if (entry == null) HtmlBodyNode(node = node, onClickCitation = onClickCitation)
+                        else Box(Modifier.outlineAnchor(entry)) { HtmlBodyNode(node = node, onClickCitation = onClickCitation) }
+                    }
                 }
             }
         }

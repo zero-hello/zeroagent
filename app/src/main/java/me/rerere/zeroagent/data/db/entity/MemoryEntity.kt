@@ -13,4 +13,6 @@ data class MemoryEntity(
     val assistantId: String,
     @ColumnInfo("content")
     val content: String = "",
+    @ColumnInfo("expires_at")
+    val expiresAt: Long? = null,
 )

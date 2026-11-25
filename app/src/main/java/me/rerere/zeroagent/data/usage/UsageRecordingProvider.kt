@@ -2,6 +2,9 @@ package me.rerere.zeroagent.data.usage
 
 import android.util.Log
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.Flow
 import me.rerere.ai.core.TokenUsage
 import me.rerere.ai.provider.Provider
@@ -29,6 +32,8 @@ private const val TAG = "UsageLedger"
 internal class UsageRecordingProvider<T : ProviderSetting>(
     private val delegate: Provider<T>,
     private val ledger: UsageLedger,
+    private val budget: ModelMonthlyBudget? = null,
+    private val resourceLimits: me.rerere.zeroagent.data.local.GenerationResourceLimits? = null,
 ) : Provider<T> by delegate {
 
     override suspend fun generateText(
@@ -37,11 +42,17 @@ internal class UsageRecordingProvider<T : ProviderSetting>(
         params: TextGenerationParams,
     ): TextGenerationResult {
         val startedAt = System.currentTimeMillis()
+        val usageContext = currentUsageCallContext() ?: UsageCallContext()
+        resourceLimits?.ensureAllowed(providerSetting, usageContext.purpose)
         val effective = params.copy(reasoningLevel = me.rerere.ai.core.ReasoningCapabilities.effective(params.model, providerSetting, params.reasoningLevel))
-        val result = try { delegate.generateText(providerSetting, ZeroAgentSystemPolicy.enforce(messages), effective) } catch (error: Exception) {
+        val secured = ZeroAgentSystemPolicy.enforce(messages)
+        val reserved = budget?.reserve(effective.model, secured, effective.maxTokens, usageContext.userTurnId)
+        val capped = reserved?.let { effective.copy(maxTokens = it.maxOutputTokens) } ?: effective
+        val result = try { delegate.generateText(providerSetting, secured, capped) } catch (error: Exception) {
             me.rerere.ai.core.ReasoningCapabilities.learnFromError(params.model, providerSetting, error)
             throw error
         }
+        kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { budget?.settle(reserved, result.usage) }
         recordCall(
             usage = result.usage,
             context = currentUsageCallContext() ?: UsageCallContext(),
@@ -74,11 +85,25 @@ internal class UsageRecordingProvider<T : ProviderSetting>(
         val startedAt = System.currentTimeMillis()
         val context = currentUsageCallContext() ?: UsageCallContext()
         val effective = params.copy(reasoningLevel = me.rerere.ai.core.ReasoningCapabilities.effective(params.model, providerSetting, params.reasoningLevel))
-        val stream = try { delegate.streamText(providerSetting, ZeroAgentSystemPolicy.enforce(messages), effective) } catch (error: Exception) {
-            me.rerere.ai.core.ReasoningCapabilities.learnFromError(params.model, providerSetting, error)
-            throw error
-        }
-        return stream.catch { error ->
+        val secured = ZeroAgentSystemPolicy.enforce(messages)
+        return flow {
+            resourceLimits?.ensureAllowed(providerSetting, context.purpose)
+            var lastCheckedAt = if (resourceLimits != null) android.os.SystemClock.elapsedRealtime() else 0L
+            val reserved = budget?.reserve(effective.model, secured, effective.maxTokens, context.userTurnId)
+            val capped = reserved?.let { effective.copy(maxTokens = it.maxOutputTokens) } ?: effective
+            var usage: TokenUsage? = null
+            try {
+                emitAll(delegate.streamText(providerSetting, secured, capped).onEach { chunk ->
+                    if (chunk is StreamChunk.Usage) usage = chunk.usage
+                    if (resourceLimits != null && android.os.SystemClock.elapsedRealtime() - lastCheckedAt >= 15_000L) {
+                        lastCheckedAt = android.os.SystemClock.elapsedRealtime()
+                        resourceLimits.ensureAllowed(providerSetting, context.purpose)
+                    }
+                })
+            } finally {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { budget?.settle(reserved, usage) }
+            }
+        }.catch { error ->
             me.rerere.ai.core.ReasoningCapabilities.learnFromError(params.model, providerSetting, error)
             throw error
         }.recordUsageOnce(
@@ -146,5 +171,9 @@ internal class UsageRecordingProvider<T : ProviderSetting>(
  * registered provider.
  */
 @Suppress("UNCHECKED_CAST")
-internal fun decorateForUsage(provider: Provider<*>, ledger: UsageLedger): Provider<*> =
-    UsageRecordingProvider(provider as Provider<ProviderSetting>, ledger)
+internal fun decorateForUsage(
+    provider: Provider<*>,
+    ledger: UsageLedger,
+    budget: ModelMonthlyBudget? = null,
+    resourceLimits: me.rerere.zeroagent.data.local.GenerationResourceLimits? = null,
+): Provider<*> = UsageRecordingProvider(provider as Provider<ProviderSetting>, ledger, budget, resourceLimits)

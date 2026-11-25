@@ -57,6 +57,9 @@ class ConversationRepository(
         pagingSourceFactory = { conversationDAO.getUnfiledPaging() },
     ).flow.map { data -> data.map { conversationSummaryToConversation(it) } }
 
+    internal suspend fun getConversationSummary(id: Uuid): Conversation? =
+        conversationDAO.getConversationById(id.toString())?.let { conversationEntityToConversation(it, emptyList()) }
+
     suspend fun updateChatModel(id: Uuid, modelId: Uuid) = conversationDAO.updateChatModel(id.toString(), encodeChatModelId(modelId))
 
     suspend fun hasFileReference(fileUrl: String): Boolean =
@@ -294,6 +297,8 @@ class ConversationRepository(
             }
         }
 
+    suspend fun getConversationTitle(id: Uuid): String? = conversationDAO.getTitleById(id.toString())
+
     suspend fun getConversationById(uuid: Uuid): Conversation? {
         val entity = conversationDAO.getConversationById(uuid.toString())
         return if (entity != null) {
@@ -376,13 +381,14 @@ class ConversationRepository(
     ) {
         val conversationId = conversation.id.toString()
         val obsolete = database.withTransaction {
+            if (conversationDAO.conversationInTrash(conversationId)) return@withTransaction null
             val previous = messageNodeDAO.getPayloadReferences(conversationId)
             conversationDAO.update(conversationToConversationEntity(conversation))
             messageNodeDAO.deleteByConversation(conversationId)
             saveMessageNodes(conversationId, conversation.messageNodes)
             if (previous.isEmpty()) emptySet()
             else previous.toSet() - messageNodeDAO.getPayloadReferences(conversationId).toSet()
-        }
+        } ?: return
         if (updateSearchIndex) {
             messageFtsManager.indexConversation(conversation)
             payloads.pruneUnreferenced(obsolete)
@@ -391,6 +397,35 @@ class ConversationRepository(
 
     internal fun indexTransferredConversation(conversation: Conversation) {
         messageFtsManager.indexOnCurrentConnection(conversation)
+    }
+
+    internal fun observeTrash(): Flow<List<Conversation>> = conversationDAO.observeTrash().map { rows ->
+        rows.map { conversationEntityToConversation(it, emptyList()) }
+    }
+
+    internal suspend fun moveToTrash(id: Uuid): Boolean =
+        conversationDAO.moveToTrash(id.toString(), System.currentTimeMillis()) > 0
+
+    internal suspend fun restoreFromTrash(id: Uuid): Boolean {
+        val restored = conversationDAO.restoreFromTrash(id.toString()) > 0
+        if (restored) getConversationById(id)?.let { messageFtsManager.indexConversation(it) }
+        return restored
+    }
+
+    internal suspend fun getTrashedConversation(id: Uuid): Conversation? =
+        conversationDAO.getTrashedConversation(id.toString())?.let {
+            conversationEntityToConversation(it, loadMessageNodes(it.id))
+        }
+
+    internal suspend fun purgeTrashedConversation(id: Uuid, captured: Conversation): Boolean {
+        val obsolete = database.withTransaction {
+            if (!conversationDAO.conversationInTrash(id.toString())) return@withTransaction null
+            val references = messageNodeDAO.getPayloadReferences(id.toString())
+            conversationDAO.deleteById(id.toString())
+            references
+        } ?: return false
+        finishConversationDeletion(captured, obsolete.toSet())
+        return true
     }
 
     suspend fun deleteConversation(conversation: Conversation) {
@@ -408,6 +443,10 @@ class ConversationRepository(
             )
             previous
         }
+        finishConversationDeletion(fullConversation, obsolete.toSet())
+    }
+
+    private suspend fun finishConversationDeletion(conversation: Conversation, obsolete: Set<String>) {
         payloads.pruneUnreferenced(obsolete)
         // message_fts is a derived index over the same rows: only touch it after the
         // authoritative delete has committed, so a failed/rolled-back transaction can't
@@ -416,7 +455,7 @@ class ConversationRepository(
         drafts.remove(conversation.id)
         drafts.clearUnsent(conversation.id)
         messageFtsManager.deleteConversation(conversation.id.toString())
-        filesManager.deleteChatFiles(fullConversation.files)
+        filesManager.deleteChatFiles(conversation.files.filterNot { hasFileReference(it.toString()) })
     }
 
     suspend fun searchMessages(

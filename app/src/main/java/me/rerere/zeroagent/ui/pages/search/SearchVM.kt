@@ -173,6 +173,10 @@ class SearchVM(
             if (request.debounce) delay(300L)
             val filter = ConversationSearchFilter.parse(request.query)
             val store = ProjectStore.get(context)
+            val projectConversationIds = filter.project?.let { name ->
+                store.projects.value.asSequence().filter { it.name.equals(name, ignoreCase = true) }
+                    .flatMap { it.conversationIds.asSequence() }.toSet()
+            }
             val models = settingsStore.settingsFlow.value.providers.flatMap { it.models }.associateBy { it.id }
             val cache = object : LinkedHashMap<String, Conversation?>(16, .75f, true) {
                 override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Conversation?>?): Boolean = size > 16
@@ -180,6 +184,7 @@ class SearchVM(
             val conversationMatches = mutableMapOf<String, Boolean>()
 
             suspend fun matches(result: MessageSearchResult): Boolean {
+                if (projectConversationIds != null && result.conversationId !in projectConversationIds) return false
                 if (!conversationMatches.getOrPut(result.conversationId) {
                     !ChatPrivacy.chatLocked(context, Uuid.parse(result.conversationId)) &&
                         (filter.tag == null || store.tags(result.conversationId).any { it.equals(filter.tag, true) })

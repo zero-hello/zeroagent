@@ -77,6 +77,7 @@ fun WorkspaceFileEditorPage(
     var loading by remember { mutableStateOf(true) }
     var loadError by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
+    var draftReview by remember(id, area, path) { mutableStateOf<List<WorkspaceTextEdit>?>(null) }
     var savedText by remember(id, area, path) { mutableStateOf("") }
     var diff by remember(id, area, path) { mutableStateOf<Pair<WorkspaceTextChanges.Change, String>?>(null) }
     var restoring by remember(id, area, path) { mutableStateOf(false) }
@@ -96,6 +97,29 @@ fun WorkspaceFileEditorPage(
             loadError = it.message ?: "Could not read the file"
             loading = false
         }
+    }
+
+    draftReview?.let { edits ->
+        WorkspaceDraftReview(edits, onDismiss = { draftReview = null }, onApply = { selected ->
+            draftReview = null
+            saving = true
+            val previous = savedText
+            scope.launch {
+                try {
+                    val merged = withContext(Dispatchers.Default) { applyWorkspaceEdits(previous, selected) }
+                    repository.writeReviewedText(id, path, previous, merged)
+                    savedText = merged
+                    textState.setTextAndPlaceCursorAtEnd(merged)
+                    toaster.show("已儲存所選變更", type = ToastType.Success)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    toaster.show(errorContext.localizedErrorMessage(error), type = ToastType.Error)
+                } finally {
+                    saving = false
+                }
+            }
+        })
     }
 
     diff?.let { (change, lines) ->
@@ -186,24 +210,22 @@ fun WorkspaceFileEditorPage(
                                 if (saving) return@TextButton
                                 saving = true
                                 val submittedText = textState.text.toString()
+                                val previous = savedText
                                 scope.launch {
-                                    runCatching {
-                                        repository.writeText(
-                                            id = id,
-                                            path = path,
-                                            text = submittedText,
-                                            overwrite = true,
-                                        )
-                                    }.onSuccess {
-                                        savedText = submittedText
-                                        toaster.show("Saved", type = ToastType.Success)
-                                    }.onFailure {
-                                        toaster.show(errorContext.localizedErrorMessage(it), type = ToastType.Error)
+                                    try {
+                                        draftReview = withContext(Dispatchers.Default) {
+                                            calculateWorkspaceEdits(previous, submittedText)
+                                        }.takeIf { it.isNotEmpty() }
+                                    } catch (cancelled: CancellationException) {
+                                        throw cancelled
+                                    } catch (error: Exception) {
+                                        toaster.show(errorContext.localizedErrorMessage(error), type = ToastType.Error)
+                                    } finally {
+                                        saving = false
                                     }
-                                    saving = false
                                 }
                             },
-                            enabled = !saving,
+                            enabled = !saving && textState.text.toString() != savedText,
                         ) {
                             Text(androidx.compose.ui.res.stringResource(me.rerere.zeroagent.R.string.zeroagent6s_save))
                         }

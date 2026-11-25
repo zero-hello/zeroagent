@@ -24,6 +24,7 @@ data class UsageCallContext(
     val runId: String? = null,
     val parentRunId: String? = null,
     val privateSession: Boolean = false,
+    val userTurnId: String? = null,
 ) : AbstractCoroutineContextElement(UsageCallContext) {
     companion object Key : CoroutineContext.Key<UsageCallContext>
 }

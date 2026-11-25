@@ -106,6 +106,28 @@ class LlamaCppProvider(
      *  which holds its own mutex for the whole inference so concurrent callers queue up rather
      *  than racing the loaded model. */
     private val loadMutex = Mutex()
+    private val idleScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.IO)
+    private var unloadWhenIdle: kotlinx.coroutines.Job? = null
+
+    suspend fun warmModel(model: Model) = loadMutex.withLock {
+        try {
+            ensureModelReady(emptyList(), TextGenerationParams(model = model))
+        } finally {
+            scheduleIdleUnload()
+        }
+    }
+
+    private fun scheduleIdleUnload() {
+        unloadWhenIdle?.cancel()
+        if (loadedPath.get() == null) return
+        unloadWhenIdle = idleScope.launch {
+            kotlinx.coroutines.delay(120_000)
+            loadMutex.withLock {
+                runtime.unload()
+                loadedPath.set(null)
+            }
+        }
+    }
 
     override suspend fun listModels(providerSetting: ProviderSetting.LlamaCppLocal): List<Model> =
         providerSetting.models
@@ -115,8 +137,13 @@ class LlamaCppProvider(
         messages: List<UIMessage>,
         params: TextGenerationParams,
     ): TextGenerationResult = loadMutex.withLock {
-        ensureModelReady(messages, params)
-        generateFromLoadedModel(runtime, messages, params)
+        unloadWhenIdle?.cancel()
+        try {
+            ensureModelReady(messages, params)
+            generateFromLoadedModel(runtime, messages, params)
+        } finally {
+            scheduleIdleUnload()
+        }
     }
 
     override suspend fun streamText(
@@ -127,8 +154,13 @@ class LlamaCppProvider(
         // loadMutex is held across the whole load-then-generate sequence, not just the load -
         // see the mutex's doc comment for why the generation itself must stay inside the lock.
         loadMutex.withLock {
-            ensureModelReady(messages, params)
-            emitAll(streamFromLoadedModel(runtime, messages, params))
+            unloadWhenIdle?.cancel()
+            try {
+                ensureModelReady(messages, params)
+                emitAll(streamFromLoadedModel(runtime, messages, params))
+            } finally {
+                scheduleIdleUnload()
+            }
         }
     }
 

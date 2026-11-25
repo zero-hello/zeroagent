@@ -112,6 +112,9 @@ internal class GenerationRequestExecutor(
         excludedContext: Set<String> = emptySet(),
         recalledPrompt: String? = null,
     ) {
+        val userTurnId = conversationId?.let {
+            messages.lastOrNull { message -> message.role == MessageRole.USER && !message.isSynthetic }?.id?.toString()
+        }
         val trackContext = conversationId != null && LabPreferences.enabled(context, "reply_context")
         val summaryId = if ((trackContext || "summary" in excludedContext) && conversationId != null) {
             conversationRepo.getCompaction(conversationId)?.sourceEndNodeId
@@ -318,7 +321,7 @@ internal class GenerationRequestExecutor(
                                         conversationId = conversationId?.toString(),
                                         assistantId = assistant.id.toString(),
                                         runId = usageAttribution?.runId,
-                                        parentRunId = usageAttribution?.parentRunId,
+                                        parentRunId = usageAttribution?.parentRunId, userTurnId = userTurnId,
                                     )
                                 ) {
                                     providerImpl.streamText(
@@ -463,7 +466,7 @@ internal class GenerationRequestExecutor(
                             conversationId = conversationId?.toString(),
                             assistantId = assistant.id.toString(),
                             runId = usageAttribution?.runId,
-                            parentRunId = usageAttribution?.parentRunId,
+                            parentRunId = usageAttribution?.parentRunId, userTurnId = userTurnId,
                         )
                     ) {
                         captureHandoff(internalMessages)

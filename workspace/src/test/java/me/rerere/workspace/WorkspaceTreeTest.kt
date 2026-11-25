@@ -13,6 +13,20 @@ import java.nio.file.Files
 class WorkspaceTreeTest {
 
     @Test
+    fun `directory listing omits symbolic links`() {
+        val root = Files.createTempDirectory("workspace-tree-link-test")
+        val folder = Files.createDirectory(root.resolve("folder"))
+        Files.writeString(folder.resolve("file.txt"), "visible")
+        try {
+            Files.createSymbolicLink(root.resolve("alias"), folder)
+        } catch (error: Exception) {
+            org.junit.Assume.assumeNoException("Symbolic links are unavailable on this host", error)
+        }
+        val entries = WorkspaceFileSystem().tree(root.toFile()).entries.map { it.path }
+        assertEquals(listOf("folder", "folder/file.txt"), entries)
+    }
+
+    @Test
     fun `nested directories and files are listed depth-first with directories before files`() {
         val root = Files.createTempDirectory("workspace-tree-test").toFile()
         val fileSystem = WorkspaceFileSystem()

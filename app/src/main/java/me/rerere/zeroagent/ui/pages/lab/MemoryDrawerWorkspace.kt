@@ -52,6 +52,9 @@ import me.rerere.zeroagent.data.lab.MemoryChange
 import me.rerere.zeroagent.data.productivity.ProjectStore
 import me.rerere.zeroagent.data.repository.MemoryRepository
 import org.koin.compose.koinInject
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -71,6 +74,8 @@ internal fun MemoryDrawerWorkspace(modifier: Modifier) {
         else -> projects.firstOrNull { it.id == key }?.name ?: "模型記憶"
     }
     var editing by remember { mutableStateOf<MemoryEntity?>(null) }
+    var settingExpiry by remember { mutableStateOf<MemoryEntity?>(null) }
+    var expiryInput by remember { mutableStateOf("") }
     var removing by remember { mutableStateOf<MemoryEntity?>(null) }
     var text by remember { mutableStateOf("") }
     var notice by remember { mutableStateOf("") }
@@ -92,7 +97,7 @@ internal fun MemoryDrawerWorkspace(modifier: Modifier) {
         }
     }
     val controls: @Composable () -> Unit = {
-        Text("這裡顯示本機記憶庫與待確認的變更。關閉 Lab 入口後，現有記憶與待確認建議仍會保留。")
+        Text("記憶存在本機，到期後會移除。設定期限的記憶不會加入聊天匯出。")
         ListItem(
             headlineContent = { Text("暫停 AI 新增或修改記憶") },
             supportingContent = { Text("暫停捕捉後仍可查看和編輯現有記憶。需要排除某一筆時，可選擇刪除並阻擋相同內容。") },
@@ -124,7 +129,12 @@ internal fun MemoryDrawerWorkspace(modifier: Modifier) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(scopeName(record.assistantId), style = MaterialTheme.typography.labelLarge)
                 Text(record.content)
-                Row {
+                val until = record.expiresAt?.let { end ->
+                    Instant.ofEpochMilli(end - 1).atZone(ZoneId.systemDefault()).toLocalDate().toString()
+                }
+                if (until != null) Text("保留至 $until", style = MaterialTheme.typography.labelMedium)
+                FlowRow {
+                    TextButton(enabled = !busy, onClick = { settingExpiry = record; expiryInput = until.orEmpty() }) { Text("期限") }
                     TextButton(enabled = !busy, onClick = { editing = record; text = record.content }) { Text("編輯") }
                     TextButton(enabled = !busy, onClick = { removing = record }) { Text("移除") }
                 }
@@ -226,6 +236,30 @@ internal fun MemoryDrawerWorkspace(modifier: Modifier) {
                 write { repository.updateContent(record.id, content) }
             }) { Text("保存") }
         }, dismissButton = { TextButton(onClick = { editing = null }) { Text("取消") } })
+    }
+    settingExpiry?.let { record ->
+        val normalized = expiryInput.trim()
+        val date = runCatching { LocalDate.parse(normalized) }.getOrNull()?.takeIf {
+            it >= LocalDate.now() && it.year <= 9999
+        }
+        AlertDialog(onDismissRequest = { settingExpiry = null }, title = { Text("保留期限") }, text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("填寫日期後，會保留到當天結束。留空可取消期限。")
+                androidx.compose.material3.OutlinedTextField(
+                    value = expiryInput,
+                    onValueChange = { expiryInput = it.take(10) },
+                    label = { Text("年-月-日") },
+                    singleLine = true,
+                    isError = normalized.isNotEmpty() && date == null,
+                )
+            }
+        }, confirmButton = {
+            TextButton(enabled = !busy && (normalized.isEmpty() || date != null), onClick = {
+                val expiry = date?.plusDays(1)?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+                settingExpiry = null
+                write { repository.setExpiry(record.id, expiry) }
+            }) { Text("保存") }
+        }, dismissButton = { TextButton(onClick = { settingExpiry = null }) { Text("取消") } })
     }
     removing?.let { record ->
         AlertDialog(onDismissRequest = { removing = null }, title = { Text("移除這筆記憶？") },

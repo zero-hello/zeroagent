@@ -13,6 +13,7 @@ internal class ConversationToolApproval(
     private val isToolAutoApproved: suspend (String) -> Boolean,
     private val canReview: suspend (String) -> Boolean,
     private val review: suspend (UIMessagePart.Tool) -> ToolReviewResult,
+    private val isScopedReadApproved: suspend (UIMessagePart.Tool) -> Boolean = { false },
 ) {
     private data class Receipt(val name: String, val input: String, val access: ConversationAccessSnapshot)
     private val receipts = mutableMapOf<String, Receipt>()
@@ -29,6 +30,10 @@ internal class ConversationToolApproval(
             return tool.copy(approvalState = state)
         }
         val access = conversationId?.let(ConversationAccess::snapshot)
+        if (conversationId != null && !HeadlessConversations.isHeadless(conversationId) &&
+            !ToolApprovalDefaults.isHardFloor(tool.toolName) && isScopedReadApproved(tool) &&
+            ConversationAccess.snapshot(conversationId) == access
+        ) return tool
         val rootApproved = tool.toolName in setOf("run_root_command", "termux_run_command") && isToolAutoApproved(tool.toolName)
         val assisted = access?.mode == ConversationAccessMode.ASSISTED &&
             !HeadlessConversations.isHeadless(conversationId!!) && !rootApproved

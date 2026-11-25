@@ -30,6 +30,12 @@ interface MemoryDAO {
     @Update
     suspend fun updateMemory(memory: MemoryEntity)
 
+    @Query("UPDATE memoryentity SET expires_at = :expiresAt WHERE id = :id")
+    suspend fun setExpiry(id: Int, expiresAt: Long?): Int
+
+    @Query("DELETE FROM memoryentity WHERE expires_at IS NOT NULL AND expires_at <= :now")
+    suspend fun deleteExpired(now: Long): Int
+
     @Query("DELETE FROM memoryentity WHERE id = :id")
     suspend fun deleteMemory(id: Int)
 

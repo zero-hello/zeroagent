@@ -88,7 +88,7 @@ internal fun shouldRetryGenerationStreamFailure(
     if (receivedMeaningfulOutput || retryAttempt >= maxRetries.coerceAtLeast(0).toLong()) {
         return false
     }
-    if (failure is ResponseStreamErrorException || isContextLimitFailure(failure)) {
+    if (failure is me.rerere.zeroagent.data.usage.ModelBudgetException || failure is me.rerere.zeroagent.data.local.GenerationResourceLimitException || failure is ResponseStreamErrorException || isContextLimitFailure(failure)) {
         return false
     }
     if (isNonRetryableClientError(failure)) {
@@ -122,7 +122,7 @@ internal fun shouldContinueGenerationStream(
     if (!receivedMeaningfulOutput) return false
     if (continuationsUsed >= maxContinuations.coerceAtLeast(0)) return false
     if (isCancellationFailure(failure)) return false
-    if (failure is ResponseStreamErrorException || isContextLimitFailure(failure)) return false
+    if (failure is me.rerere.zeroagent.data.usage.ModelBudgetException || failure is me.rerere.zeroagent.data.local.GenerationResourceLimitException || failure is ResponseStreamErrorException || isContextLimitFailure(failure)) return false
     if (isNonRetryableClientError(failure)) return false
     if (isQuotaExhaustedFailure(failure)) return false
     return true
@@ -137,7 +137,7 @@ internal fun shouldContinueGenerationStream(
 internal fun canContinueFromPartial(partial: UIMessage?): Boolean =
     partial != null &&
         partial.role == MessageRole.ASSISTANT &&
-        partial.parts.none { it is UIMessagePart.ToolCall } &&
+        partial.parts.none { it is UIMessagePart.ToolCall || it is UIMessagePart.Tool || it is UIMessagePart.ToolResult } &&
         partial.parts.any { it is UIMessagePart.Text && it.text.isNotBlank() }
 
 /**
@@ -176,7 +176,7 @@ internal fun shouldRestartGenerationStreamAfterPartial(
 ): Boolean {
     if (!receivedMeaningfulOutput || alreadyRestarted) return false
     if (isCancellationFailure(failure)) return false
-    if (failure is ResponseStreamErrorException || isContextLimitFailure(failure)) return false
+    if (failure is me.rerere.zeroagent.data.usage.ModelBudgetException || failure is me.rerere.zeroagent.data.local.GenerationResourceLimitException || failure is ResponseStreamErrorException || isContextLimitFailure(failure)) return false
     if (isNonRetryableClientError(failure)) return false
     if (isQuotaExhaustedFailure(failure)) return false
     return true

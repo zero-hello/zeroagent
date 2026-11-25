@@ -17,6 +17,14 @@ import me.rerere.zeroagent.ui.components.ui.Switch
 @Composable
 fun ModelGenerationControls(model: Model, provider: ProviderSetting?, onChange: (Model) -> Unit) {
     val g = model.generation
+    if (provider is ProviderSetting.LiteRtLocal || provider is ProviderSetting.LlamaCppLocal) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Text("開啟對話時預先載入模型", Modifier.weight(1f))
+            Switch(checked = g.warmOnChatOpen, onCheckedChange = { enabled ->
+                onChange(model.copy(generation = g.copy(warmOnChatOpen = enabled)))
+            })
+        }
+    }
     fun change(fn: (ModelGenerationSettings) -> ModelGenerationSettings) = onChange(model.copy(generation = fn(g)))
     Text(stringResource(R.string.zeroagent11_model_parameters), style = MaterialTheme.typography.titleMedium)
     Text(stringResource(R.string.zeroagent11_model_parameters_hint), style = MaterialTheme.typography.bodySmall)
@@ -28,6 +36,30 @@ fun ModelGenerationControls(model: Model, provider: ProviderSetting?, onChange: 
     NumericModelParameter(model.id.toString(), "top_k", "topK", g.topK?.toString().orEmpty(), ModelParameterCapabilities.supports(model, provider, "top_k"), (if (provider is ProviderSetting.LlamaCppLocal) 0.0 else 1.0)..1000.0, integer = true) { value -> change { it.copy(topK = value?.toInt()) } }
     NumericModelParameter(model.id.toString(), "max_tokens", stringResource(R.string.zeroagent11_max_tokens), g.maxTokens?.toString().orEmpty(), ModelParameterCapabilities.supports(model, provider, "max_tokens"), 1.0..Int.MAX_VALUE.toDouble(), integer = true) { value -> change { it.copy(maxTokens = value?.toInt()) } }
     if (me.rerere.ai.provider.ModelAbility.REASONING in model.abilities) ReasoningButton(model = model, reasoningLevel = g.reasoningLevel, onUpdateReasoningLevel = { level -> change { it.copy(reasoningLevel = level) } })
+    if (model.type == ModelType.CHAT) {
+        me.rerere.zeroagent.ui.pages.chat.FallbackSettings(model, me.rerere.zeroagent.ui.context.LocalSettings.current) { ids ->
+            change { it.copy(fallbackModelIds = ids) }
+        }
+        NumericModelParameter(model.id.toString(), "turn_tools", "單次任務的工具呼叫上限",
+            g.maxToolCallsPerTurn?.toString().orEmpty(), true, 1.0..1000.0, integer = true) { maximum ->
+            change { it.copy(maxToolCallsPerTurn = maximum?.toInt()) }
+        }
+        NumericModelParameter(model.id.toString(), "monthly_budget", "每月模型預算（USD）",
+            g.monthlyBudgetUsd?.toString().orEmpty(), true, 0.01..1_000_000.0) { amount ->
+            change { it.copy(monthlyBudgetUsd = amount) }
+        }
+        NumericModelParameter(model.id.toString(), "task_budget", "單次任務預算（USD）",
+            g.taskBudgetUsd?.toString().orEmpty(), true, 0.01..1_000_000.0) { amount ->
+            change { it.copy(taskBudgetUsd = amount) }
+        }
+        NumericModelParameter(model.id.toString(), "task_output_limit", "單次任務的總輸出 Token 上限",
+            g.taskOutputTokenLimit?.toString().orEmpty(), ModelParameterCapabilities.supports(model, provider, "max_tokens"),
+            1.0..10_000_000.0, integer = true) { maximum ->
+            change { it.copy(taskOutputTokenLimit = maximum?.toInt()) }
+        }
+        Text("預算依模型費率估算。需設定每次請求的輸出上限。缺少費率或剩餘額度不足時會暫停新請求。",
+            style = MaterialTheme.typography.bodySmall)
+    }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(stringResource(R.string.zeroagent11_stream_output), modifier = Modifier.weight(1f))
         Switch(checked = g.streamOutput, onCheckedChange = { enabled -> change { it.copy(streamOutput = enabled) } })

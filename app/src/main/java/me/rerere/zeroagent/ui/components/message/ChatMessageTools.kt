@@ -180,7 +180,12 @@ fun ChainOfThoughtScope.ChatMessageToolStep(
 
     // Summary detection is delegated to the registered renderer; image output, webview
     // cards, and denial reasons are common to all tools.
-    val hasExtraContent = review != null || renderer.hasSummary(context) || isDenied || images.isNotEmpty() || webviewParts.isNotEmpty()
+    val workspaceProposals = if (tool.toolName in setOf("workspace_write_file", "workspace_edit_file")) {
+        tool.output.filterIsInstance<UIMessagePart.Text>().mapNotNull {
+            it.metadata?.get(me.rerere.zeroagent.data.ai.tools.WORKSPACE_PROPOSAL_METADATA) as? JsonObject
+        }
+    } else emptyList()
+    val hasExtraContent = workspaceProposals.isNotEmpty() || review != null || renderer.hasSummary(context) || isDenied || images.isNotEmpty() || webviewParts.isNotEmpty()
 
     ControlledChainOfThoughtStep(
         expanded = expanded,
@@ -353,6 +358,23 @@ fun ChainOfThoughtScope.ChatMessageToolStep(
                             Spacer(Modifier.width(8.dp))
                             Text(stringResource(R.string.chat_message_tool_approve))
                         }
+                        if (allowChatScope && me.rerere.zeroagent.data.ai.tools.WorkspaceReadGrants.canOffer(tool)) {
+                            val folder = me.rerere.zeroagent.data.ai.tools.WorkspaceReadGrants.path(tool)
+                            FilledTonalButton(
+                                shapes = ButtonDefaults.shapes(),
+                                enabled = !inFlight,
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                                onClick = {
+                                    inFlight = true
+                                    showApproval = false
+                                    onToolApproval(
+                                        tool.toolCallId, true, "",
+                                        me.rerere.zeroagent.service.ChatService.ApprovalScope.TaskFolderRead,
+                                        tool.toolName,
+                                    )
+                                },
+                            ) { Text("本次任務可讀取 /workspace/$folder，最長 10 分鐘") }
+                        }
                         if (allowChatScope && review == null && !me.rerere.zeroagent.data.ai.tools.ToolApprovalDefaults.isHardFloor(tool.toolName)) FilledTonalButton(
                             shapes = ButtonDefaults.shapes(), onClick = {
                                 if (inFlight) return@FilledTonalButton
@@ -404,6 +426,7 @@ fun ChainOfThoughtScope.ChatMessageToolStep(
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (!isPending) ToolReviewSummary(tool)
                     renderer.Summary(context)
+                    workspaceProposals.forEach { WorkspaceProposalReview(it) }
                     webviewParts.forEach { webviewPart ->
                         SkillWebviewCardOrNull(part = webviewPart)
                     }

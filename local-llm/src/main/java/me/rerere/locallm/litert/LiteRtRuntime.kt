@@ -286,6 +286,13 @@ class LiteRtRuntime(private val context: Context) {
         armIdleTeardown()
     }
 
+    internal suspend fun noteWarmUse(modelPath: String) = mutex.withLock {
+        val current = loaded ?: return@withLock
+        if (current.engineKey.modelPath != modelPath) return@withLock
+        current.lastUseAtMs = android.os.SystemClock.elapsedRealtime()
+        armIdleTeardown()
+    }
+
     /** Cancel any pending teardown and schedule a fresh one at the current delay. Called
      *  from the streamTurns finally so a new turn always resets the clock. */
     private fun armIdleTeardown() {

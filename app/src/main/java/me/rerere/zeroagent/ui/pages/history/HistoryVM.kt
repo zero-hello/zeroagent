@@ -21,6 +21,7 @@ private const val TAG = "HistoryVM"
 class HistoryVM(
     private val conversationRepo: ConversationRepository,
     private val settingsStore: SettingsStore,
+    private val chatService: me.rerere.zeroagent.service.ChatService,
 ) : ViewModel() {
     val assistant = settingsStore.settingsFlow
         .map { it.getCurrentAssistant() }
@@ -30,15 +31,20 @@ class HistoryVM(
         Log.e(TAG, "Error: ${it.message}")
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    fun deleteConversation(conversation: Conversation) {
-        viewModelScope.launch {
-            conversationRepo.deleteConversation(conversation)
-        }
-    }
+    val recycled = conversationRepo.observeTrash().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    suspend fun recycleConversation(conversation: Conversation): Boolean = chatService.recycleConversation(conversation.id)
+
+    suspend fun restoreRecycled(id: Uuid): Boolean = conversationRepo.restoreFromTrash(id)
+
+    suspend fun getRecycledDetails(id: Uuid): Conversation? = conversationRepo.getTrashedConversation(id)
+
+    suspend fun purgeRecycled(conversation: Conversation): Boolean =
+        conversationRepo.purgeTrashedConversation(conversation.id, conversation)
 
     fun deleteAllConversations() {
         viewModelScope.launch {
-            conversations.value.toList().forEach { conversationRepo.deleteConversation(it) }
+            conversations.value.toList().forEach { chatService.recycleConversation(it.id) }
         }
     }
 

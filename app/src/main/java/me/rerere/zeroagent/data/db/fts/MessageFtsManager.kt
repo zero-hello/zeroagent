@@ -131,6 +131,7 @@ class MessageFtsManager(private val database: AppDatabase) {
                    simple_snippet(message_fts, 0, '[', ']', '...', 30) AS snippet
             FROM message_fts
             WHERE text MATCH jieba_query(?)
+              AND EXISTS (SELECT 1 FROM conversationentity AS active WHERE active.id = message_fts.conversation_id AND active.trashed_at IS NULL)
             $assistantFilter
             ORDER BY ${sort.orderBy}, message_fts.rowid
             LIMIT $MESSAGE_SEARCH_PAGE_SIZE OFFSET ?

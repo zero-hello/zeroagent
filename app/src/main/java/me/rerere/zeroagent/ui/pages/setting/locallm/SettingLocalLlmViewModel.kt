@@ -67,6 +67,15 @@ class SettingLocalLlmViewModel(
 ) : ViewModel() {
 
     private val downloads = LocalModelDownloads(context)
+    private val _downloadRestrictions = MutableStateFlow(downloads.restrictions())
+    internal val downloadRestrictions = _downloadRestrictions.asStateFlow()
+    private val _downloadWaiting = MutableStateFlow(false)
+    internal val downloadWaiting = _downloadWaiting.asStateFlow()
+
+    internal fun setDownloadRestriction(restriction: LocalModelDownloads.DownloadRestriction, enabled: Boolean) {
+        downloads.setRestriction(restriction, enabled)
+        _downloadRestrictions.value = downloads.restrictions()
+    }
     private val _capabilities = MutableStateFlow<LocalRuntimeSupport.Capabilities?>(null)
     val capabilities = _capabilities.asStateFlow()
     private val _downloadPaused = MutableStateFlow(false)
@@ -208,6 +217,7 @@ class SettingLocalLlmViewModel(
         viewModelScope.launch {
             downloads.observe(runtime).collect { infos ->
                 val work = infos.firstOrNull { !it.state.isFinished } ?: infos.firstOrNull()
+                _downloadWaiting.value = work?.state == WorkInfo.State.ENQUEUED
                 _downloadPaused.value = work?.state == WorkInfo.State.CANCELLED || work?.state == WorkInfo.State.FAILED
                 _downloadFile.value = work?.progress?.getString("file") ?: work?.outputData?.getString("file")
                 if (!_importing.value) {
