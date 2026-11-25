@@ -75,7 +75,7 @@ internal fun FallbackSettings(model: Model, settings: Settings, onUpdate: (Set<S
 @Composable
 internal fun FallbackModelButton(current: Model, settings: Settings, hasAttachments: Boolean, onSwitch: (Model, Boolean) -> Unit) {
     val candidates = remember(current, settings.providers) {
-        fallbackCandidates(current, settings).filter { it.model.id.toString() in current.generation.fallbackModelIds }
+                fallbackCandidates(current, settings).sortedByDescending { it.model.id.toString() in current.generation.fallbackModelIds }
     }
     if (candidates.isEmpty()) return
     var open by remember(current.id) { mutableStateOf(false) }

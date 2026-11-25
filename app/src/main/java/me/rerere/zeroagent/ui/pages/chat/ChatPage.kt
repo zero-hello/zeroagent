@@ -96,6 +96,7 @@ import me.rerere.zeroagent.ui.components.message.PendingMessageReviewButton
 import me.rerere.zeroagent.data.chat.ChatCommandEffect
 import me.rerere.zeroagent.data.chat.ChatSlashCommand
 import me.rerere.zeroagent.data.datastore.Settings
+import me.rerere.zeroagent.data.datastore.findModelById
 import me.rerere.zeroagent.data.datastore.findProvider
 import me.rerere.zeroagent.data.datastore.getCurrentAssistant
 import me.rerere.zeroagent.data.datastore.assistantForModel
@@ -333,6 +334,12 @@ private fun ChatPageContent(
             ChatCommandEffect.IMAGE -> navController.navigate(Screen.ImageGen)
             ChatCommandEffect.VOICE -> onStartVoiceMode()
             ChatCommandEffect.ACCESS -> accessRequest++
+            ChatCommandEffect.DELEGATE_ACCESS -> scope.launch {
+                val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    me.rerere.zeroagent.data.ai.tools.ConversationAccess.delegateCurrentChat(conversation.id)
+                }
+                toaster.show(localizedResources.getString(if (ok) R.string.access_delegated_current_chat else R.string.access_save_failed))
+            }
             ChatCommandEffect.HELP -> slashHelp = true
             ChatCommandEffect.DIRECTIVE_SAVED ->
                 toaster.show(localizedResources.getString(R.string.zeroagent8_directive_saved))
@@ -467,23 +474,33 @@ private fun ChatPageContent(
                             }
                         }
                     }
-                    if (loadingJob == null && currentChatModel != null && errors.any { canSuggestFallback(it.error) }) {
-                        FallbackModelButton(
-                            current = currentChatModel,
-                            settings = setting,
-                            hasAttachments = conversation.files.isNotEmpty(),
-                            onSwitch = { model, resume ->
-                                vm.setChatModel(model, updateDefault = false)
-                                if (resume) {
-                                    val last = conversation.currentMessages.lastOrNull()
-                                    if (last?.role == MessageRole.USER) {
-                                        vm.regenerateAtMessage(last)
-                                    } else {
-                                        vm.handleMessageSend(listOf(UIMessagePart.Text("請從上一則未完成的回覆接續，避免重複已完成的操作。")))
+                    val last = conversation.currentMessages.lastOrNull()
+                    val interrupted = me.rerere.zeroagent.data.ai.hasResumeState(
+                        conversation.chatSuggestions, stringResource(R.string.chat_suggestion_continue),
+                    ) ||
+                        (last?.role == MessageRole.USER && errors.any { canSuggestFallback(it.error) })
+                    if (loadingJob == null && currentChatModel != null && interrupted && last != null) {
+                        val canContinue = me.rerere.zeroagent.data.ai.canContinueFromPartial(last)
+                        val originalModel = last.modelId?.let { setting.findModelById(it) } ?: currentChatModel.takeIf { last.modelId == null }
+                        if (canContinue && originalModel?.findProvider(setting.providers)?.enabled == true) {
+                            androidx.compose.material3.TextButton(onClick = { vm.continueInterruptedReply(last.id) }) {
+                                Text(stringResource(R.string.chat_resume_interrupted_reply))
+                            }
+                        }
+                        if (canContinue || last.role == MessageRole.USER) {
+                            FallbackModelButton(
+                                current = originalModel ?: currentChatModel,
+                                settings = setting,
+                                hasAttachments = conversation.files.isNotEmpty(),
+                                onSwitch = { model, resume ->
+                                    if (resume && canContinue) vm.continueInterruptedReply(last.id, model)
+                                    else {
+                                        vm.setChatModel(model, updateDefault = false)
+                                        if (resume && last.role == MessageRole.USER) vm.regenerateAtMessage(last)
                                     }
-                                }
-                            },
-                        )
+                                },
+                            )
+                        }
                     }
                     ChatContextMeter(
                         conversation = conversation,

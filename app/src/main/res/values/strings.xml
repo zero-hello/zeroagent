@@ -2853,4 +2853,6 @@
   <string name="adaptive_settings_choose_option">Choose a setting to view its details.</string>
   <string name="adaptive_settings_choose_provider">Choose a provider to view its connection and models.</string>
   <string name="adaptive_memory_choose_entry">Choose a memory or a suggested change.</string>
+  <string name="chat_resume_interrupted_reply">Continue interrupted reply</string>
+  <string name="access_delegated_current_chat">Tool approval updated for this chat.</string>
 </resources>

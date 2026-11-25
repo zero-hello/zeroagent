@@ -79,7 +79,7 @@ import kotlin.uuid.Uuid
 fun SettingModelPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val pagerState = rememberPagerState { 2 }
+    val pagerState = rememberPagerState { 3 }
     val scope = rememberCoroutineScope()
 
     Scaffold(
@@ -108,6 +108,12 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
                     icon = { Icon(HugeIcons.AiEditing, null) },
                     label = { Text(stringResource(R.string.setting_model_page_tab_prompt)) }
                 )
+                NavigationBarItem(
+                    selected = pagerState.currentPage == 2,
+                    onClick = { scope.launch { pagerState.animateScrollToPage(2) } },
+                    icon = { Icon(HugeIcons.AiBrain01, null) },
+                    label = { Text(stringResource(R.string.model_persona_title)) },
+                )
             }
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -119,6 +125,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
             when (page) {
                 0 -> ModelSettingsPage(settings = settings, vm = vm, contentPadding = contentPadding)
                 1 -> PromptSettingsPage(settings = settings, vm = vm, contentPadding = contentPadding)
+                2 -> ModelPersonaPage(settings, vm, contentPadding)
             }
         }
     }

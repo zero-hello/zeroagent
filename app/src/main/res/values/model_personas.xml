@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="model_persona_title">Model personas</string>
+  <string name="model_persona_hint">Choose a default style. In any chat you can ask for a different role or ask the model to ignore this preference.</string>
+  <string name="model_persona_general">All-purpose assistant</string>
+  <string name="model_persona_general_desc">Answers questions and helps with everyday, creative and technical tasks.</string>
+  <string name="model_persona_engineer">Programming partner</string>
+  <string name="model_persona_engineer_desc">Helps diagnose bugs, review changes and explain technical decisions.</string>
+  <string name="model_persona_research">Research assistant</string>
+  <string name="model_persona_research_desc">Compares sources and separates evidence from inferences.</string>
+  <string name="model_persona_coach">Learning coach</string>
+  <string name="model_persona_coach_desc">Explains ideas, offers hints and adapts to your pace.</string>
+  <string name="model_persona_editor">Writing editor</string>
+  <string name="model_persona_editor_desc">Improves clarity and flow while keeping your voice.</string>
+  <string name="model_persona_planner">Task planner</string>
+  <string name="model_persona_planner_desc">Breaks goals into concrete steps and tracks what remains.</string>
+</resources>

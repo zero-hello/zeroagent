@@ -111,6 +111,7 @@ internal class GenerationRequestExecutor(
         stepIndex: Int = 0,
         excludedContext: Set<String> = emptySet(),
         recalledPrompt: String? = null,
+        continuePartial: Boolean = false,
     ) {
         val userTurnId = conversationId?.let {
             messages.lastOrNull { message -> message.role == MessageRole.USER && !message.isSynthetic }?.id?.toString()
@@ -159,7 +160,7 @@ internal class GenerationRequestExecutor(
             // cached prefix, the volatile part sits after it. See SystemPromptBuilder.
             val (stableSystem, volatileSystem) = systemPromptBuilder.buildSections(
                 assistantPrompt = effectiveSystemPrompt,
-                identityPrompt = "",
+                identityPrompt = if (replacesAssistantPrompt) "" else ModelPersona.resolve(settings.modelPersonaId).prompt,
                 phoneGuidance = PhoneAgentGuidance.build(tools.map { it.name }.toSet()),
                 memoryPrompt = memoryPrompt,
                 recentChatsPrompt = recentChatsPrompt,
@@ -209,6 +210,10 @@ internal class GenerationRequestExecutor(
             }
             if (parts == message.parts) message else message.copy(parts = parts)
         }
+        val firstRequest = if (continuePartial) {
+            val partial = preStreamMessages.last()
+            continuationRequestMessages(internalMessages.filterNot { it.id == partial.id }, preStreamMessages)
+        } else internalMessages
         val priorMessageIds = preStreamMessages.mapTo(hashSetOf()) { it.id }
         var activeMessages = preStreamMessages
         var handedOffContext = emptyList<ReplyContextEntry>()
@@ -219,7 +224,7 @@ internal class GenerationRequestExecutor(
             if (!trackContext || conversationId == null || !LabPreferences.enabled(context, "reply_context")) return
             val entries = collectReplyContext(request, contextCandidates, summaryId)
             val continuingReply = activeMessages.lastOrNull()?.takeIf {
-                it.role == MessageRole.ASSISTANT && it.id !in priorMessageIds
+                it.role == MessageRole.ASSISTANT && (continuePartial || it.id !in priorMessageIds)
             }
             if (continuingReply != null) {
                 ReplyContextStore.record(conversationId, continuingReply.id, entries)
@@ -232,7 +237,7 @@ internal class GenerationRequestExecutor(
         suspend fun publish(updatedMessages: List<UIMessage>) {
             activeMessages = updatedMessages
             if (pendingNewReplyReceipt && conversationId != null && LabPreferences.enabled(context, "reply_context")) {
-                updatedMessages.lastOrNull()?.takeIf { it.role == MessageRole.ASSISTANT && it.id !in priorMessageIds }
+                updatedMessages.lastOrNull()?.takeIf { it.role == MessageRole.ASSISTANT && (continuePartial || it.id !in priorMessageIds) }
                     ?.let {
                         ReplyContextStore.record(conversationId, it.id, handedOffContext)
                         pendingNewReplyReceipt = false
@@ -251,7 +256,7 @@ internal class GenerationRequestExecutor(
             // than surfacing it as a dead error, so the switch was removed and the flag ignored.
             maxStreamRetries = settings.responseStreamMaxRetries,
             tools = tools,
-            textToolCallParsing = settings.parseTextToolCalls,
+            textToolCallParsing = !continuePartial && settings.parseTextToolCalls,
             reasoningLevel = me.rerere.ai.core.ReasoningCapabilities.effective(model, provider, model.generation.reasoningLevel),
             customHeaders = buildList {
                 addAll(model.customHeaders)
@@ -272,9 +277,11 @@ internal class GenerationRequestExecutor(
                     receivedMeaningfulOutput = false
                     receivedAnyChunk = false
                     val attemptMessages = if (continuationsUsed == 0) {
-                        internalMessages
+                        firstRequest
                     } else {
-                        continuationRequestMessages(internalMessages, messages)
+                        val base = if (continuePartial) internalMessages.filterNot { it.id == preStreamMessages.last().id }
+                            else internalMessages
+                        continuationRequestMessages(base, messages)
                     }
                     try {
                     val streamChunkHandler = StreamChunkHandler(model)
@@ -469,10 +476,10 @@ internal class GenerationRequestExecutor(
                             parentRunId = usageAttribution?.parentRunId, userTurnId = userTurnId,
                         )
                     ) {
-                        captureHandoff(internalMessages)
+                        captureHandoff(firstRequest)
                         providerImpl.generateText(
                             providerSetting = provider,
-                            messages = internalMessages,
+                            messages = firstRequest,
                             params = params,
                         )
                     }

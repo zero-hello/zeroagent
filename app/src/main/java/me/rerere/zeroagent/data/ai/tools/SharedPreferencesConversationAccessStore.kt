@@ -23,6 +23,10 @@ internal class SharedPreferencesConversationAccessStore(context: Context) : Conv
         .putString("$CHAT_PREFIX$id", mode.name)
         .commit()
 
+    override fun saveChatOnly(id: Uuid, mode: ConversationAccessMode): Boolean = preferences.edit()
+        .putString("$CHAT_PREFIX$id", mode.name)
+        .commit()
+
     private companion object {
         const val CHAT_PREFIX = "chat:"
         const val DEFAULT_KEY = "default_mode"

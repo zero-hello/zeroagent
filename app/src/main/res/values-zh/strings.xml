@@ -2547,4 +2547,6 @@
   <string name="adaptive_settings_choose_option">选择要查看的设置。</string>
   <string name="adaptive_settings_choose_provider">选择供应商以查看连接设置与模型。</string>
   <string name="adaptive_memory_choose_entry">选择一条记忆或待确认的变更。</string>
+  <string name="chat_resume_interrupted_reply">继续中断的回复</string>
+  <string name="access_delegated_current_chat">已更新这个聊天室的工具授权。</string>
 </resources>

@@ -29,11 +29,12 @@ internal object LabMemoryReview {
     fun pending(value: String): List<MemoryChange> = runCatching { Json.decodeFromString<List<MemoryChange>>(value) }.getOrDefault(emptyList())
 
     @Synchronized
-    fun propose(context: Context, change: MemoryChange): Boolean {
+    fun propose(context: Context, change: MemoryChange, allowAdditive: Boolean = false): Boolean {
         if (LabPreferences.enabled(context, CAPTURE_PAUSED)) return false
         val blocked = LabPreferences.get(context, BLOCKED).split(',').toSet()
         if (change.proposed != null && fingerprint(change.proposed.normalizedFact()) in blocked) return false
-        if (!LabPreferences.enabled(context, "memory_drawer")) return true
+        if ((allowAdditive && change.memoryId == null && change.original == null) ||
+            !LabPreferences.enabled(context, "memory_drawer")) return true
         val changes = pending(LabPreferences.get(context, PENDING))
         if (changes.none { it.key == change.key } && changes.size < 40) {
             LabPreferences.set(context, PENDING, Json.encodeToString(changes + change))

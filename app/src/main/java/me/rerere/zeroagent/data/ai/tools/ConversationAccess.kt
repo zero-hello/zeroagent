@@ -17,6 +17,7 @@ internal data class SavedConversationAccess(
 internal interface ConversationAccessStore {
     fun load(): SavedConversationAccess
     fun save(id: Uuid, mode: ConversationAccessMode): Boolean
+    fun saveChatOnly(id: Uuid, mode: ConversationAccessMode): Boolean = false
 }
 
 /** Saved choices survive restarts; individual tool approvals remain transient. */
@@ -50,6 +51,18 @@ object ConversationAccess {
         ToolApprovalAllowList.clearChat(id)
         revisions[id] = (revisions[id] ?: 0) + 1
         mutable.update { it + (id to mode) }
+        true
+    }
+
+    /** A direct chat instruction changes only this session and cannot downgrade an existing FULL grant. */
+    internal fun delegateCurrentChat(id: Uuid): Boolean = synchronized(lock) {
+        if (mode(id) == ConversationAccessMode.FULL) return true
+        if (store?.saveChatOnly(id, ConversationAccessMode.ASSISTED) == false) return false
+        if (mutable.value[id] != ConversationAccessMode.ASSISTED) {
+            ToolApprovalAllowList.clearChat(id)
+            revisions[id] = (revisions[id] ?: 0) + 1
+            mutable.update { it + (id to ConversationAccessMode.ASSISTED) }
+        }
         true
     }
 

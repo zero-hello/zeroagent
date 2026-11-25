@@ -1063,6 +1063,50 @@ class ChatService(
         session.setJob(job)
     }
 
+    /** Continue the selected last answer without creating a visible user message or replaying tools. */
+    internal fun continueInterruptedReply(conversationId: Uuid, messageId: Uuid, fallbackModel: Model? = null) =
+        synchronized(getOrCreateSession(conversationId)) {
+            val session = getOrCreateSession(conversationId)
+            if (session.getJob()?.isCompleted == false) return@synchronized
+            val releaseForegroundWork = foregroundWorkTracker.acquire()
+            val job = appScope.launch(start = CoroutineStart.LAZY) {
+                try {
+                    awaitForegroundWorkReady()
+                    ensureHydrated(conversationId)
+                    val conversation = session.state.value
+                    val last = conversation.currentMessages.lastOrNull()
+                    if (last?.id != messageId || !me.rerere.zeroagent.data.ai.canContinueFromPartial(last) ||
+                        !me.rerere.zeroagent.data.ai.hasResumeState(conversation.chatSuggestions, context.getString(R.string.chat_suggestion_continue))
+                    ) return@launch
+                    val settings = settingsStore.settingsFlow.first()
+                    val requestedModelId = fallbackModel?.id ?: last.modelId ?: conversation.chatModelId ?: settings.chatModelId
+                    val model = settings.findModelById(requestedModelId)
+                    if (model?.findProvider(settings.providers)?.enabled != true) return@launch
+                    if (fallbackModel != null) {
+                        updateConversationState(conversationId) { it.copy(chatModelId = model.id) }
+                        persistCurrentConversation(conversationId)
+                    }
+                    val previousErrors = _errors.value.filter { it.conversationId == conversationId }.mapTo(hashSetOf()) { it.id }
+                    val excluded = me.rerere.zeroagent.data.ai.resumeExclusions(conversation.chatSuggestions)
+                    handleMessageComplete(
+                        conversationId, excludedContext = excluded, continuingMessageId = messageId,
+                        continuingModelId = model.id,
+                    )
+                    _errors.update { errors -> errors.filterNot { it.id in previousErrors } }
+                    _generationDoneFlow.emit(conversationId)
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    session.messageQueue.pause()
+                    addError(error, conversationId)
+                } finally {
+                    releaseForegroundWork()
+                }
+            }
+            auxJobs.cancelAll(conversationId)
+            session.setJob(job)
+        }
+
     // ---- 处理工具调用审批 ----
 
     /** Scope of an "approve" decision. Once = this single tool call only. ChatScope =
@@ -1363,6 +1407,8 @@ class ChatService(
         messageRange: ClosedRange<Int>? = null,
         allowContextRetry: Boolean = true,
         excludedContext: Set<String> = emptySet(),
+        continuingMessageId: Uuid? = null,
+        continuingModelId: Uuid? = null,
     ) {
         // A generation is one "turn" for read_window_tree's snapshot: within it a re-read can be
         // answered with "unchanged" or a delta, but a diff never spans two turns — so a model
@@ -1370,7 +1416,8 @@ class ChatService(
         me.rerere.zeroagent.data.ai.tools.local.TreeSnapshotCache.clear()
         val settings = settingsStore.settingsFlow.first()
         val initialConversation = getConversationFlow(conversationId).value
-        val model = effectiveChatModel(settings, initialConversation)
+        val model = (if (continuingModelId != null) settings.findModelById(continuingModelId)
+            else effectiveChatModel(settings, initialConversation))
             ?: throw IllegalStateException(context.getString(R.string.chat_select_model_first))
         // Keep durable IDs intact; the selected model owns this turn's tools and memory profile.
         val assistant = me.rerere.zeroagent.data.productivity.ProjectStore.get(context)
@@ -1475,11 +1522,43 @@ class ChatService(
             } else {
                 compactedMessageView!!.messages
             }
+            val continuePartial = continuingMessageId != null
+            if (continuePartial && (messagesForGeneration.lastOrNull()?.id != continuingMessageId ||
+                !me.rerere.zeroagent.data.ai.canContinueFromPartial(messagesForGeneration.lastOrNull()))) return
+            val resolveTurnTools = if (continuePartial) null else try {
+                chatToolFactory.createGenerationSurface(
+                    context = ChatToolContext(settings, assistant, conversationId, model, conversation.workspaceCwd),
+                    useExternalWebSearch = useExternalWebSearch,
+                    activation = { toolActivationFor(conversationId) },
+                    pendingTools = messagesForGeneration.lastOrNull()?.getTools().orEmpty().filterNot { it.isExecuted }.map { it.toolName },
+                    onCompact = { instructions ->
+                        compactConversationFromTool(
+                            conversationId = conversationId,
+                            conversation = getConversationFlow(conversationId).value,
+                            settings = settings,
+                            model = model,
+                            instructions = instructions,
+                        )
+                    },
+                )
+            } catch (error: InvalidMcpServerNamesException) {
+                addError(
+                    error = IllegalStateException(context.getString(R.string.error_mcp_invalid_server_name, error.names.joinToString(", "))),
+                    conversationId = conversationId,
+                )
+                return
+            }
             generationLoop.generateText(
                 onUserPause = { session.messageQueue.pause() },
                 excludedContext = excludedContext,
+                continuePartial = continuePartial,
+                canAutoApproveSimpleTool = { name ->
+                    (name != "memory_write" ||
+                        !me.rerere.zeroagent.data.ai.tools.ColdMemoryRules.normalizeDir(assistant.coldMemoryDir).isNullOrBlank()) &&
+                        name !in toolApprovalPreferences.snapshot().blacklist
+                },
                 settings = settings,
-                model = model,
+                model = if (continuePartial) model.copy(tools = emptySet()) else model,
                 processingStatus = session.processingStatus,
                 // Read once per call so a background task gets its runtime context into the system prompt without
                 // having to plumb a parameter all the way through sendMessage. Returns null
@@ -1592,28 +1671,8 @@ class ChatService(
                     add(ContextBudgetReminderTransformer)
                 },
                 outputTransformers = outputTransformers,
-                tools = try {
-                    chatToolFactory.createForGeneration(
-                        context = ChatToolContext(settings, assistant, conversationId, model, conversation.workspaceCwd),
-                        useExternalWebSearch = useExternalWebSearch,
-                        activation = { toolActivationFor(conversationId) },
-                        onCompact = { instructions ->
-                            compactConversationFromTool(
-                                conversationId = conversationId,
-                                conversation = getConversationFlow(conversationId).value,
-                                settings = settings,
-                                model = model,
-                                instructions = instructions,
-                            )
-                        },
-                    )
-                } catch (error: InvalidMcpServerNamesException) {
-                    addError(
-                        error = IllegalStateException(context.getString(R.string.error_mcp_invalid_server_name, error.names.joinToString(", "))),
-                        conversationId = conversationId,
-                    )
-                    return
-                },
+                tools = emptyList(),
+                resolveTurnTools = resolveTurnTools,
             ).onCompletion { completionCause ->
                 // 取消 Live Update 通知
                 notifications.cancelLiveUpdateNotification(conversationId)
@@ -1759,6 +1818,8 @@ class ChatService(
                     messageRange = null,
                     allowContextRetry = false,
                     excludedContext = excludedContext,
+                    continuingMessageId = continuingMessageId,
+                    continuingModelId = continuingModelId,
                 )
                 return
             }
@@ -1784,7 +1845,7 @@ class ChatService(
                 // A failed turn is always "stalled" (see isStalledTurn) - surface the continue
                 // chip via the same chatSuggestions field generateSuggestion writes, so
                 // ChatSuggestionsRow shows it even when enableSuggestion is off.
-                setContinueSuggestionAndPersist(conversationId)
+                setContinueSuggestionAndPersist(conversationId, excludedContext)
             }.onFailure { saveErr ->
                 Log.w(TAG, "handleMessageComplete: failure-path save failed", saveErr)
             }
@@ -2278,9 +2339,10 @@ class ChatService(
         streamingPersistence.flush(sessions.values.filter { it.isGenerating }.map { it.id })
     }
 
-    private suspend fun setContinueSuggestionAndPersist(conversationId: Uuid) {
+    private suspend fun setContinueSuggestionAndPersist(conversationId: Uuid, excludedContext: Set<String> = emptySet()) {
         val suggestion = context.getString(R.string.chat_suggestion_continue)
-        updateConversationState(conversationId) { it.copy(chatSuggestions = listOf(suggestion)) }
+        val stored = me.rerere.zeroagent.data.ai.resumeState(suggestion, excludedContext)
+        updateConversationState(conversationId) { it.copy(chatSuggestions = stored) }
         persistCurrentConversation(conversationId)
     }
 

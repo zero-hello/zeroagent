@@ -13,6 +13,7 @@ internal class ConversationToolApproval(
     private val isToolAutoApproved: suspend (String) -> Boolean,
     private val canReview: suspend (String) -> Boolean,
     private val review: suspend (UIMessagePart.Tool) -> ToolReviewResult,
+    private val canAutoApproveSimpleTool: suspend (String) -> Boolean = { false },
     private val isScopedReadApproved: suspend (UIMessagePart.Tool) -> Boolean = { false },
 ) {
     private data class Receipt(val name: String, val input: String, val access: ConversationAccessSnapshot)
@@ -23,13 +24,17 @@ internal class ConversationToolApproval(
         HardlineCommandGuard.checkTool(tool.toolName, tool.input)?.let { reason ->
             return tool.copy(approvalState = ToolApprovalState.Denied("blocked by safety floor (hardline): $reason"))
         }
+        val access = conversationId?.let(ConversationAccess::snapshot)
+        if (conversationId != null && !HeadlessConversations.isHeadless(conversationId) &&
+            isSimpleConversationTool(tool) && canAutoApproveSimpleTool(tool.toolName) &&
+            ConversationAccess.snapshot(conversationId) == access
+        ) return tool.copy(metadata = tool.metadata?.let { JsonObject(it - TOOL_REVIEW_METADATA) })
         if (requiresExplicitSideEffectConfirmation(tool.toolName)) {
             val state = if (conversationId == null || HeadlessConversations.isHeadless(conversationId)) {
                 ToolApprovalState.Denied("需要使用者在對話中確認後才能執行此操作。")
             } else ToolApprovalState.Pending
             return tool.copy(approvalState = state)
         }
-        val access = conversationId?.let(ConversationAccess::snapshot)
         if (conversationId != null && !HeadlessConversations.isHeadless(conversationId) &&
             !ToolApprovalDefaults.isHardFloor(tool.toolName) && isScopedReadApproved(tool) &&
             ConversationAccess.snapshot(conversationId) == access

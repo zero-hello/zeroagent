@@ -226,7 +226,7 @@ val appModule = module {
 
     single<me.rerere.zeroagent.data.ai.tools.ChatToolSources> {
         me.rerere.zeroagent.data.ai.tools.DefaultChatToolSources(
-            localTools = get(), mcpManager = get(), skillManager = get(), workspaceRepository = get(),
+            localTools = get(), mcpManager = get(), skillManager = get(), workspaceRepository = get(), context = get(),
         )
     }
     single { ChatToolFactory(get()) }

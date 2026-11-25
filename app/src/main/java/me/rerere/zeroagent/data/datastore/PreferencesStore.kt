@@ -162,6 +162,7 @@ class SettingsStore(
         val OCR_PROMPT = stringPreferencesKey("ocr_prompt")
         val COMPRESS_MODEL = stringPreferencesKey("compress_model")
         val COMPRESS_PROMPT = stringPreferencesKey("compress_prompt")
+        val MODEL_PERSONA_ID = stringPreferencesKey("model_persona_id")
         val ENABLE_AUTO_COMPACTION = booleanPreferencesKey("enable_auto_compaction")
         val AUTO_COMPACTION_THRESHOLD_MODE = stringPreferencesKey("auto_compaction_threshold_mode")
         val AUTO_COMPACTION_THRESHOLD_PERCENT = intPreferencesKey("auto_compaction_threshold_percent")
@@ -275,6 +276,7 @@ class SettingsStore(
                 preferences[OCR_PROMPT] = settings.ocrPrompt
                 preferences[COMPRESS_MODEL] = settings.compressModelId.toString()
                 preferences[COMPRESS_PROMPT] = settings.compressPrompt
+                preferences[MODEL_PERSONA_ID] = settings.modelPersonaId
                 preferences[ENABLE_AUTO_COMPACTION] = settings.enableAutoCompaction
                 preferences[AUTO_COMPACTION_THRESHOLD_MODE] = settings.autoCompactionThresholdMode.name
                 preferences[AUTO_COMPACTION_THRESHOLD_PERCENT] =
@@ -364,6 +366,7 @@ class SettingsStore(
                 compressPrompt = preferences[COMPRESS_PROMPT] ?: DEFAULT_COMPRESS_PROMPT,
                 assistantId = preferences[SELECT_ASSISTANT]?.let { runCatching { Uuid.parse(it) }.getOrNull() }
                     ?: DEFAULT_ASSISTANT_ID,
+                modelPersonaId = preferences[MODEL_PERSONA_ID] ?: "general",
                 enableAutoCompaction = preferences[ENABLE_AUTO_COMPACTION] == true,
                 autoCompactionThresholdMode = preferences[AUTO_COMPACTION_THRESHOLD_MODE]
                     ?.let { value -> runCatching { AutoCompactionThresholdMode.valueOf(value) }.getOrNull() }
@@ -796,6 +799,7 @@ data class Settings(
     val compressModelId: Uuid = Uuid.random(),
     val compressPrompt: String = DEFAULT_COMPRESS_PROMPT,
     val enableAutoCompaction: Boolean = false,
+    val modelPersonaId: String = "general",
     val autoCompactionThresholdMode: AutoCompactionThresholdMode = AutoCompactionThresholdMode.PERCENT,
     val autoCompactionThresholdPercent: Int = 80,
     val autoCompactionThresholdTokensK: Int = 8,

@@ -149,6 +149,9 @@ class GenerationLoop(
         workspaceCwd: String? = null,
         onUserPause: () -> Unit = {},
         excludedContext: Set<String> = emptySet(),
+        continuePartial: Boolean = false,
+        canAutoApproveSimpleTool: suspend (String) -> Boolean = { false },
+        resolveTurnTools: (() -> List<Tool>)? = null,
     ): Flow<GenerationChunk> {
       val runControl = AgentRunControl(onUserPause)
       return flow<GenerationChunk> {
@@ -244,7 +247,7 @@ class GenerationLoop(
 
             Log.i(TAG, "streamText: start step #$stepIndex (${model.id})")
 
-            val toolsInternal = buildList {
+            val toolsInternal = if (continuePartial) emptyList() else buildList {
                 Log.i(TAG, "generateInternal: build tools($assistant)")
                 if (assistant.enableMemory) {
                     val memoryAssistantId = if (assistant.useGlobalMemory) {
@@ -259,7 +262,8 @@ class GenerationLoop(
                                 .firstOrNull { it.content.trim().equals(content, ignoreCase = true) }
                                 ?: run {
                                     check(me.rerere.zeroagent.data.lab.LabMemoryReview.propose(context,
-                                        me.rerere.zeroagent.data.lab.MemoryChange(memoryAssistantId, null, null, content, conversationId?.toString()))) {
+                                        me.rerere.zeroagent.data.lab.MemoryChange(memoryAssistantId, null, null, content, conversationId?.toString()),
+                                        allowAdditive = true)) {
                                         "Memory was not saved. The user can confirm pending changes in the memory drawer."
                                     }
                                     memoryRepo.addMemory(memoryAssistantId, content)
@@ -289,7 +293,7 @@ class GenerationLoop(
                         }
                     ).let(this::addAll)
                 }
-                addAll(tools)
+                addAll(resolveTurnTools?.invoke() ?: tools)
                 if (conversationId != null) {
                     add(me.rerere.zeroagent.data.chat.ChatExtras.themeTool(context, conversationId))
                 }
@@ -301,6 +305,7 @@ class GenerationLoop(
                 isToolAutoApproved = isToolAutoApproved,
                 canReview = canReviewTool,
                 isScopedReadApproved = isScopedReadApproved,
+                canAutoApproveSimpleTool = canAutoApproveSimpleTool,
                 review = { tool ->
                     processingStatus.value = context.zeroAgentLocalizedContext().getString(
                         me.rerere.zeroagent.R.string.access_reviewing, tool.toolName,
@@ -345,7 +350,7 @@ class GenerationLoop(
             // Skip generation if we have approved/denied tool calls to handle
             if (pendingTools.isEmpty()) {
                 val reviewUser = messages.lastOrNull { it.role == MessageRole.USER && !it.isSynthetic }
-                val reviewReply = conversationId != null && stepIndex == 0 &&
+                val reviewReply = !continuePartial && conversationId != null && stepIndex == 0 &&
                     currentUsageCallContext()?.privateSession != true &&
                     LabPreferences.enabled(context, "self_check") && shouldReviewLabReply(reviewUser)
                 val recalledPrompt = recalled.prompt.takeIf { contextualMemory.enabled && it.isNotBlank() && "recalled" !in excludedContext }
@@ -393,6 +398,7 @@ class GenerationLoop(
                         model = model,
                         providerImpl = providerImpl,
                         stepIndex = stepIndex,
+                        continuePartial = continuePartial && stepIndex == 0,
                         provider = provider,
                         tools = toolsInternal,
                         memories = memories.orEmpty().filterNot { it.id == oneTurnMemory?.memoryId },

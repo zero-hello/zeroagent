@@ -272,6 +272,9 @@ class ChatVM(
         settingsStore.update(transform)
     }
 
+    internal fun continueInterruptedReply(messageId: Uuid, fallback: Model? = null) =
+        chatService.continueInterruptedReply(_conversationId, messageId, fallback)
+
     // 设置聊天模型
     fun setChatModel(model: Model, updateDefault: Boolean = true) {
         // Update the live conversation before returning to the UI. A user can submit a

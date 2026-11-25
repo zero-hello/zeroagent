@@ -30,7 +30,7 @@ internal const val TOOL_CATALOG_MAX_SUMMARY_CHARS = 180
 enum class ToolSurfaceMode { DIRECT, PROGRESSIVE_CATALOG }
 
 /** Where a catalogued tool comes from; used for scoring and serialized in search hits. */
-enum class ToolCatalogSource { LOCAL, MCP }
+enum class ToolCatalogSource { LOCAL, MCP, PUBLIC_DATA }
 
 /**
  * One catalog entry.
@@ -147,6 +147,17 @@ class ToolActivationState {
     /** Drop active names that fell out of the catalog (e.g. an MCP server disconnected). */
     fun retain(knownNames: Set<String>) = synchronized(lock) { activeNames.retainAll(knownNames) }
 
+    /** Restores schemas for approval cards saved before the process stopped. */
+    fun restorePending(catalog: ToolCatalog, names: List<String>) = synchronized(lock) {
+        val pending = names.distinct().filter { catalog.entry(it) != null }.take(TOOL_CATALOG_MAX_ACTIVE_SCHEMAS)
+        if (pending.isNotEmpty()) {
+            val previous = activeNames.filterNot { it in pending }
+            activeNames.clear()
+            activeNames.addAll(previous.takeLast(TOOL_CATALOG_MAX_ACTIVE_SCHEMAS - pending.size))
+            activeNames.addAll(pending)
+        }
+    }
+
     /**
      * Activate [names] in the order given.
      *
@@ -155,7 +166,7 @@ class ToolActivationState {
      * name is already (or just became) active. Unknown names never consume the per-call
      * budget, and the per-call budget is applied first-come-first-served.
      */
-    fun activate(catalog: ToolCatalog, names: List<String>): ToolOpenOutcome = synchronized(lock) {
+    fun activate(catalog: ToolCatalog, names: List<String>, replaceOldest: Boolean = false): ToolOpenOutcome = synchronized(lock) {
         val activated = mutableListOf<String>()
         val alreadyActive = mutableListOf<String>()
         val unknown = mutableListOf<String>()
@@ -175,8 +186,16 @@ class ToolActivationState {
                 continue
             }
             if (activeNames.size >= TOOL_CATALOG_MAX_ACTIVE_SCHEMAS) {
-                rejectedOverCap.add(name)
-                continue
+                if (replaceOldest) {
+                    val oldest = activeNames.firstOrNull { it !in names }
+                    if (oldest != null) activeNames.remove(oldest) else {
+                        rejectedOverCap.add(name)
+                        continue
+                    }
+                } else {
+                    rejectedOverCap.add(name)
+                    continue
+                }
             }
             activeNames.add(name)
             activated.add(name)
@@ -202,6 +221,7 @@ class ToolActivationState {
 fun buildToolCatalogTools(
     catalog: ToolCatalog,
     activation: ToolActivationState,
+    replaceOldest: Boolean = false,
 ): List<Tool> = listOf(
     Tool(
         name = "tool_search",
@@ -256,7 +276,7 @@ fun buildToolCatalogTools(
         },
         execute = {
             val names = parseNames(it)
-            listOf(UIMessagePart.Text(activation.activate(catalog, names).toJson()))
+            listOf(UIMessagePart.Text(activation.activate(catalog, names, replaceOldest).toJson()))
         },
     ),
 )

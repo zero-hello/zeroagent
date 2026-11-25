@@ -23,12 +23,13 @@ class ChatToolFactoryTest {
         val schema = InputSchema.Obj(JsonObject(emptyMap()))
         sources.remote = listOf(Triple(id, "server", McpTool(name = "read", description = "Read data", inputSchema = schema, needsApproval = false)))
         val tools = generation(sources)
-        assertEquals(listOf("search", "local", "workspace", "memory", "skill", buildMcpToolName(id, "server", "read")), tools.map { it.name })
-        assertTrue(tools.last().needsApproval(JsonNull))
-        assertSame(schema, tools.last().parameters())
-        assertEquals("Read data", tools.last().description)
+        assertEquals(listOf("search", "local", "workspace", "memory", "skill", buildMcpToolName(id, "server", "read"), "tool_search", "tool_open"), tools.map { it.name })
+        val mcp = tools.single { it.name == buildMcpToolName(id, "server", "read") }
+        assertTrue(mcp.needsApproval(JsonNull))
+        assertSame(schema, mcp.parameters())
+        assertEquals("Read data", mcp.description)
         val args = JsonObject(emptyMap())
-        tools.last().execute(args)
+        mcp.execute(args)
         assertEquals(Triple(id, "read", args), sources.invocation)
         assertNull(sources.scopedAssistant)
     }
@@ -103,7 +104,7 @@ class ChatToolFactoryTest {
         val sources = Sources()
         sources.available = false
         val tools = generation(sources, context().copy(assistant = Assistant()), search = false)
-        assertEquals(listOf("local"), tools.map { it.name })
+        assertEquals(listOf("local", "tool_search", "tool_open"), tools.map { it.name })
         assertEquals(0, sources.skillLoads)
     }
 
@@ -111,7 +112,7 @@ class ChatToolFactoryTest {
         val sources = Sources()
         val context = context(Assistant(enableCompactContextTool = true))
         var compacted = false
-        val tools = ChatToolFactory(sources).createForGeneration(context, false, { error("Direct mode must not allocate activation") }) {
+        val tools = ChatToolFactory(sources).createForGeneration(context, false, { ToolActivationState() }) {
             compacted = true
             CompactionToolResult(true, 100, 50, 20)
         }
@@ -119,6 +120,16 @@ class ChatToolFactoryTest {
         tools.single { it.name == "compact_context" }.execute(JsonObject(emptyMap()))
         assertTrue(compacted)
         assertFalse(ChatToolFactory(sources).createForRerun(context).any { it.name == "compact_context" })
+    }
+
+    @Test fun `tools opened in one model step are visible in the following step without a new chat turn`() = runBlocking {
+        val surface = ChatToolFactory(Sources()).createGenerationSurface(context(), false, { ToolActivationState() }) {
+            CompactionToolResult(false, 0, 0, 0)
+        }
+        assertFalse(surface().any { it.name == "util_sum" })
+        val open = surface().single { it.name == "tool_open" }
+        open.execute(kotlinx.serialization.json.Json.parseToJsonElement("""{"names":["util_sum"]}"""))
+        assertTrue(surface().any { it.name == "util_sum" })
     }
 
     private fun context(assistant: Assistant = Assistant(enableWebSearch = true)) = ChatToolContext(

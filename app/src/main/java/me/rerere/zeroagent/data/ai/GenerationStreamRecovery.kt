@@ -352,3 +352,14 @@ internal suspend fun <T> retryGenerationTransportRequest(
     }
 }
 
+
+// Persist the interruption marker and context exclusions alongside the existing suggestion field.
+// This keeps Room and backups compatible and the user-facing suggestion stays ordinary text.
+private const val RESUME_METADATA = "\u0000zeroagent.resume:"
+internal fun isResumeMetadata(value: String): Boolean = value.startsWith(RESUME_METADATA)
+internal fun resumeState(suggestion: String, excluded: Set<String>): List<String> =
+    listOf(suggestion, RESUME_METADATA) + excluded.map { RESUME_METADATA + it }
+internal fun hasResumeState(suggestions: List<String>, localizedContinue: String): Boolean =
+    RESUME_METADATA in suggestions || localizedContinue in suggestions
+internal fun resumeExclusions(suggestions: List<String>): Set<String> = suggestions.asSequence()
+    .filter { it != RESUME_METADATA && isResumeMetadata(it) }.map { it.removePrefix(RESUME_METADATA) }.toSet()

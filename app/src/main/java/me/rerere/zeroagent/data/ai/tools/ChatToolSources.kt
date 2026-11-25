@@ -27,6 +27,7 @@ data class ChatToolContext(
 
 /** Live tool dependencies; fakes can exercise assembly without Android, storage or a server. */
 interface ChatToolSources {
+    fun publicDataTools(): List<ToolCatalogEntry> = emptyList()
     fun searchTools(settings: Settings): List<Tool>
     suspend fun localTools(context: ChatToolContext): List<Tool>
     suspend fun workspaceTools(assistant: Assistant, cwd: String?): List<Tool>
@@ -41,7 +42,14 @@ class DefaultChatToolSources(
     private val mcpManager: McpManager,
     private val skillManager: SkillManager,
     private val workspaceRepository: WorkspaceRepository,
+    context: android.content.Context,
 ) : ChatToolSources {
+    private val worldBank = WorldBankTools(readCatalog = {
+        context.assets.open("world_bank_indicators.tsv").bufferedReader().use { it.readLines() }
+    })
+
+    override fun publicDataTools() = worldBank.entries
+
     override fun searchTools(settings: Settings) = createSearchTools(settings).toList()
 
     override suspend fun localTools(context: ChatToolContext): List<Tool> = ToolSurfaceResolver.resolve(
@@ -137,11 +145,14 @@ class DefaultChatToolSources(
             writeDoc = { name, content, append ->
                 val path = childPath(name)
                 val text = if (append) {
-                    readFile(path).orEmpty() + content
+                    val previous = workspaceRepository.readReviewBase(workspaceId, path)
+                    (previous.orEmpty() + content).also {
+                        workspaceRepository.writeReviewedText(workspaceId, path, previous, it)
+                    }
                 } else {
+                    workspaceRepository.writeText(workspaceId, path, content, overwrite = true)
                     content
                 }
-                workspaceRepository.writeText(workspaceId, path, text, overwrite = true)
                 ColdMemoryWriteResult(
                     fileName = name,
                     mode = if (append) "append" else "overwrite",

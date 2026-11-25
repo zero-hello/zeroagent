@@ -2,7 +2,7 @@ package me.rerere.zeroagent.data.chat
 
 /** Presentation effects are delivered synchronously, before the input is cleared. */
 internal enum class ChatCommandEffect {
-    COMPACT, IMAGE, VOICE, ACCESS, HELP, DIRECTIVE_SAVED, DIRECTIVE_REMOVED, GOAL_USAGE,
+    COMPACT, IMAGE, VOICE, ACCESS, DELEGATE_ACCESS, HELP, DIRECTIVE_SAVED, DIRECTIVE_REMOVED, GOAL_USAGE,
 }
 
 /** Executes command policy without Compose, Android services, or a ViewModel. */
@@ -13,6 +13,11 @@ internal class ChatCommandHandler(
     private val clearInput: () -> Unit,
 ) {
     fun handle(draft: String, onEffect: (ChatCommandEffect) -> Unit): Boolean {
+        if (isDirectToolDelegation(draft)) {
+            onEffect(ChatCommandEffect.DELEGATE_ACCESS)
+            clearInput()
+            return true
+        }
         val parsed = parseSlashCommand(draft) ?: return false
         when (parsed.command) {
             ChatSlashCommand.COMPACT -> onEffect(ChatCommandEffect.COMPACT)
@@ -43,3 +48,11 @@ internal class ChatCommandHandler(
         return true
     }
 }
+
+/** Only the whole, newly typed message counts. Quoted instructions and attached data do not. */
+internal fun isDirectToolDelegation(draft: String): Boolean =
+    draft.trim().trimEnd('。', '！', '.', '!').lowercase() in setOf(
+        "全程代我授權", "請全程代我授權", "全程替我授權", "請全程替我授權",
+        "全程代我授权", "请全程代我授权", "全程替我授权", "请全程替我授权",
+        "approve tools for me throughout this chat", "please approve tools for me throughout this chat",
+    )

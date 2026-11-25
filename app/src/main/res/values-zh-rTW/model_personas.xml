@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="model_persona_title">模型人設</string>
+  <string name="model_persona_hint">選擇平常使用的人設。聊天時，可以直接請 AI 暫時忽略它，或指定新的角色。</string>
+  <string name="model_persona_general">全方位 AI 助手</string>
+  <string name="model_persona_general_desc">回答問題，也能協助日常、創作和技術工作。</string>
+  <string name="model_persona_engineer">程式搭檔</string>
+  <string name="model_persona_engineer_desc">一起找錯、看程式碼，說明修改和取捨。</string>
+  <string name="model_persona_research">研究助手</string>
+  <string name="model_persona_research_desc">比較來源，分清楚證據、推論和還不知道的事。</string>
+  <string name="model_persona_coach">學習教練</string>
+  <string name="model_persona_coach_desc">照你的步調給提示、舉例，也能帶你解完整題目。</string>
+  <string name="model_persona_editor">寫作編輯</string>
+  <string name="model_persona_editor_desc">保留你的語氣，讓文章更清楚、更順。</string>
+  <string name="model_persona_planner">任務規劃師</string>
+  <string name="model_persona_planner_desc">把目標拆成具體步驟，整理先後順序和剩餘工作。</string>
+</resources>

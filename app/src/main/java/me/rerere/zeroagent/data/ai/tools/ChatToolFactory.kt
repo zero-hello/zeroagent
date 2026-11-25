@@ -25,18 +25,29 @@ class ChatToolFactory(private val sources: ChatToolSources) {
         useExternalWebSearch: Boolean,
         activation: () -> ToolActivationState,
         onCompact: suspend (String?) -> CompactionToolResult,
-    ): List<Tool> = assemble(context, GenerationOptions(useExternalWebSearch, activation, onCompact))
+    ): List<Tool> = createGenerationSurface(context, useExternalWebSearch, activation, onCompact = onCompact)()
 
-    suspend fun createForRerun(context: ChatToolContext): List<Tool> = assemble(context, null)
+    internal suspend fun createGenerationSurface(
+        context: ChatToolContext,
+        useExternalWebSearch: Boolean,
+        activation: () -> ToolActivationState,
+        pendingTools: List<String> = emptyList(),
+        onCompact: suspend (String?) -> CompactionToolResult,
+    ): () -> List<Tool> = assemble(context, GenerationOptions(useExternalWebSearch, activation, pendingTools, onCompact))
+
+    suspend fun createForRerun(context: ChatToolContext): List<Tool> = assemble(context, null)()
 
     private data class GenerationOptions(
         val externalSearch: Boolean,
         val activation: () -> ToolActivationState,
+        val pendingTools: List<String>,
         val onCompact: suspend (String?) -> CompactionToolResult,
     )
 
-    private suspend fun assemble(context: ChatToolContext, generation: GenerationOptions?): List<Tool> {
+    private suspend fun assemble(context: ChatToolContext, generation: GenerationOptions?): () -> List<Tool> {
         val surfaceAssistant = SubAgentSurface.assistantFor(context.conversationId) ?: context.assistant
+        val publicData = if (HeadlessConversations.isHeadless(context.conversationId)) emptyList() else sources.publicDataTools()
+        var activatedTools: () -> List<Tool> = { emptyList() }
         val tools = buildList {
             // Generation uses the caller's model-aware search decision; rerun historically does not.
             if (generation?.externalSearch ?: surfaceAssistant.enableWebSearch) addAll(sources.searchTools(context.settings))
@@ -50,8 +61,10 @@ class ChatToolFactory(private val sources: ChatToolSources) {
             val remote = sources.mcpTools(if (surfaceAssistant === context.assistant) null else surfaceAssistant)
             // Rerun intentionally has no generation-only name validation or catalog indirection.
             if (generation != null) validateNames(remote)
-            if (generation != null && surfaceAssistant.toolSurfaceMode == ToolSurfaceMode.PROGRESSIVE_CATALOG) {
-                val catalog = ToolCatalog(remote.map { (id, name, tool) ->
+            if (generation != null) {
+                val deferredMcp = if (surfaceAssistant.toolSurfaceMode == ToolSurfaceMode.PROGRESSIVE_CATALOG) remote else emptyList()
+                if (deferredMcp.isEmpty()) remote.forEach { (id, name, tool) -> add(buildMcpTool(id, name, tool)) }
+                val catalog = ToolCatalog(PersonalUtilityTools.entries + publicData + deferredMcp.map { (id, name, tool) ->
                     ToolCatalogEntry(
                         name = me.rerere.zeroagent.data.ai.mcp.buildMcpToolName(id, name, tool.name),
                         summary = mcpCatalogSummary(tool),
@@ -61,13 +74,15 @@ class ChatToolFactory(private val sources: ChatToolSources) {
                 })
                 val activation = generation.activation()
                 activation.retain(catalog.entries.mapTo(mutableSetOf()) { it.name })
-                addAll(buildToolCatalogTools(catalog, activation))
-                activation.active().forEach { name -> catalog.entry(name)?.let { add(it.tool) } }
+                activation.restorePending(catalog, generation.pendingTools)
+                addAll(buildToolCatalogTools(catalog, activation, replaceOldest = true))
+                activatedTools = { activation.active().mapNotNull { name -> catalog.entry(name)?.tool } }
             } else {
+                addAll((PersonalUtilityTools.entries + publicData).map { it.tool })
                 remote.forEach { (id, name, tool) -> add(buildMcpTool(id, name, tool)) }
             }
         }
-        return SubAgentSurface.apply(context.conversationId, tools)
+        return { SubAgentSurface.apply(context.conversationId, tools + activatedTools()) }
     }
 
     private fun validateNames(tools: List<Triple<Uuid, String, McpTool>>) {
