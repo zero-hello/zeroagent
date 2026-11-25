@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_manual_check">Check for updates</string>
+    <string name="update_manual_description">Look for a newer ZeroAgent version.</string>
+    <string name="update_manual_checking">Checking for updates…</string>
+    <string name="update_manual_current">You are using the latest version.</string>
+    <string name="update_manual_available">A new version is available.</string>
+    <string name="update_manual_no_compatible_apk">A new version is available, but there is no APK for this device.</string>
+    <string name="update_manual_failed">Could not check for updates. Check your connection and try again.</string>
+    <string name="update_bundled_changes">• The changes for this version are available offline after updating.\n\n• You can check for updates at the bottom of Settings, even when automatic reminders are paused.\n\n• Update checks can use a second GitHub source when the usual one is unavailable.</string>
+</resources>

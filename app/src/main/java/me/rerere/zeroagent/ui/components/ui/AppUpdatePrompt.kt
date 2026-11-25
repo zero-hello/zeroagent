@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -50,7 +51,8 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
     val toaster = LocalToaster.current
     val scope = rememberCoroutineScope()
     val state by checker.updateState.collectAsStateWithLifecycle()
-    val info = (state as? UiState.Success)?.data
+    val manualInfo by checker.manualUpdate.collectAsStateWithLifecycle()
+    val info = manualInfo ?: (state as? UiState.Success)?.data
     var checksEnabled by remember(disabledUntil) { mutableStateOf(System.currentTimeMillis() >= disabledUntil) }
     val preferences = remember(context) { context.getSharedPreferences("version_notice", Context.MODE_PRIVATE) }
     val navigation = LocalNavController.current
@@ -66,7 +68,7 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
         }
     }
     var showChanges by remember(upgraded) { mutableStateOf(upgraded) }
-    var dismissedVersion by remember { mutableStateOf<String?>(null) }
+    var dismissedVersion by rememberSaveable { mutableStateOf<String?>(null) }
     val transfer by checker.transfer.collectAsStateWithLifecycle()
     val downloading = transfer != null
     val withNotifications = rememberUpdateNotificationRequest()
@@ -85,9 +87,9 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
     val asset = remember(info, installedVersion) {
         info?.newerDownload(installedVersion, SignedUpdateInstaller::isCompatible)
     }
-    val showUpdate = checksEnabled && info != null && dismissedVersion != info.version && asset != null
-    val waitingForInitialCheck = checksEnabled && state == UiState.Loading
-    if (showChanges && !showUpdate && !waitingForInitialCheck) {
+    val showUpdate = info != null && asset != null &&
+        (manualInfo != null || (checksEnabled && dismissedVersion != info.version))
+    if (showChanges && manualInfo == null) {
         val close = {
             showChanges = false
             preferences.edit().putString("seen_version", installedVersion).apply()
@@ -97,8 +99,7 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
             title = { Text(stringResource(R.string.update_installed_version, installedVersion)) },
             text = {
                 Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
-                    ReleaseNotes(info?.takeIf { it.version == installedVersion }?.changelog?.ifBlank { null }
-                        ?: stringResource(R.string.update_installed_changes_unavailable))
+                    Text(stringResource(R.string.update_bundled_changes))
                     PreviousApkExport(showInstallNote = true, onBackup = {
                         close()
                         navigation.navigate(Screen.Backup)
@@ -108,12 +109,19 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
             confirmButton = { TextButton(onClick = close) { Text(stringResource(android.R.string.ok)) } },
         )
     } else if (showUpdate && info != null && asset != null) {
+        val dismiss = {
+            dismissedVersion = info.version
+            checker.dismissManualUpdate(info)
+        }
         ZeroAgentAlertDialog(
-            onDismissRequest = { if (!downloading) dismissedVersion = info.version },
+            onDismissRequest = { if (!downloading) dismiss() },
             title = { Text(stringResource(R.string.update_card_new_version_found, info.version)) },
             text = {
                 Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)) {
-                    ReleaseNotes(info.changelog, Modifier.heightIn(max = 260.dp).verticalScroll(rememberScrollState()))
+                    ReleaseNotes(
+                        info.changelog.ifBlank { stringResource(R.string.update_installed_changes_unavailable) },
+                        Modifier.heightIn(max = 260.dp).verticalScroll(rememberScrollState()),
+                    )
                     transfer?.let { UpdateDownloadProgress(it) }
                 }
             },
@@ -121,7 +129,7 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
                 TextButton(enabled = !downloading, onClick = {
                     withNotifications { scope.launch {
                         try {
-                            if (checker.downloadUpdate(context, asset)) dismissedVersion = info.version
+                            if (checker.downloadUpdate(context, asset)) dismiss()
                         } catch (e: CancellationException) {
                             throw e
                         } catch (e: Exception) {
@@ -130,7 +138,7 @@ internal fun AppUpdatePrompt(disabledUntil: Long) {
                     } }
                 }) { Text(stringResource(if (downloading) R.string.update_card_downloading else R.string.update_download_install)) }
             },
-            dismissButton = { TextButton(enabled = !downloading, onClick = { dismissedVersion = info.version }) { Text(stringResource(R.string.cancel)) } },
+            dismissButton = { TextButton(enabled = !downloading, onClick = dismiss) { Text(stringResource(R.string.cancel)) } },
         )
     }
 }

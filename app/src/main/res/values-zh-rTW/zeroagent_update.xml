@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_manual_check">檢查更新</string>
+    <string name="update_manual_description">查看 ZeroAgent 有沒有新版本。</string>
+    <string name="update_manual_checking">正在檢查更新…</string>
+    <string name="update_manual_current">目前已是最新版本。</string>
+    <string name="update_manual_available">找到新版本。</string>
+    <string name="update_manual_no_compatible_apk">找到新版本，但沒有適合這台裝置的安裝檔。</string>
+    <string name="update_manual_failed">無法檢查更新。請確認網路連線後再試一次。</string>
+    <string name="update_bundled_changes">• 安裝新版後，離線也能看這一版的更新內容。\n\n• 設定最下方新增「檢查更新」，暫停自動提醒時也可以使用。\n\n• 原本的更新來源暫時無法使用時，會改用 GitHub 的另一個來源。</string>
+</resources>

@@ -46,23 +46,44 @@ class UpdateChecker(
     val updateState: StateFlow<UiState<UpdateInfo>> = state.asStateFlow()
     private val refreshMutex = Mutex()
     private var nextCheckAt: Long? = null
+    private val manualUpdateState = MutableStateFlow<UpdateInfo?>(null)
+    internal val manualUpdate = manualUpdateState.asStateFlow()
+
+    /** A user request bypasses the automatic check interval and opens the same download prompt. */
+    internal suspend fun checkNow(isCompatible: (UpdateDownload) -> Boolean): UiState<UpdateInfo> =
+        refreshMutex.withLock {
+            val result = refreshState()
+            manualUpdateState.value = (result as? UiState.Success)?.data?.takeIf {
+                it.newerDownload(currentVersionName, isCompatible) != null
+            }
+            result
+        }
+
+    internal fun dismissManualUpdate(info: UpdateInfo) {
+        manualUpdateState.compareAndSet(info, null)
+    }
 
     /** Returns the remaining time until another check is due, including after a failure. */
     suspend fun refresh(): Long = refreshMutex.withLock {
         val now = elapsedRealtime()
         nextCheckAt?.let { if (it > now) return@withLock it - now }
 
-        val interval = try {
-            state.value = UiState.Success(data = withContext(Dispatchers.IO) { fetchUpdateInfo() })
-            15 * 60 * 1000L
+        refreshState()
+        checkNotNull(nextCheckAt) - elapsedRealtime()
+    }
+
+    private suspend fun refreshState(): UiState<UpdateInfo> {
+        val result = try {
+            UiState.Success(data = withContext(Dispatchers.IO) { fetchUpdateInfo() })
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            state.value = UiState.Error(e)
-            2 * 60 * 1000L
+            UiState.Error(e)
         }
+        val interval = if (result is UiState.Success) 900_000L else 120_000L
         nextCheckAt = elapsedRealtime() + interval
-        interval
+        state.value = result
+        return result
     }
 
     /**

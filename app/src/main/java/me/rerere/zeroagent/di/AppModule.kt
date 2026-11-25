@@ -62,7 +62,7 @@ val appModule = module {
     }
 
     // Phase 14: Reliability bundle
-    single { me.rerere.zeroagent.reliability.GitHubReleaseChecker(get()) }
+    single { me.rerere.zeroagent.reliability.GitHubReleaseChecker(get(), useReleaseManifest = true) }
     single { me.rerere.zeroagent.reliability.BugReportBuilder(get()) }
 
     // Phase 11: Sub-agents

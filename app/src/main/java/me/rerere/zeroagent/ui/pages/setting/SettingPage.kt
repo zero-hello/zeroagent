@@ -13,10 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.*
+import kotlinx.coroutines.launch
+import me.rerere.zeroagent.BuildConfig
 import me.rerere.zeroagent.R
 import me.rerere.zeroagent.Screen
 import me.rerere.zeroagent.data.files.FilesManager
@@ -24,7 +29,12 @@ import me.rerere.zeroagent.ui.pages.chat.LocalAppDrawer
 import me.rerere.zeroagent.ui.components.ui.CardGroup
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentLanguagePreferences
 import me.rerere.zeroagent.ui.context.LocalNavController
+import me.rerere.zeroagent.ui.hooks.rememberIsPlayStoreVersion
 import me.rerere.zeroagent.ui.theme.CustomColors
+import me.rerere.zeroagent.utils.SignedUpdateInstaller
+import me.rerere.zeroagent.utils.UiState
+import me.rerere.zeroagent.utils.UpdateChecker
+import me.rerere.zeroagent.utils.Version
 import me.rerere.zeroagent.ui.pages.gettingstarted.hasConfiguredModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -38,6 +48,7 @@ fun SettingPage(vm: SettingVM = koinViewModel(), showBackButton: Boolean = false
     val context = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val filesManager: FilesManager = koinInject()
+    val isPlayStore = rememberIsPlayStoreVersion()
     val storage by produceState(-1 to 0L) { value = filesManager.countChatFiles() }
     val entries = remember(settings.developerMode, settings.chatModelId) {
         settingsSearchIndex(settings.developerMode, settings.chatModelId.toString())
@@ -150,7 +161,46 @@ fun SettingPage(vm: SettingVM = koinViewModel(), showBackButton: Boolean = false
                     )
                 }
             }
+            if (!isPlayStore) item("check-update") { ManualUpdateSetting() }
         }
+    }
+}
+
+@Composable
+private fun ManualUpdateSetting(checker: UpdateChecker = koinInject()) {
+    val scope = rememberCoroutineScope()
+    var checking by remember { mutableStateOf(false) }
+    var status by remember { mutableIntStateOf(R.string.update_manual_description) }
+    val check: () -> Unit = {
+        if (!checking) {
+            checking = true
+            status = R.string.update_manual_checking
+            scope.launch {
+                try {
+                    status = when (val result = checker.checkNow(SignedUpdateInstaller::isCompatible)) {
+                        is UiState.Success -> when {
+                            Version(result.data.version) <= Version(BuildConfig.VERSION_NAME) -> R.string.update_manual_current
+                            result.data.newerDownload(BuildConfig.VERSION_NAME, SignedUpdateInstaller::isCompatible) != null -> R.string.update_manual_available
+                            else -> R.string.update_manual_no_compatible_apk
+                        }
+                        else -> R.string.update_manual_failed
+                    }
+                } finally {
+                    checking = false
+                }
+            }
+        }
+    }
+    CardGroup {
+        item(
+            onClick = check.takeUnless { checking },
+            leadingContent = { Icon(HugeIcons.Refresh03, null) },
+            headlineContent = { Text(stringResource(R.string.update_manual_check)) },
+            supportingContent = {
+                Text(stringResource(status), Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+            },
+            trailingContent = if (checking) {{ CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) }} else null,
+        )
     }
 }
 

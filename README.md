@@ -2,7 +2,7 @@
 
 ZeroAgent 是由 Zero 維護的 Android AI 助理。你可以使用自己的模型服務，或下載相容的本機模型。支援文字聊天、附件、即時語音、記憶管理與內建終端機。
 
-**目前版本 v2.4.0 · Android 12 以上**
+**目前版本 v2.4.1 · Android 12 以上**
 
 [下載完整 APK](https://github.com/zero-hello/zeroagent/releases/latest) · [AGPL-3.0 授權](LICENSE) · [來源與第三方聲明](SOURCE_NOTICE.md)
 

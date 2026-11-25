@@ -1,8 +1,8 @@
 package me.rerere.zeroagent.reliability
 
-import android.util.Log
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
-import me.rerere.common.http.await
+import me.rerere.zeroagent.utils.readUpdateResponse
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,7 +14,7 @@ import me.rerere.zeroagent.utils.UpdateInfo
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-private const val TAG = "GHReleaseChecker"
+private val releaseTag = Regex("v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-zA-Z0-9.-]+)?")
 
 /**
  * Checks GitHub Releases for the latest tag of [DEFAULT_REPO] and compares it against the
@@ -34,6 +34,7 @@ private const val TAG = "GHReleaseChecker"
 class GitHubReleaseChecker(
     private val client: OkHttpClient,
     private val repo: String = DEFAULT_REPO,
+    private val useReleaseManifest: Boolean = false,
 ) {
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -70,39 +71,46 @@ class GitHubReleaseChecker(
 
     suspend fun check(): CheckResult = withContext(Dispatchers.IO) {
         if (repo.isBlank()) return@withContext CheckResult.Failed("ZeroAgent update source is not configured")
-        val req = Request.Builder()
-            .url(latestUrl)
-            .get()
-            .addHeader("Accept", "application/vnd.github+json")
-            .addHeader("Cache-Control", "no-cache")
-            .addHeader("X-GitHub-Api-Version", "2022-11-28")
-            .addHeader("User-Agent", "ZeroAgent/${BuildConfig.VERSION_NAME}")
-            .build()
-        val response = try {
-            client.newCall(req).await()
+        val release = try {
+            try {
+                fetchRelease(latestUrl)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                if (!useReleaseManifest) throw e
+                // The release asset is served outside the rate-limited REST API.
+                fetchRelease("https://github.com/$repo/releases/latest/download/update.json")
+            }
         } catch (e: CancellationException) {
             throw e
-        } catch (t: Exception) {
-            Log.w(TAG, "GitHub release fetch failed", t)
-            return@withContext CheckResult.Failed("network error: ${t.message ?: t.javaClass.simpleName}")
+        } catch (e: Exception) {
+            return@withContext CheckResult.Failed(e.message ?: "Could not check for updates")
         }
-        response.use { resp ->
-            if (!resp.isSuccessful) {
-                return@withContext CheckResult.Failed("github responded ${resp.code}")
+        val current = BuildConfig.VERSION_NAME
+        if (isNewer(release.tag_name, current)) {
+            CheckResult.Available(current, release)
+        } else {
+            CheckResult.UpToDate(current, release)
+        }
+    }
+
+    private suspend fun fetchRelease(url: String): Release {
+        val request = Request.Builder()
+            .url(url)
+            .header("Accept", "application/vnd.github+json")
+            .header("Cache-Control", "no-cache")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .header("User-Agent", "ZeroAgent/${BuildConfig.VERSION_NAME}")
+            .build()
+        val call = client.newCall(request)
+        call.timeout().timeout(12, TimeUnit.SECONDS)
+        return call.readUpdateResponse { response ->
+            check(response.isSuccessful) { "GitHub returned HTTP ${response.code}" }
+            val release = json.decodeFromString<Release>(response.body.string())
+            check(releaseTag.matches(release.tag_name) && !release.draft && !release.prerelease) {
+                "Invalid public release"
             }
-            val body = resp.body.string()
-            val release = try {
-                json.decodeFromString<Release>(body)
-            } catch (t: Throwable) {
-                return@withContext CheckResult.Failed("could not parse github response: ${t.message ?: t.javaClass.simpleName}")
-            }
-            val current = BuildConfig.VERSION_NAME
-            val latest = release.tag_name.removePrefix("v")
-            return@withContext if (isNewer(latest, current)) {
-                CheckResult.Available(current, release)
-            } else {
-                CheckResult.UpToDate(current, release)
-            }
+            release
         }
     }
 
