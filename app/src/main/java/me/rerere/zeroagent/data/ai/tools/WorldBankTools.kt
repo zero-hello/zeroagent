@@ -48,7 +48,11 @@ internal class WorldBankTools(
             execute = { arguments ->
                 val result = try {
                     val request = worldBankRequest(indicator.code, arguments, Year.now().value)
-                    decodeWorldBankData(indicator.code, indicator.label, indicator.source, retrieve(request), request.toString())
+                    val first = decodeWorldBankData(indicator.code, indicator.label, indicator.source, retrieve(request), request.toString())
+                    if ("error" !in first) first else {
+                        val explicit = request.newBuilder().addQueryParameter("source", "2").build()
+                        decodeWorldBankData(indicator.code, indicator.label, indicator.source, retrieve(explicit), explicit.toString())
+                    }
                 } catch (error: CancellationException) {
                     throw error
                 } catch (error: IOException) {
@@ -107,12 +111,16 @@ internal fun worldBankRequest(code: String, input: JsonElement, currentYear: Int
     val end = year("end_year")
     require((start == null) == (end == null))
     if (start != null && end != null) require(start >= 1960 && end <= currentYear && end - start in 0..25)
+    val firstYear = start ?: currentYear - 9
+    val lastYear = end ?: currentYear
     return BASE_URL.newBuilder()
         .addPathSegment("country").addPathSegment(codes.joinToString(";"))
         .addPathSegment("indicator").addPathSegment(code)
-        .addQueryParameter("format", "json").addQueryParameter("source", "2")
-        .addQueryParameter("per_page", "150")
-        .addQueryParameter("date", if (start != null) "$start:$end" else "${currentYear - 9}:$currentYear")
+        .addQueryParameter("format", "json")
+        .addEncodedQueryParameter("date", if (firstYear == lastYear) "$firstYear" else "$firstYear:$lastYear")
+        .apply {
+            if ((lastYear - firstYear + 1) * codes.size > 50) addQueryParameter("per_page", "150")
+        }
         .build()
 }
 
