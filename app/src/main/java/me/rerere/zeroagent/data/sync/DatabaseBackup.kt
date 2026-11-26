@@ -64,8 +64,14 @@ internal object DatabaseBackup {
         SQLiteDatabase.openDatabase(configuration, null) {
             error("Backup snapshot is corrupt")
         }.use { snapshot ->
-            snapshot.execSQL("PRAGMA secure_delete=ON")
-            snapshot.execSQL("UPDATE ssh_hosts SET password = NULL, privateKey = NULL, passphrase = NULL")
+            snapshot.beginTransaction()
+            try {
+                SQLiteConfiguration.enableSecureDelete(snapshot)
+                snapshot.execSQL("UPDATE ssh_hosts SET password = NULL, privateKey = NULL, passphrase = NULL")
+                snapshot.setTransactionSuccessful()
+            } finally {
+                snapshot.endTransaction()
+            }
             checkpoint(snapshot)
         }
         removeSidecars(databaseFile)

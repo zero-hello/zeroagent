@@ -2,6 +2,7 @@ package me.rerere.zeroagent.data.db.migrations
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import me.rerere.zeroagent.data.db.SQLiteConfiguration
 import me.rerere.zeroagent.data.ssh.SshHostCredentials
 
 /** The Room upgrade transaction commits the credentials and the version together. */
@@ -11,7 +12,7 @@ internal class EncryptSshCredentialsMigration(
 ) : Migration(32, 33) {
     override fun migrate(db: SupportSQLiteDatabase) {
         markCheckpointPending()
-        db.execSQL("PRAGMA secure_delete=ON")
+        SQLiteConfiguration.enableSecureDelete(db)
         val encrypted = mutableListOf<Array<Any?>>()
         db.query(
             "SELECT name, password, privateKey, passphrase FROM ssh_hosts " +

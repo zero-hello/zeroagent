@@ -1,10 +1,10 @@
 package me.rerere.zeroagent.data.db.migrations
 
 import androidx.room.testing.MigrationTestHelper
-import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import me.rerere.zeroagent.data.db.AppDatabase
+import me.rerere.zeroagent.data.db.SQLiteConfiguration
 import me.rerere.zeroagent.data.db.entity.SshHostEntity
 import me.rerere.zeroagent.data.ssh.SshHostCredentials
 import org.junit.Assert.assertEquals
@@ -16,9 +16,11 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class EncryptSshCredentialsMigrationTest {
+    private val instrumentation = InstrumentationRegistry.getInstrumentation()
+
     @get:Rule val helper = MigrationTestHelper(
-        InstrumentationRegistry.getInstrumentation(), AppDatabase::class.java, emptyList(),
-        FrameworkSQLiteOpenHelperFactory(),
+        instrumentation, AppDatabase::class.java, emptyList(),
+        SQLiteConfiguration.openHelperFactory(instrumentation.targetContext),
     )
 
     @Test fun encryptsLegacyCredentialsAndPreservesTheHost() {

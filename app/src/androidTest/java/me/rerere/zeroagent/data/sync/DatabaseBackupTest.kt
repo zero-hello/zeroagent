@@ -77,6 +77,30 @@ class DatabaseBackupTest {
         }
     }
 
+    @Test fun portableBackupRemovesCredentialsAndPreservesTheSshHost() {
+        val file = File(directory, "ssh-snapshot")
+        open(file).use { database ->
+            database.execSQL(
+                "CREATE TABLE ssh_hosts (name TEXT PRIMARY KEY, host TEXT, " +
+                    "password TEXT, privateKey TEXT, passphrase TEXT)",
+            )
+            database.execSQL(
+                "INSERT INTO ssh_hosts VALUES (?, ?, ?, ?, ?)",
+                arrayOf<Any?>("fixture", "test.invalid", "test-password", "test-key", "test-passphrase"),
+            )
+        }
+
+        DatabaseBackup.removeSshCredentials(context, file)
+
+        open(file).use { database ->
+            database.query("SELECT host, password, privateKey, passphrase FROM ssh_hosts WHERE name = 'fixture'").use { row ->
+                assertTrue(row.moveToFirst())
+                assertEquals("test.invalid", row.getString(0))
+                for (column in 1..3) assertTrue(row.isNull(column))
+            }
+        }
+    }
+
     @Test fun corruptDatabaseIsRejected() {
         val file = File(directory, "invalid")
         file.writeText("not a SQLite database")
