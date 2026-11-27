@@ -5,7 +5,6 @@ import android.content.res.Configuration
 import android.os.LocaleList
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -34,8 +33,7 @@ import me.rerere.zeroagent.data.ai.tools.TOOL_REVIEW_METADATA
 import me.rerere.zeroagent.ui.components.message.ToolReviewSummary
 import me.rerere.zeroagent.ui.components.message.ChatMessageToolStep
 import me.rerere.zeroagent.ui.components.ui.ChainOfThought
-import me.rerere.zeroagent.ui.theme.Typography
-import me.rerere.zeroagent.ui.theme.presets.ZeroAgentThemePreset
+import me.rerere.zeroagent.ui.designsystem.ZeroTheme
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -74,7 +72,7 @@ class ConversationAccessControlTest {
 
     @Composable
     private fun Theme(dark: Boolean = false, content: @Composable () -> Unit) {
-        MaterialTheme(colorScheme = ZeroAgentThemePreset.getColorScheme(dark), typography = Typography) {
+        ZeroTheme.Provide(isDark = dark) {
             Surface(Modifier.fillMaxSize()) { content() }
         }
     }

@@ -15,7 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentModalBottomSheet as ModalBottomSheet
 import androidx.compose.material3.Text
@@ -44,6 +44,7 @@ fun ChatMessageCopySheet(
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
+    val ask = me.rerere.zeroagent.ui.designsystem.LocalSelectedTextAsk.current
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)),
@@ -111,6 +112,25 @@ fun ChatMessageCopySheet(
                         textAlign = TextAlign.Center
                     )
                 }
+            } else if (ask != null) {
+                val body = androidx.compose.runtime.remember(textParts) { textParts.joinToString("\n\n") { it.text } }
+                val selection = androidx.compose.runtime.remember(body) {
+                    androidx.compose.runtime.mutableStateOf(androidx.compose.ui.text.input.TextFieldValue(body))
+                }
+                me.rerere.zeroagent.ui.designsystem.ZeroTextField(
+                    value = selection.value,
+                    onValueChange = { selection.value = selection.value.copy(selection = it.selection) },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                )
+                val range = selection.value.selection
+                me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(onClick = {
+                    val excerpt = body.substring(range.min, range.max).trim()
+                    if (excerpt.isNotEmpty()) {
+                        onDismissRequest()
+                        ask(excerpt)
+                    }
+                }, enabled = !range.collapsed) { Text(stringResource(R.string.zero_v6_quick_ask)) }
             } else {
                 SelectionContainer {
                     Column(

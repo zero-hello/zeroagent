@@ -1,5 +1,8 @@
 package me.rerere.zeroagent.ui.components.ai
 
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Column
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -15,7 +18,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,7 +46,7 @@ import me.rerere.hugeicons.stroke.Idea01
 import me.rerere.hugeicons.stroke.Voice
 import me.rerere.zeroagent.R
 
-/** Each action owns its measured space; a short window wraps instead of overlapping hit targets. */
+/** One row owns the attachment button, editable text and current primary action. */
 @Composable
 internal fun ComposerActionRow(
     loading: Boolean,
@@ -52,74 +55,70 @@ internal fun ComposerActionRow(
     onVoiceCall: (() -> Unit)?,
     onSend: () -> Unit,
     onStop: () -> Unit,
-    onModelOptions: () -> Unit,
+    onModelOptions: (() -> Unit)?,
     onReasoning: (() -> Unit)? = null,
     reasoningSelected: Boolean = false,
     reasoningLabel: String? = null,
     modifier: Modifier = Modifier,
     onLongSend: (() -> Unit)? = null,
+    input: @Composable (Modifier) -> Unit = { Spacer(it) },
 ) {
-    FlowRow(
-        modifier = modifier.fillMaxWidth().testTag("composer_actions"),
-        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        IconButton(onClick = onAttach, modifier = Modifier.size(48.dp).testTag("composer_attach")) {
-            Icon(HugeIcons.Add01, stringResource(R.string.quick_chat_segment_attachment))
-        }
-        if (onVoiceCall != null) {
-            FilledTonalIconButton(shapes = IconButtonDefaults.shapes(), onClick = onVoiceCall, modifier = Modifier.size(48.dp).testTag("composer_voice")) {
-                Icon(HugeIcons.Voice, stringResource(R.string.zeroagent_voice_title))
-            }
-        }
-        me.rerere.zeroagent.ui.components.ui.Tooltip(tooltip = { Text(stringResource(R.string.model_list_select_model)) }) {
-            IconButton(onClick = onModelOptions, modifier = Modifier.size(48.dp).testTag("composer_model")) {
-                Icon(HugeIcons.Brain02, stringResource(R.string.model_list_select_model))
-            }
-        }
-        if (onReasoning != null) {
-            me.rerere.zeroagent.ui.components.ui.Tooltip(tooltip = { Text(stringResource(R.string.reasoning_picker_title)) }) {
-                FilledTonalIconButton(
-                    shapes = IconButtonDefaults.shapes(),
-                    onClick = onReasoning,
-                    modifier = Modifier.size(48.dp).testTag("composer_reasoning").semantics {
+    Column(modifier.fillMaxWidth().testTag("composer_actions")) {
+        if (onModelOptions != null || onReasoning != null) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                onModelOptions?.let { action ->
+                    IconButton(onClick = action, modifier = Modifier.testTag("composer_model")) {
+                        Icon(HugeIcons.Brain02, stringResource(R.string.model_list_select_model))
+                    }
+                }
+                onReasoning?.let { action ->
+                    IconButton(onClick = action, modifier = Modifier.testTag("composer_reasoning").semantics {
                         selected = reasoningSelected
                         reasoningLabel?.let { stateDescription = it }
-                    },
-                    colors = if (reasoningSelected) IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    ) else IconButtonDefaults.filledTonalIconButtonColors(),
-                ) {
-                    Icon(HugeIcons.Idea01, stringResource(R.string.reasoning_picker_title))
+                    }) { Icon(HugeIcons.Idea01, stringResource(R.string.reasoning_picker_title)) }
                 }
             }
         }
-        Spacer(Modifier.weight(1f))
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (loading) {
-                FilledTonalIconButton(
-                    shapes = IconButtonDefaults.shapes(), onClick = onStop,
-                    modifier = Modifier.size(48.dp).testTag("composer_stop"),
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    ),
-                ) { Icon(HugeIcons.Cancel01, stringResource(R.string.stop)) }
+        Row(verticalAlignment = Alignment.Bottom) {
+            IconButton(onClick = onAttach, modifier = Modifier.testTag("composer_attach")) {
+                Icon(HugeIcons.Add01, stringResource(R.string.quick_chat_segment_attachment))
             }
-            if (!loading || hasDraft) {
-                Box(
-                    modifier = Modifier.size(48.dp).testTag("composer_send").clip(CircleShape)
-                        .combinedClickable(enabled = hasDraft, role = Role.Button, onClick = onSend, onLongClick = onLongSend),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Surface(shape = CircleShape,
-                        color = if (hasDraft) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = if (hasDraft) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(40.dp),
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(HugeIcons.ArrowUp02, stringResource(R.string.send), Modifier.size(22.dp))
+            input(Modifier.weight(1f))
+            if (loading && hasDraft) {
+                IconButton(onClick = onStop, modifier = Modifier.testTag("composer_stop")) {
+                    Icon(HugeIcons.Cancel01, stringResource(R.string.stop))
+                }
+            }
+            val mode = when {
+                hasDraft -> ComposerPrimary.Send
+                loading -> ComposerPrimary.Stop
+                onVoiceCall != null -> ComposerPrimary.Voice
+                else -> ComposerPrimary.Send
+            }
+            androidx.compose.animation.AnimatedContent(targetState = mode, label = "Composer action",
+                transitionSpec = {
+                    androidx.compose.animation.fadeIn(me.rerere.zeroagent.ui.designsystem.ZeroMotion.snappy()) togetherWith
+                        androidx.compose.animation.fadeOut(me.rerere.zeroagent.ui.designsystem.ZeroMotion.fluid())
+                }) { current ->
+                when (current) {
+                    ComposerPrimary.Voice -> IconButton(onClick = { onVoiceCall?.invoke() }, modifier = Modifier.testTag("composer_voice")) {
+                        Icon(HugeIcons.Voice, stringResource(R.string.zeroagent_voice_title))
+                    }
+                    ComposerPrimary.Stop -> IconButton(onClick = onStop, modifier = Modifier.testTag("composer_stop")) {
+                        Icon(HugeIcons.Cancel01, stringResource(R.string.stop))
+                    }
+                    ComposerPrimary.Send -> {
+                        val colors = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors
+                        Box(Modifier.size(48.dp).testTag("composer_send").clip(CircleShape)
+                            .combinedClickable(enabled = hasDraft, role = Role.Button, onClick = onSend, onLongClick = onLongSend),
+                            contentAlignment = Alignment.Center) {
+                            Surface(shape = CircleShape, modifier = Modifier.size(38.dp),
+                                color = if (hasDraft) colors.textPrimary else colors.surfaceElevated,
+                                contentColor = if (hasDraft) colors.background else colors.textMuted) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(HugeIcons.ArrowUp02, stringResource(R.string.send), Modifier.size(20.dp))
+                                }
+                            }
                         }
                     }
                 }
@@ -128,6 +127,7 @@ internal fun ComposerActionRow(
     }
 }
 
+private enum class ComposerPrimary { Voice, Send, Stop }
 /** A transparent layout slot, without an enclosing toolbar surface or external model selector. */
 @Composable
 internal fun ComposerPermissionRow(control: @Composable () -> Unit) {

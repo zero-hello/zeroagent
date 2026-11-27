@@ -49,7 +49,10 @@ import org.koin.compose.koinInject
  * The panel is positioned and mirrored from the ball that opened it: it never sits at a fixed
  * bottom, and its controls move to whichever side the ball is on (see [QuickChatPanel]).
  */
-class QuickChatActivity : FragmentActivity() {
+open class QuickChatActivity : FragmentActivity() {
+    protected open val isQuickAsk = false
+    protected open fun externalQuote(intent: Intent?): String? = null
+    private val quote = mutableStateOf<String?>(null)
 
     companion object {
         /**
@@ -63,6 +66,9 @@ class QuickChatActivity : FragmentActivity() {
 
         /** Vertical centre of the ball, in screen pixels; the panel anchors itself to it. */
         const val EXTRA_BALL_CENTER_Y = "quick_chat_ball_center_y"
+
+        fun quickAskIntent(context: Context): Intent = Intent(context, ZeroQuickAskActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
 
         fun intent(context: Context, voice: Boolean, ballSide: String, ballCenterY: Int): Intent =
             Intent(context, QuickChatActivity::class.java).apply {
@@ -116,19 +122,24 @@ class QuickChatActivity : FragmentActivity() {
                         alignment = Alignment.TopCenter,
                         showCloseButton = true,
                     )
-                    val conversationId = androidx.compose.runtime.remember { initialConversationId(this) }
+                    val savedId = androidx.compose.runtime.saveable.rememberSaveable {
+                        (if (isQuickAsk) kotlin.uuid.Uuid.random() else initialConversationId(this)).toString()
+                    }
+                    val conversationId = kotlin.uuid.Uuid.parse(savedId)
                     val locked = me.rerere.zeroagent.ui.components.ui.ChatPrivacy.appLocked(this) ||
                         me.rerere.zeroagent.ui.components.ui.ChatPrivacy.chatLocked(this, conversationId)
                     me.rerere.zeroagent.ui.components.ui.ChatPrivacyGate(locked, conversationId) {
                         QuickChatPanel(
                             initialId = conversationId,
+                            quickAsk = isQuickAsk,
+                            externalQuote = quote.value,
                             holdToTalk = holdToTalk.value,
                             mirror = mirror.value,
                             ballCenterY = ballCenterY.intValue,
                             // Told from the panel's first frame, not from onCreate: the ball folds itself
                             // away exactly as the panel unfolds, and stands the idle countdown down while
                             // the panel owns the screen. It comes back when we finish.
-                            onUnfoldStart = { FloatingBallService.notifyPanel(this, open = true) },
+                            onUnfoldStart = { if (!isQuickAsk) FloatingBallService.notifyPanel(this, open = true) },
                             onClose = { finish() },
                         )
                     }
@@ -144,7 +155,7 @@ class QuickChatActivity : FragmentActivity() {
     }
 
     override fun onDestroy() {
-        FloatingBallService.notifyPanel(this, open = false)
+        if (!isQuickAsk) FloatingBallService.notifyPanel(this, open = false)
         super.onDestroy()
     }
 
@@ -168,6 +179,10 @@ class QuickChatActivity : FragmentActivity() {
     }
 
     private fun readPanelExtras(intent: Intent?) {
+        if (isQuickAsk) {
+            quote.value = externalQuote(intent)
+            return
+        }
         mirror.value = intent?.getStringExtra(EXTRA_BALL_SIDE) == "left"
         ballCenterY.intValue = intent?.getIntExtra(EXTRA_BALL_CENTER_Y, 0) ?: 0
         holdToTalk.value = intent?.getBooleanExtra(EXTRA_VOICE, false) == true

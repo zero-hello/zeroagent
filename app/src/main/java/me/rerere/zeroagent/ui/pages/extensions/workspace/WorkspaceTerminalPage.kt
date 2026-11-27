@@ -26,7 +26,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
@@ -44,6 +44,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import me.rerere.zeroagent.ui.designsystem.ZeroTheme
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -65,11 +67,7 @@ import org.koin.compose.koinInject
 
 @Composable
 fun WorkspaceTerminalPage(id: String) {
-    MaterialTheme(colorScheme = androidx.compose.material3.darkColorScheme(
-        primary = Color(0xFFC6BFFF), surface = Color(0xFF101010), background = Color.Black,
-        surfaceContainer = Color(0xFF181818), surfaceContainerHighest = Color(0xFF252525),
-        onSurface = Color(0xFFE8E8E8), onSurfaceVariant = Color(0xFFBEBEBE),
-    )) { AndroidTerminalPageContent(id) }
+    ZeroTheme.Provide(isDark = true) { AndroidTerminalPageContent(id) }
 }
 
 @Composable
@@ -171,7 +169,7 @@ private fun WorkspaceTerminalContent(
             // Resize to the final IME height at animation start so the toolbar moves immediately
             // and terminal rows stay stable instead of sending a SIGWINCH for every frame.
             .windowInsetsPadding(WindowInsets.imeAnimationTarget),
-        color = Color.Black,
+        color = ZeroTheme.colors.background,
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
@@ -360,7 +358,8 @@ private fun WorkspaceTerminalTabContent(
         }
     }
 
-    Column(modifier = modifier.background(Color.Black)) {
+    val terminalBackground = ZeroTheme.colors.background.toArgb()
+    Column(modifier = modifier.background(ZeroTheme.colors.background)) {
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -370,7 +369,7 @@ private fun WorkspaceTerminalTabContent(
                 modifier = Modifier.fillMaxSize(),
                 factory = { viewContext ->
                     TerminalView(viewContext, null).apply {
-                        setBackgroundColor(android.graphics.Color.BLACK)
+                        setBackgroundColor(terminalBackground)
                         isFocusable = true
                         isFocusableInTouchMode = true
                         setTextSize(terminalTextSizePx)
@@ -407,7 +406,7 @@ private fun WorkspaceTerminalTabContent(
                         .align(Alignment.BottomCenter)
                         .padding(12.dp),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White,
+                    color = ZeroTheme.colors.textPrimary,
                 )
             }
         }
@@ -432,7 +431,7 @@ private fun TerminalExtraKeysBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF151515))
+            .background(ZeroTheme.colors.surface)
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 8.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -466,8 +465,8 @@ private fun TerminalExtraKey(
         shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
         modifier = Modifier.heightIn(min = 48.dp).semantics { this.selected = selected },
         colors = ButtonDefaults.textButtonColors(
-            containerColor = if (selected) Color(0xFF466B54) else Color(0xFF252525),
-            contentColor = Color(0xFFE8E8E8),
+            containerColor = if (selected) ZeroTheme.colors.accentOliveSubtle else ZeroTheme.colors.surfaceElevated,
+            contentColor = ZeroTheme.colors.textPrimary,
         ),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
     ) {

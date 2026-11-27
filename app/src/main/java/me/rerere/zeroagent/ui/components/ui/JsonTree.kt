@@ -298,15 +298,15 @@ private fun ValueText(primitive: JsonPrimitive, onClick: (() -> Unit)? = null) {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
                 .replace("\t", "\\t")
-            "\"$content\"" to Color(0xFF6A8759)
+            "\"$content\"" to me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.textPrimary
         }
 
         primitive.booleanOrNull != null -> {
-            primitive.content to Color(0xFFCC7832)
+            primitive.content to me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.textSecondary
         }
 
         primitive.longOrNull != null || primitive.doubleOrNull != null -> {
-            primitive.content to Color(0xFF6897BB)
+            primitive.content to me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.textMuted
         }
 
         else -> {

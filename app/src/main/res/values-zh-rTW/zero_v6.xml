@@ -1,0 +1,26 @@
+<resources>
+    <string name="zero_v6_sound">互動音效</string>
+    <string name="zero_v6_font">介面字體</string>
+    <string name="zero_v6_font_cache_info">下載或匯入的字體只存在這台裝置。</string>
+    <string name="zero_v6_system_font">系統字體</string>
+    <string name="zero_v6_local_font">匯入的字體</string>
+    <string name="zero_v6_download_font">下載 %1$s</string>
+    <string name="zero_v6_font_failed">字體載入失敗，會繼續使用目前的字體。</string>
+    <string name="zero_v6_import_font">匯入 TTF 或 OTF</string>
+    <string name="zero_v6_clear_fonts">清除下載與匯入的字體</string>
+    <string name="zero_v6_clear_fonts_message">會刪除本機的字體副本。如果目前使用其中一款，會切回系統字體。</string>
+    <string name="zero_v6_explain">解釋</string>
+    <string name="zero_v6_translate">翻譯</string>
+    <string name="zero_v6_summarize">摘要</string>
+    <string name="zero_v6_widget_prompt">問問 Zero Agent…</string>
+    <string name="zero_v6_showcase">UI 設計系統與互動測試</string>
+    <string name="zero_v6_model_local">本機模型</string>
+    <string name="zero_v6_model_cloud">雲端模型</string>
+    <string name="zero_v6_rename_chat">重新命名對話</string>
+    <string name="zero_v6_copy_plain">複製純文字</string>
+    <string name="zero_v6_copy_markdown">複製 Markdown</string>
+    <string name="zero_v6_captions_expand">展開字幕</string>
+    <string name="zero_v6_captions_collapse">收合字幕</string>
+    <string name="zero_v6_hang_up">結束通話</string>
+    <string name="zero_v6_memory_updated">已更新記憶</string>
+</resources>

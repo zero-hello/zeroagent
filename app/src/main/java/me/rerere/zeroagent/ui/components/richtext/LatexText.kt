@@ -2,6 +2,15 @@ package me.rerere.zeroagent.ui.components.richtext
 
 import android.graphics.Rect
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.platform.LocalContext
+import me.rerere.zeroagent.ui.designsystem.ZeroTheme
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
@@ -14,6 +23,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import ru.noties.jlatexmath.JLatexMathDrawable
 import ru.noties.jlatexmath.JLatexMathSplitter
 
@@ -37,11 +47,11 @@ fun LatexText(
 ) {
     val style = style.merge(
         fontSize = fontSize,
-        color = color
+        color = if (color == Color.Unspecified) ZeroTheme.colors.textPrimary else color
     )
     val density = LocalDensity.current
 
-    val drawable = remember(latex, fontSize, style) {
+    val drawable = remember(latex, fontSize, style, density) {
         runCatching {
             with(density) {
                 getLatexDrawable(
@@ -56,27 +66,22 @@ fun LatexText(
         }.getOrNull()
     }
 
-    if (drawable != null) {
-        with(density) {
-            Canvas(
-                modifier = modifier
-                    .size(
-                        width = drawable.bounds.width().toDp(),
-                        height = drawable.bounds.height().toDp()
-                    )
-            ) {
-                drawable.draw(drawContext.canvas.nativeCanvas)
-            }
+    val colors = ZeroTheme.colors
+    val context = LocalContext.current
+    Surface(onClick = {
+        context.getSystemService(android.content.ClipboardManager::class.java)
+            ?.setPrimaryClip(android.content.ClipData.newPlainText("LaTeX", latex))
+    }, modifier = modifier, border = BorderStroke(1.dp, colors.borderSubtle),
+        shape = MaterialTheme.shapes.small, color = colors.surface) {
+        Box(Modifier.horizontalScroll(rememberScrollState()).padding(12.dp)) {
+            if (drawable != null) {
+                with(density) { Canvas(Modifier.size(drawable.bounds.width().toDp(), drawable.bounds.height().toDp())) {
+                    drawable.draw(drawContext.canvas.nativeCanvas)
+                } }
+            } else Text(text = latex, style = style)
         }
-    } else {
-        Text(
-            text = latex,
-            style = style,
-            modifier = modifier
-        )
     }
 }
-
 fun getLatexDrawable(
     latex: String,
     fontSize: Float,

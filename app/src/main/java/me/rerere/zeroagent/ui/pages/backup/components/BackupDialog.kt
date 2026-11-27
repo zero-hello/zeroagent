@@ -3,7 +3,7 @@ package me.rerere.zeroagent.ui.pages.backup.components
 import androidx.compose.material3.ButtonDefaults
 
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
@@ -18,7 +18,7 @@ fun BackupDialog() {
         text = { Text(stringResource(R.string.backup_page_restart_desc)) },
         confirmButton = {
             Button(
-                shapes = ButtonDefaults.shapes(), onClick = {
+                onClick = {
                     exitProcess(0)
                 }
             ) {

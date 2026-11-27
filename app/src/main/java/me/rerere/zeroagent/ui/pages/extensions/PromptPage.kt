@@ -43,7 +43,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
@@ -51,14 +51,14 @@ import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
 import androidx.compose.material3.FloatingToolbarDefaults.floatingToolbarVerticalNestedScroll
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentModalBottomSheet as ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import me.rerere.zeroagent.ui.components.ui.Switch
@@ -272,7 +272,7 @@ private fun ModeInjectionTab(
                 }
             },
         ) {
-            Button(shapes = ButtonDefaults.shapes(), onClick = { editState.open(PromptInjection.ModeInjection()) }) {
+            Button(onClick = { editState.open(PromptInjection.ModeInjection()) }) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
@@ -684,7 +684,7 @@ private fun LorebookTab(
                 }
             },
         ) {
-            Button(shapes = ButtonDefaults.shapes(), onClick = { editState.open(Lorebook()) }) {
+            Button(onClick = { editState.open(Lorebook()) }) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically

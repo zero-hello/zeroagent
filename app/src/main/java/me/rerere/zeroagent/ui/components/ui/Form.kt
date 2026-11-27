@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
 import me.rerere.zeroagent.ui.components.ui.Switch
 import androidx.compose.material3.Text

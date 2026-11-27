@@ -16,7 +16,7 @@ import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -80,7 +80,7 @@ fun TagsInput(
         // 添加按钮
         Surface(
             shape = CircleShape,
-            tonalElevation = 2.dp,
+            tonalElevation = 0.dp,
             modifier = Modifier
                 .clip(CircleShape)
                 .clickable { showAddDialog = true }) {

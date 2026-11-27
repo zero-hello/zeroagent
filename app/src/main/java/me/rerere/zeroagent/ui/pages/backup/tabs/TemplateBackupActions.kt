@@ -228,8 +228,8 @@ internal fun TemplateBackupActions(vm: BackupVM) {
                     QRCode(
                         value = payload,
                         modifier = Modifier.size(250.dp),
-                        color = Color.Black,
-                        backgroundColor = Color.White,
+                        color = me.rerere.zeroagent.ui.designsystem.ZeroTheme.qrInk,
+                        backgroundColor = me.rerere.zeroagent.ui.designsystem.ZeroTheme.qrPaper,
                         description = stringResource(R.string.template_qr_title),
                     )
                 },

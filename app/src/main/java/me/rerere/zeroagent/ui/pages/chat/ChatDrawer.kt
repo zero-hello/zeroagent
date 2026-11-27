@@ -14,7 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import me.rerere.zeroagent.ui.components.ui.ExpressiveDivider as HorizontalDivider
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -41,7 +41,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentModalBottomSheet as ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.Surface
 import me.rerere.zeroagent.ui.components.ui.Switch
 import androidx.compose.material3.Text
@@ -456,7 +456,7 @@ fun ChatDrawerContent(
                             } else {
                                 MaterialTheme.colorScheme.surface
                             },
-                            tonalElevation = if (isCurrent) 2.dp else 0.dp
+                            tonalElevation = 0.dp
                         ) {
                             Row(
                                 modifier = Modifier
@@ -959,7 +959,7 @@ private fun AssistantItem(
         } else {
             MaterialTheme.colorScheme.surface
         },
-        tonalElevation = if (isCurrentAssistant) 2.dp else 0.dp
+        tonalElevation = 0.dp
     ) {
         Row(
             modifier = Modifier

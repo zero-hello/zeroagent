@@ -2,9 +2,16 @@ package me.rerere.zeroagent.ui.pages.chat
 
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.ui.window.DialogWindowProvider
+import android.view.WindowManager
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.RuntimeShader
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import me.rerere.zeroagent.ui.designsystem.*
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.stringResource
@@ -52,6 +58,7 @@ fun RealtimeVoicePage(model: Model, provider: ProviderSetting, assistant: Assist
     val nativeModel = model.copy(modelId = model.nativeVoiceModelId(), displayName = model.nativeVoiceModelId())
     val session = remember(model.id, model.realtimeVoice, provider.id) { RealtimeVoiceSession(context, client) }
     val state by session.state.collectAsStateWithLifecycle()
+    val feedback = rememberZeroFeedback()
     var permission by remember { mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) }
     var permissionPending by remember { mutableStateOf(false) }
     var outputMenu by remember { mutableStateOf(false) }
@@ -59,14 +66,15 @@ fun RealtimeVoicePage(model: Model, provider: ProviderSetting, assistant: Assist
     var permissionDenied by remember { mutableStateOf(false) }
     var subtitles by remember { mutableStateOf(true) }
     var text by remember { mutableStateOf("") }
+    var showText by remember { mutableStateOf(false) }
+    var expandedCaptions by remember { mutableStateOf(false) }
+    fun leaveVoice() {
+        feedback(ZeroFeedbackEvent.VoiceEnd)
+        onDismiss()
+    }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val lifecycleState by lifecycle.currentStateFlow.collectAsStateWithLifecycle()
-    val view = androidx.compose.ui.platform.LocalView.current
-    DisposableEffect(view) {
-        val previous = view.keepScreenOn
-        view.keepScreenOn = true
-        onDispose { view.keepScreenOn = previous }
-    }
+
     val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> permissionPending = false; permission = granted; permissionDenied = !granted }
     LaunchedEffect(Unit) { if (!permission) { permissionPending = true; request.launch(Manifest.permission.RECORD_AUDIO) } }
     LaunchedEffect(permission, lifecycleState) {
@@ -92,7 +100,19 @@ fun RealtimeVoicePage(model: Model, provider: ProviderSetting, assistant: Assist
         RealtimePhase.MUTED -> R.string.zeroagent_voice_muted
         else -> R.string.zeroagent_voice_closed
     })
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    Dialog(onDismissRequest = ::leaveVoice, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        val view = androidx.compose.ui.platform.LocalView.current
+        val window = (view.parent as? DialogWindowProvider)?.window
+        DisposableEffect(view, window) {
+            val flag = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            val wasSet = window?.attributes?.flags?.and(flag) == flag
+            val viewWasSet = view.keepScreenOn
+            if (window != null) window.addFlags(flag) else view.keepScreenOn = true
+            onDispose {
+                if (window == null) view.keepScreenOn = viewWasSet
+                else if (!wasSet) window.clearFlags(flag)
+            }
+        }
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
             Column(Modifier.fillMaxSize()
                 .safeDrawingPadding().imePadding().padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -102,11 +122,11 @@ fun RealtimeVoicePage(model: Model, provider: ProviderSetting, assistant: Assist
                         Text(model.displayName.ifBlank { model.modelId }, style = MaterialTheme.typography.labelSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                     IconToggleButton(checked = subtitles, onCheckedChange = { subtitles = it }) {
-                        Icon(HugeIcons.Text, stringResource(R.string.zeroagent_voice_subtitles), tint = if (subtitles) MaterialTheme.colorScheme.primary else Color.Gray)
+                        Icon(HugeIcons.Text, stringResource(R.string.zeroagent_voice_subtitles), tint = if (subtitles) MaterialTheme.colorScheme.primary else ZeroTheme.colors.textMuted)
                     }
                     Box {
                         IconButton(onClick = { outputMenu = true }) {
-                            Icon(HugeIcons.VolumeHigh, stringResource(R.string.zeroagent_voice_output), tint = if (state.outputMuted) Color.Gray else MaterialTheme.colorScheme.primary)
+                            Icon(HugeIcons.VolumeHigh, stringResource(R.string.zeroagent_voice_output), tint = if (state.outputMuted) ZeroTheme.colors.textMuted else MaterialTheme.colorScheme.primary)
                         }
                         DropdownMenu(expanded = outputMenu, onDismissRequest = { outputMenu = false }) {
                             DropdownMenuItem(text = { Text(stringResource(if (state.outputMuted) R.string.zeroagent8_voice_unmute else R.string.zeroagent8_voice_mute)) },
@@ -123,30 +143,43 @@ fun RealtimeVoicePage(model: Model, provider: ProviderSetting, assistant: Assist
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(stateLabel, style = MaterialTheme.typography.titleMedium)
+                    ZeroInlineBanner(stateLabel, busy = state.phase == RealtimePhase.CONNECTING || state.phase == RealtimePhase.THINKING)
                     LiveVoiceOrb(session, state, Modifier.fillMaxWidth().height(220.dp))
-                    if (state.routeUnavailable) Text(stringResource(R.string.zeroagent8_voice_route_error), color = MaterialTheme.colorScheme.error)
+                    if (state.routeUnavailable) ZeroInlineBanner(stringResource(R.string.zeroagent8_voice_route_error), error = true)
                     if (!state.echoCancellation) Text(stringResource(R.string.zeroagent_voice_echo_hint), style = MaterialTheme.typography.bodySmall)
-                    if (subtitles) Column(
-                        Modifier.fillMaxWidth().heightIn(max = 240.dp).verticalScroll(captionsScroll),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        if (state.userTranscript.isNotBlank()) Text(state.userTranscript, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        if (state.assistantTranscript.isNotBlank()) Text(state.assistantTranscript, style = MaterialTheme.typography.bodyLarge)
+                    if (subtitles && (state.userTranscript.isNotBlank() || state.assistantTranscript.isNotBlank())) {
+                        ZeroHairlineCard(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                ZeroCapsuleButton(onClick = { expandedCaptions = !expandedCaptions }) {
+                                    Text(stringResource(if (expandedCaptions) R.string.zero_v6_captions_collapse else R.string.zero_v6_captions_expand))
+                                }
+                                if (expandedCaptions) Column(Modifier.heightIn(max = 230.dp).verticalScroll(captionsScroll)) {
+                                    if (state.userTranscript.isNotBlank()) Text(state.userTranscript, color = ZeroTheme.colors.textSecondary)
+                                    if (state.assistantTranscript.isNotBlank()) Text(state.assistantTranscript)
+                                } else Text(state.assistantTranscript.ifBlank { state.userTranscript }, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
                     }
                 }
                 Text(stringResource(R.string.zeroagent_voice_voice_limit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Surface(Modifier.fillMaxWidth().padding(vertical = 12.dp), shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-                    Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IconToggleButton(checked = !state.inputMuted, onCheckedChange = { if (state.responding) session.interrupt() else session.muteInput() }) {
-                            Icon(HugeIcons.Mic01, stringResource(R.string.zeroagent_voice_microphone), tint = if (state.inputMuted) Color.Gray else MaterialTheme.colorScheme.primary)
-                        }
-                        TextField(value = text, onValueChange = { text = it }, modifier = Modifier.weight(1f), maxLines = 3,
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Send),
-                            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSend = { if (text.isNotBlank() && session.sendText(text)) { text = "" } }),
-                            placeholder = { Text(stringResource(R.string.zeroagent_voice_text), style = MaterialTheme.typography.bodyMedium) },
-                            colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent, focusedTextColor = MaterialTheme.colorScheme.onSurface, unfocusedTextColor = MaterialTheme.colorScheme.onSurface))
+                AnimatedVisibility(showText) {
+                    ZeroTextField(value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), maxLines = 3,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Send),
+                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSend = { if (text.isNotBlank() && session.sendText(text)) text = "" }),
+                        placeholder = { Text(stringResource(R.string.zeroagent_voice_text)) })
+                }
+                Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
+                    ZeroIconButton(onClick = {
+                        if (state.responding) { session.interrupt(); feedback(ZeroFeedbackEvent.VoiceInterrupt) }
+                        else { session.muteInput(); feedback(ZeroFeedbackEvent.Toggle) }
+                    }) {
+                        Icon(HugeIcons.Mic01, stringResource(R.string.zeroagent_voice_microphone), tint = if (state.inputMuted) ZeroTheme.colors.accentOlive else ZeroTheme.colors.textPrimary)
+                    }
+                    ZeroIconButton(onClick = { showText = !showText }) {
+                        Icon(HugeIcons.Text, stringResource(R.string.zeroagent_voice_text))
+                    }
+                    ZeroIconButton(onClick = ::leaveVoice) {
+                        Icon(HugeIcons.Cancel01, stringResource(R.string.zero_v6_hang_up), tint = ZeroTheme.colors.destructive)
                     }
                 }
             }
@@ -173,81 +206,48 @@ internal fun voiceErrorResource(code: String): Int = when (code) {
 
 @Composable
 private fun LiveVoiceOrb(session: RealtimeVoiceSession, state: RealtimeVoiceState, modifier: Modifier) {
-    val levels by session.levels.collectAsStateWithLifecycle()
-    VoiceOrb(state.copy(input = levels.input, output = levels.output), modifier)
-}
-
-@Composable
-private fun VoiceOrb(state: RealtimeVoiceState, modifier: Modifier) {
-    val motionEnabled = me.rerere.zeroagent.ui.components.ui.rememberMotionEnabled()
-    val time = if (motionEnabled) {
-        val transition = rememberInfiniteTransition(label = "voice-orb")
-        val animatedTime by transition.animateFloat(0f, (2 * PI).toFloat(), infiniteRepeatable(tween(14000, easing = LinearEasing)), label = "flow")
-        animatedTime
-    } else 0f
-    val level by animateFloatAsState(max(state.input.amplitude, state.output.amplitude).times(3f).coerceIn(0f, 1f), tween(90), label = "voice-energy")
-    val brightness = max(state.input.brightness, state.output.brightness)
-    val shader = if (Build.VERSION.SDK_INT >= 33) remember { runCatching { OrbShader.create() }.getOrNull() } else null
-    Canvas(modifier) {
-        val r = min(size.width, size.height) * (.29f + level * .035f)
-        val c = center
-        drawCircle(Brush.radialGradient(listOf(Color(0x253C70B0), Color.Transparent), c, r * 1.65f), r * 1.65f, c)
-        if (Build.VERSION.SDK_INT >= 33 && shader != null) {
-            OrbShader.update(shader, size.width, size.height, time, level, brightness)
-            drawCircle(ShaderBrush(shader), r, c)
-        } else {
-            val bounds = Path().apply { addOval(Rect(c - Offset(r, r), c + Offset(r, r))) }
-            clipPath(bounds) {
-                drawCircle(Color(0xFF273C72), r, c)
-                val colors = listOf(Color(0xFF8EBBFA), Color(0xFFB9A0E8), Color(0xFF69CFC4))
-                colors.forEachIndexed { i, color ->
-                    val spot = c + Offset(sin(time + i * 2f), cos(time + i * 2f)) * r * .55f
-                    drawCircle(Brush.radialGradient(listOf(color.copy(alpha = .8f + level * .15f), Color.Transparent), spot, r * 1.3f), r * 1.3f, spot)
-                }
+    val levels = session.levels.collectAsStateWithLifecycle()
+    val colors = ZeroTheme.colors
+    val active = state.phase in setOf(RealtimePhase.CONNECTING, RealtimePhase.LISTENING, RealtimePhase.THINKING, RealtimePhase.SPEAKING)
+    val elapsed = if (active && me.rerere.zeroagent.ui.components.ui.rememberMotionEnabled()) {
+        rememberInfiniteTransition(label = "Voice ring").animateFloat(0f, (2 * PI).toFloat(),
+            infiniteRepeatable(tween(3000, easing = LinearEasing)), label = "Voice ring phase")
+    } else null
+    Box(modifier.drawWithCache {
+        val radius = size.minDimension * .31f
+        val ring = Path()
+        val line = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round)
+        val glow = Stroke(width = 1.dp.toPx())
+        onDrawBehind {
+            val angle = elapsed?.value ?: 0f
+            val samples = levels.value
+            val energy = when (state.phase) {
+                RealtimePhase.LISTENING -> (samples.input.amplitude * 3f).coerceIn(0f, 1f)
+                RealtimePhase.SPEAKING -> (samples.output.amplitude * 3f).coerceIn(0f, 1f)
+                else -> 0f
+            }
+            val pulse = sin(angle) * .016f
+            if (state.phase == RealtimePhase.LISTENING) {
+                drawCircle(colors.accentOlive, radius * (1.07f + energy * .17f + pulse), alpha = .42f, style = glow)
+            }
+            ring.rewind()
+            repeat(96) { sample ->
+                val phase = sample * (2 * PI / 96).toFloat()
+                val wave = sin(phase * 5f + angle * 2f) * energy * .09f
+                val r = radius * (1f + pulse + wave)
+                val x = center.x + cos(phase) * r
+                val y = center.y + sin(phase) * r
+                if (sample == 0) ring.moveTo(x, y) else ring.lineTo(x, y)
+            }
+            ring.close()
+            drawPath(ring, if (state.phase == RealtimePhase.ERROR) colors.destructive else colors.textPrimary, style = line)
+            if (state.phase == RealtimePhase.CONNECTING || state.phase == RealtimePhase.THINKING) {
+                drawCircle(colors.accentOlive, 3.dp.toPx(),
+                    center = Offset(center.x + cos(angle) * radius, center.y + sin(angle) * radius))
             }
         }
-        // Paths provide a genuinely animated liquid surface on Android 12 as well.
-        for (layer in 0..3) {
-            val path = Path()
-            for (step in 0..100) {
-                val a = step / 100f * 2f * PI.toFloat()
-                val wave = r * (1f + (.025f + level * .035f) * sin(a * (3 + layer) + time * (layer + 1)))
-                val p = c + Offset(cos(a) * wave, sin(a) * wave)
-                if (step == 0) path.moveTo(p.x, p.y) else path.lineTo(p.x, p.y)
-            }
-            path.close(); drawPath(path, Color(0xFFCEE1FF).copy(alpha = .1f + brightness * .06f), style = Stroke(1.2f + layer))
-        }
-        for (i in 0..23) {
-            val a = i * 2.39996f + sin(time) * .5f
-            val distance = r * (1.2f + (i % 7) * .065f + level * .12f)
-            drawCircle(Color(0xFFCAD9F2).copy(alpha = .25f + .25f * sin(time + i).pow(2)),
-                1f + i % 3, c + Offset(cos(a) * distance, sin(a) * distance))
-        }
-    }
+    })
 }
-
-@RequiresApi(33)
-private object OrbShader {
-    fun create(): android.graphics.Shader = RuntimeShader("""
-        uniform float2 resolution; uniform float time; uniform float energy; uniform float brightness;
-        half4 main(float2 p) {
-            float2 uv = (p - resolution * .5) / min(resolution.x, resolution.y);
-            float2 motion = float2(sin(time), cos(time));
-            float flow = sin(uv.x * 11. + motion.x * 2. + sin(uv.y * 9. + motion.y));
-            float ripple = cos(uv.y * 13. - motion.y * 2. + flow * (1.2 + energy));
-            float light = clamp(.5 + .28 * flow + .16 * ripple + brightness * .12, 0., 1.);
-            half3 color = mix(half3(.16, .29, .57), half3(.58, .78, .98), light);
-            color = mix(color, half3(.73, .57, .88), clamp(ripple * .28 + .18, 0., .45));
-            return half4(color, 1.);
-        }
-    """.trimIndent())
-    fun update(baseShader: android.graphics.Shader, width: Float, height: Float, time: Float, energy: Float, brightness: Float) {
-        val shader = baseShader as RuntimeShader
-        shader.setFloatUniform("resolution", width, height); shader.setFloatUniform("time", time)
-        shader.setFloatUniform("energy", energy); shader.setFloatUniform("brightness", brightness)
-    }
-}
-
 internal fun voiceOutputRouteLabel(type: Int): Int = when (type) {
     android.media.AudioDeviceInfo.TYPE_BUILTIN_EARPIECE -> R.string.zeroagent8_voice_earpiece
     android.media.AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> R.string.zeroagent8_voice_speaker

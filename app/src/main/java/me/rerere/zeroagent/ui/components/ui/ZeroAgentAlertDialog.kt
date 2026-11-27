@@ -1,5 +1,7 @@
 package me.rerere.zeroagent.ui.components.ui
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.runtime.Composable
@@ -20,19 +22,19 @@ fun ZeroAgentAlertDialog(
     icon: (@Composable () -> Unit)? = null,
     title: (@Composable () -> Unit)? = null,
     text: (@Composable () -> Unit)? = null,
-    shape: Shape = AlertDialogDefaults.shape,
-    containerColor: Color = AlertDialogDefaults.containerColor,
+    shape: Shape = androidx.compose.material3.MaterialTheme.shapes.large,
+    containerColor: Color = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.surface,
     iconContentColor: Color = AlertDialogDefaults.iconContentColor,
     titleContentColor: Color = AlertDialogDefaults.titleContentColor,
     textContentColor: Color = AlertDialogDefaults.textContentColor,
-    tonalElevation: Dp = AlertDialogDefaults.TonalElevation,
+    tonalElevation: Dp = 0.dp,
     properties: DialogProperties = DialogProperties(),
 ) {
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
         confirmButton = confirmButton,
-        modifier = modifier,
+        modifier = modifier.border(1.dp, me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.borderSubtle, shape),
         dismissButton = dismissButton,
         icon = icon,
         title = title,
@@ -59,7 +61,8 @@ fun ZeroAgentAlertDialog(
         androidx.compose.material3.Surface(
             modifier = Modifier,
             shape = androidx.compose.material3.MaterialTheme.shapes.extraLarge,
-            color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.surface,
+            border = BorderStroke(1.dp, me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.borderSubtle),
             content = content,
         )
     }

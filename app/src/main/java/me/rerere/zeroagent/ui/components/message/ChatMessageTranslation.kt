@@ -26,10 +26,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentCard as Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import me.rerere.zeroagent.ui.designsystem.ZeroProgressIndicator as CircularProgressIndicator
 import me.rerere.zeroagent.ui.components.ui.ExpressiveDivider as HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentModalBottomSheet as ModalBottomSheet
 import androidx.compose.material3.Text

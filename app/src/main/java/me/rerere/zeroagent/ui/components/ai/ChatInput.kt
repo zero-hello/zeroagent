@@ -1,10 +1,13 @@
 package me.rerere.zeroagent.ui.components.ai
 
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.BorderStroke
+import me.rerere.zeroagent.ui.designsystem.ZeroTheme
+import me.rerere.zeroagent.ui.designsystem.rememberZeroFeedback
+import me.rerere.zeroagent.ui.designsystem.ZeroFeedbackEvent
 
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.content.MediaType
@@ -39,7 +42,7 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -142,6 +145,9 @@ fun ChatInput(
 
     onUpdateReasoningLevel: (me.rerere.ai.core.ReasoningLevel) -> Unit,
     onMoreClick: () -> Unit,
+    selectedQuote: String? = null,
+    onRemoveQuote: () -> Unit = {},
+    quoteFocusRequest: Int = 0,
     onCancelClick: () -> Unit,
     onSendClick: () -> Unit,
     onLongSendClick: () -> Unit,
@@ -161,6 +167,14 @@ fun ChatInput(
 
     val composerFocus = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(quoteFocusRequest) {
+        if (quoteFocusRequest > 0 && selectedQuote != null) {
+            composerFocus.requestFocus()
+            androidx.compose.runtime.withFrameNanos { }
+            keyboardController?.show()
+        }
+    }
+
     val focusManager = LocalFocusManager.current
 
     var isFullScreen by remember { mutableStateOf(false) }
@@ -178,6 +192,7 @@ fun ChatInput(
         else -> null
     }
 
+    val feedback = rememberZeroFeedback()
     fun sendMessage() {
         if (!state.isEmpty()) warning()?.let {
             toaster.show(it, type = ToastType.Error)
@@ -185,7 +200,12 @@ fun ChatInput(
         }
         focusManager.clearFocus(force = true)
         keyboardController?.hide()
-        if (loading && state.isEmpty()) onCancelClick() else onSendClick()
+        if (loading && state.isEmpty()) {
+            onCancelClick()
+        } else {
+            if (!state.isEmpty()) feedback(ZeroFeedbackEvent.Send)
+            onSendClick()
+        }
     }
 
     fun sendMessageWithoutAnswer() {
@@ -196,8 +216,12 @@ fun ChatInput(
 
     val showReasoning = model?.abilities?.contains(ModelAbility.REASONING) == true
     // Keep the composer multiline and stable while typing.
-    val containerShape = MaterialTheme.shapes.large
-    val modelListState = rememberModelListState(model?.id, settings.providers, ModelType.CHAT)
+    val radius by androidx.compose.animation.core.animateDpAsState(
+        if (state.textContent.text.lineSequence().take(2).count() > 1) 22.dp else 28.dp,
+        me.rerere.zeroagent.ui.designsystem.ZeroMotion.fluid(), label = "Composer corners",
+    )
+    val containerShape = RoundedCornerShape(radius)
+
     val capabilityRevision by ReasoningCapabilities.revision.collectAsState()
     val provider = model?.findProvider(settings.providers)
     val reasoningOptions = remember(model, provider, capabilityRevision) { ReasoningCapabilities.forModel(model, provider) }
@@ -207,8 +231,8 @@ fun ChatInput(
         model?.generation?.reasoningLevel ?: assistant.reasoningLevel,
     )
     var showReasoningPicker by remember(model?.id, provider?.id) { mutableStateOf(false) }
-    var showEditorMenu by remember { mutableStateOf(false) }
-    ModelListSheet(state = modelListState, onSelect = onUpdateChatModel)
+    var showToolIsland by remember { mutableStateOf(false) }
+    val toolBack = me.rerere.zeroagent.ui.designsystem.rememberZeroPredictiveDismiss(showToolIsland) { showToolIsland = false }
     if (showReasoningPicker) ReasoningPicker(
         reasoningLevel = reasoningLevel,
         supportedLevels = reasoningOptions.levels,
@@ -225,9 +249,11 @@ fun ChatInput(
             modifier = modifier.fillMaxWidth().imePadding().navigationBarsPadding(),
             contentAlignment = Alignment.Center,
         ) {
+        val compact = maxHeight < 360.dp
+        val composerHeight = if (compact) (maxHeight * .35f).coerceIn(minOf(52.dp, maxHeight), maxHeight) else maxHeight
         Column(
             modifier = Modifier.widthIn(max = AppLayout.chatWidth).fillMaxWidth()
-                .heightIn(max = maxHeight).verticalScroll(rememberScrollState())
+                .heightIn(max = composerHeight).verticalScroll(rememberScrollState(), reverseScrolling = compact)
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -250,23 +276,59 @@ fun ChatInput(
                     onFocus = { composerFocus.requestFocus() },
                 )
             }
-            // Tonal Material surface keeps the editing area distinct from conversation controls.
+            selectedQuote?.let { quote ->
+                me.rerere.zeroagent.ui.designsystem.ZeroQuotePreviewCard(
+                    quote, stringResource(R.string.quick_chat_close), onRemoveQuote,
+                )
+            }
+            if (state.messageContent.isNotEmpty()) MediaFileInputRow(state = state)
+            androidx.compose.animation.AnimatedVisibility(
+                visible = showToolIsland,
+                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(
+                    me.rerere.zeroagent.ui.designsystem.ZeroMotion.bouncy(), expandFrom = Alignment.Bottom,
+                ),
+                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically(
+                    me.rerere.zeroagent.ui.designsystem.ZeroMotion.fluid(), shrinkTowards = Alignment.Bottom,
+                ),
+            ) {
+                me.rerere.zeroagent.ui.designsystem.ZeroHairlineCard(Modifier.fillMaxWidth().graphicsLayer {
+                    alpha = 1f - .4f * toolBack.value
+                    translationY = 12.dp.toPx() * toolBack.value
+                }) {
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton({ showToolIsland = false; onMoreClick() }) {
+                            Icon(HugeIcons.Add01, null, Modifier.size(16.dp))
+                            Text(stringResource(R.string.quick_chat_segment_attachment))
+                        }
+                        if (showReasoning && reasoningOptions.levels.size > 1) {
+                            me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton({
+                                showToolIsland = false
+                                focusManager.clearFocus(force = true)
+                                keyboardController?.hide()
+                                showReasoningPicker = true
+                            }, selected = reasoningLevel.isEnabled) { Text(stringResource(R.string.reasoning_picker_title)) }
+                        }
+                        me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton({ showToolIsland = false; isFullScreen = true }) {
+                            Text(stringResource(R.string.text_area_fullscreen_edit))
+                        }
+                    }
+                }
+            }
+            val colors = ZeroTheme.colors
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(containerShape),
                 shape = containerShape,
                 tonalElevation = 0.dp,
-                color = MaterialTheme.colorScheme.surfaceContainer,
+                color = colors.surface,
+                border = BorderStroke(1.dp, if (loading) colors.accentOlive else colors.borderSubtle),
             ) {
                 Column(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    if (state.messageContent.isNotEmpty()) {
-                        MediaFileInputRow(state = state)
-                    }
-
                     if (mediaWarning.isNotEmpty()) {
                         Text(
                             "目前的模型無法讀取：${mediaWarning.joinToString("、") { it.displayName() }}",
@@ -298,48 +360,30 @@ fun ChatInput(
                             }
                         }
                     }
-                    TextInputRow(
-                        state = state,
-                        completionProviders = completionProviders,
-                        focusRequester = composerFocus,
-                        onSendMessage = { sendMessage() },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    ComposerActionRow(
+                        loading = loading,
+                        hasDraft = !state.isEmpty(),
+                        onAttach = { feedback(ZeroFeedbackEvent.Tools); showToolIsland = !showToolIsland },
+                        onVoiceCall = onStartVoiceMode,
+                        onSend = { sendMessage() },
+                        onStop = onCancelClick,
+                        onModelOptions = null,
+                        onLongSend = { sendMessageWithoutAnswer() },
+                    ) { fieldModifier ->
+                        TextInputRow(
+                            state = state,
+                            completionProviders = completionProviders,
+                            focusRequester = composerFocus,
+                            onSendMessage = { sendMessage() },
+                            modifier = fieldModifier,
+                        )
+                    }
                     if (settings.displaySetting.enableHoldDictation) {
                         HoldToDictate { text ->
                             if (state.textContent.text.isNotBlank()) state.appendText(" ")
                             state.appendText(text)
                         }
                     }
-                    Box {
-                        ComposerActionRow(
-                            loading = loading,
-                            hasDraft = !state.isEmpty(),
-                            onAttach = onMoreClick,
-                            onVoiceCall = onStartVoiceMode,
-                            onSend = { sendMessage() },
-                            onStop = onCancelClick,
-                            onModelOptions = { showEditorMenu = true },
-                            onReasoning = if (showReasoning && reasoningOptions.levels.size > 1) {
-                                { focusManager.clearFocus(force = true); keyboardController?.hide(); showReasoningPicker = true }
-                            } else null,
-                            reasoningSelected = reasoningLevel.isEnabled,
-                            reasoningLabel = reasoningLevel.label(),
-                            onLongSend = { sendMessageWithoutAnswer() },
-                        )
-                        DropdownMenu(expanded = showEditorMenu, onDismissRequest = { showEditorMenu = false }) {
-                            DropdownMenuItem(
-                                text = { Text(model?.displayName ?: stringResource(R.string.model_list_select_model)) },
-                                onClick = { showEditorMenu = false; focusManager.clearFocus(force = true); keyboardController?.hide(); modelListState.open() },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.text_area_fullscreen_edit)) },
-                                onClick = { showEditorMenu = false; isFullScreen = true },
-                                leadingIcon = { Icon(HugeIcons.Fullscreen, null) },
-                            )
-                        }
-                    }
-
                     if (loading) {
                         KeepScreenOn()
                     }
@@ -555,7 +599,7 @@ private fun CompletionPopup(
             .fillMaxWidth()
             .heightIn(max = 280.dp),
         shape = RoundedCornerShape(18.dp),
-        tonalElevation = 2.dp,
+        tonalElevation = 0.dp,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {

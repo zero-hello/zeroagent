@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -78,6 +79,18 @@ fun LocalDownloadControls(vm: SettingLocalLlmViewModel) {
     val file by vm.downloadFile.collectAsStateWithLifecycle()
     val restrictions by vm.downloadRestrictions.collectAsStateWithLifecycle()
     val waiting by vm.downloadWaiting.collectAsStateWithLifecycle()
+    val installed by vm.installedModelFiles.collectAsStateWithLifecycle()
+    val feedback = me.rerere.zeroagent.ui.designsystem.rememberZeroFeedback()
+    var observedDownload by remember(vm) { mutableStateOf<String?>(null) }
+    LaunchedEffect(progress, file, paused, installed) {
+        val name = file
+        if (progress != null && name != null && name !in installed) observedDownload = name
+        if (paused) observedDownload = null
+        if (!paused && progress == null && name != null && name == observedDownload && name in installed) {
+            observedDownload = null
+            feedback(me.rerere.zeroagent.ui.designsystem.ZeroFeedbackEvent.Complete)
+        }
+    }
     var showRestrictions by remember { mutableStateOf(false) }
     TextButton(onClick = { showRestrictions = !showRestrictions }) {
         Text(if (showRestrictions) "收起下載條件" else "下載條件")

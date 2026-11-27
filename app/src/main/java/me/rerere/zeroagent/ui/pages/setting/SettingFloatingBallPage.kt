@@ -22,12 +22,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
-import androidx.compose.material3.Slider
+import me.rerere.zeroagent.ui.designsystem.ZeroSlider as Slider
 import me.rerere.zeroagent.ui.components.ui.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -358,7 +358,7 @@ fun SettingFloatingBallPage(vm: SettingVM = koinViewModel()) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
-                        shapes = ButtonDefaults.shapes(), onClick = {
+                        onClick = {
                             showIconDialog = false
                             iconPicker.launch("image/*")
                         },
@@ -368,7 +368,7 @@ fun SettingFloatingBallPage(vm: SettingVM = koinViewModel()) {
                     }
                     if (settings.floatingBallIconPath.isNotBlank()) {
                         Button(
-                            shapes = ButtonDefaults.shapes(), onClick = {
+                            onClick = {
                                 showIconDialog = false
                                 val target = FloatingBallService.iconFile(context)
                                 scope.launch {
@@ -422,7 +422,7 @@ fun SettingFloatingBallPage(vm: SettingVM = koinViewModel()) {
                         Text(stringResource(R.string.setting_floating_ball_color_custom))
                     }
                     colorDraft?.let { draft ->
-                        ColorPickerRow(
+                        me.rerere.zeroagent.ui.designsystem.ZeroColorPicker(
                             color = Color(draft),
                             onColorChange = { colorDraft = it.toArgb() },
                         )

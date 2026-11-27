@@ -11,10 +11,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentCard as Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -68,7 +68,7 @@ fun BackgroundPicker(
         }
     ) {
         Button(
-            shapes = ButtonDefaults.shapes(), onClick = {
+            onClick = {
                 showPickOption = true
             },
             modifier = Modifier.fillMaxWidth()
@@ -126,7 +126,7 @@ fun BackgroundPicker(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
-                        shapes = ButtonDefaults.shapes(), onClick = {
+                        onClick = {
                             showPickOption = false
                             imagePickerLauncher.launch("image/*")
                         },
@@ -135,7 +135,7 @@ fun BackgroundPicker(
                         Text(stringResource(R.string.assistant_page_select_from_gallery))
                     }
                     Button(
-                        shapes = ButtonDefaults.shapes(), onClick = {
+                        onClick = {
                             showPickOption = false
                             urlInput = ""
                             showUrlInput = true
@@ -146,7 +146,7 @@ fun BackgroundPicker(
                     }
                     if (background != null) {
                         Button(
-                            shapes = ButtonDefaults.shapes(), onClick = {
+                            onClick = {
                                 showPickOption = false
                                 onUpdate(null)
                             },

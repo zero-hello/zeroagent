@@ -27,7 +27,7 @@ import me.rerere.zeroagent.ui.components.ui.ZeroAgentCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -282,7 +282,7 @@ private fun EmojiModifierPicker(
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surface,
             shadowElevation = 8.dp,
-            tonalElevation = 8.dp
+            tonalElevation = 0.dp
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)

@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.AlertDialog
+import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,8 +32,7 @@ internal fun WorkspaceDiffDialog(
     onRestore: () -> Unit,
 ) {
     val lines = remember(diff) { diff.lines() }
-    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    val added = if (dark) Color(0xffa9e5ad) else Color(0xff205d34)
+    val added = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.diffAdded
     val scroll = rememberScrollState()
     AlertDialog(
         onDismissRequest = onDismiss,

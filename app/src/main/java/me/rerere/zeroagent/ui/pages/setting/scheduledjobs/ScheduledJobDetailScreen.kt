@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
@@ -173,7 +173,7 @@ fun ScheduledJobDetailScreen(
         // Sticky bottom bar so Run-now / Edit / Delete stay reachable as history grows.
         bottomBar = {
             androidx.compose.material3.Surface(
-                tonalElevation = 3.dp,
+                tonalElevation = 0.dp,
                 color = CustomColors.topBarColors.containerColor,
             ) {
                 Row(

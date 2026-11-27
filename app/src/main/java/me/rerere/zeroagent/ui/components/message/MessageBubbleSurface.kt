@@ -1,6 +1,9 @@
 package me.rerere.zeroagent.ui.components.message
 
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.dp
+import me.rerere.zeroagent.ui.designsystem.ZeroTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,18 +14,25 @@ import androidx.compose.ui.graphics.Color
 fun MessageBubbleSurface(
     user: Boolean,
     opacity: Float,
+    generating: Boolean = false,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    val colors = MaterialTheme.colorScheme
-    val base = (if (user) colors.primaryContainer else colors.surfaceContainerHigh)
-        .copy(alpha = opacity.takeIf { it.isFinite() }?.coerceIn(0f, 1f) ?: 1f)
-    val foreground = if (user) colors.onPrimaryContainer else colors.onSurface
-
-    val surface = modifier
-    if (onClick != null) Surface(onClick = onClick, modifier = surface, shape = MaterialTheme.shapes.medium,
-        color = base, contentColor = foreground, content = content)
-    else Surface(modifier = surface, shape = MaterialTheme.shapes.medium,
-        color = base, contentColor = foreground, content = content)
+    val colors = ZeroTheme.colors
+    val base = if (user) colors.textPrimary else colors.surface
+    val foreground = if (user) colors.background else colors.textPrimary
+    val shape = RoundedCornerShape(20.dp)
+    val borderColor = androidx.compose.animation.animateColorAsState(
+        targetValue = when {
+            user -> colors.borderStrong
+            generating -> colors.accentOlive
+            else -> colors.borderSubtle
+        }, label = "Message border",
+    ).value
+    val border = BorderStroke(1.dp, borderColor)
+    if (onClick != null) Surface(onClick = onClick, modifier = modifier, shape = shape,
+        color = base, contentColor = foreground, border = border, content = content)
+    else Surface(modifier = modifier, shape = shape, color = base, contentColor = foreground,
+        border = border, content = content)
 }

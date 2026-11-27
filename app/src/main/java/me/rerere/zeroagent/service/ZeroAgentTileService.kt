@@ -23,7 +23,7 @@ class ZeroAgentTileService : TileService() {
     }
 
     private fun openQuickChat() {
-        val intent = QuickChatActivity.intent(this, voice = false, ballSide = "right", ballCenterY = 0)
+        val intent = QuickChatActivity.quickAskIntent(this)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (Build.VERSION.SDK_INT >= 34) {
             startActivityAndCollapse(PendingIntent.getActivity(this, 0, intent,

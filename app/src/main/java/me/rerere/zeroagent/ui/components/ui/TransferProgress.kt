@@ -6,6 +6,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.graphics.StrokeCap
+import me.rerere.zeroagent.ui.designsystem.ZeroTheme
+import me.rerere.zeroagent.ui.designsystem.ZeroMotion
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,17 +34,22 @@ internal data class DownloadProgress(val bytes: Long, val total: Long?) {
 
 @Composable
 internal fun TransferProgress(fraction: Float?, modifier: Modifier = Modifier, detail: String? = null) {
+    val colors = ZeroTheme.colors
+    val bar = Modifier.fillMaxWidth().height(2.dp)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        if (fraction == null) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        if (fraction == null) LinearProgressIndicator(modifier = bar, color = colors.accentOlive, trackColor = colors.borderSubtle, strokeCap = StrokeCap.Round)
         else {
-            val animated by animateFloatAsState(fraction.coerceIn(0f, 1f), label = "progress")
-            LinearProgressIndicator(progress = { animated }, modifier = Modifier.fillMaxWidth())
+            val animated by animateFloatAsState(fraction.coerceIn(0f, 1f), animationSpec = ZeroMotion.fluid(), label = "progress")
+            LinearProgressIndicator(progress = { animated.coerceIn(0f, 1f) }, modifier = bar, color = colors.accentOlive, trackColor = colors.borderSubtle, strokeCap = StrokeCap.Round)
         }
-        if (detail != null) Text(detail, style = MaterialTheme.typography.labelMedium)
+        if (detail != null) Text(detail, style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"))
     }
 }
 
 @Composable
 internal fun DownloadProgressIndicator(progress: DownloadProgress, modifier: Modifier = Modifier) {
-    TransferProgress(progress.fraction, modifier, progress.label(LocalContext.current))
+    val count = progress.label(LocalContext.current)
+    val percent = progress.fraction?.let { (it * 100).toInt() }
+    val detail = if (percent == null) count else "${stringResource(R.string.local_llm_download_progress, percent)} · $count"
+    TransferProgress(progress.fraction, modifier, detail)
 }

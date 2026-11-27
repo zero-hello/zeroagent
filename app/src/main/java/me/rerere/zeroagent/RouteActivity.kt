@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.Dp
 import me.rerere.zeroagent.ui.theme.AppLayout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
+import me.rerere.zeroagent.ui.designsystem.ZeroProgressIndicator as CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,6 +50,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -133,7 +135,6 @@ import me.rerere.zeroagent.ui.pages.setting.SettingPreferencesNotificationPage
 import me.rerere.zeroagent.ui.pages.setting.SettingPreferencesGeneralPage
 import me.rerere.zeroagent.ui.pages.setting.SettingPreferencesNetworkPage
 import me.rerere.zeroagent.ui.pages.setting.SettingPreferencesUIPage
-import me.rerere.zeroagent.ui.pages.setting.SettingThemePage
 import me.rerere.zeroagent.ui.pages.setting.SettingFilesPage
 import me.rerere.zeroagent.ui.pages.setting.SettingMcpPage
 import me.rerere.zeroagent.ui.pages.setting.SettingModelPage
@@ -193,6 +194,7 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
     private var navStack: MutableList<NavKey>? = null
     private val pendingIntents = ArrayDeque<Intent>()
     private var lockedBackStack: List<NavKey>? = null
+    private var quickAskDraft by mutableStateOf<Pair<String, me.rerere.zeroagent.ui.designsystem.ZeroAskDraft>?>(null)
     private val incomingShares = mutableStateMapOf<String, List<Screen.Chat>>()
 
     // Volume key listener registry — last registered handler wins
@@ -331,7 +333,12 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                 intent.getBooleanExtra("open_new_chat", false) -> Screen.Chat(Uuid.random().toString())
                 intent.getBooleanExtra("open_productivity", false) -> Screen.Productivity()
                 intent.getBooleanExtra("open_visual_assist", false) -> Screen.VisualAssist
-                else -> validConversationId(intent.getStringExtra("conversationId"))?.let { Screen.Chat(it) }
+                else -> validConversationId(intent.getStringExtra("conversationId"))?.let { id ->
+                    val handoff = me.rerere.zeroagent.ui.designsystem.ZeroAskHandoff
+                    handoff.take(intent.getStringExtra(handoff.EXTRA), id)?.let { quickAskDraft = id to it }
+                    intent.removeExtra(handoff.EXTRA)
+                    Screen.Chat(id)
+                }
             }
         }
         listOf("open_new_chat", "open_productivity", "open_visual_assist").forEach { intent.removeExtra(it) }
@@ -503,6 +510,8 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                         files = (share?.files ?: key.files).map { it.toUri() },
                                         nodeId = key.nodeId?.let { Uuid.parse(it) },
                                         importId = share?.importId ?: key.importId,
+                                        askDraft = quickAskDraft?.takeIf { it.first == key.id }?.second,
+                                        onAskDraftConsumed = { if (quickAskDraft?.first == key.id) quickAskDraft = null },
                                         onImportConsumed = {
                                             if (share != null && incomingShares[key.id]?.firstOrNull() == share) {
                                                 val remaining = incomingShares[key.id].orEmpty().drop(1)
@@ -627,8 +636,8 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
                                 WebViewPage(key.url, key.contentId)
                             }
 
-                            entry<Screen.SettingTheme> {
-                                SettingThemePage()
+                            entry<Screen.SettingTheme>(metadata = settingsDetailMetadata) {
+                                SettingPreferencesThemePage()
                             }
 
                             entry<Screen.SettingPreferencesTheme>(metadata = settingsDetailMetadata) {

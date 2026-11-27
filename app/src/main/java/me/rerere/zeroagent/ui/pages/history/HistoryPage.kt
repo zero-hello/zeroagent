@@ -21,7 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
@@ -247,7 +247,7 @@ private fun ConversationItem(
 ) {
     Surface(
         onClick = onClick,
-        tonalElevation = 2.dp,
+        tonalElevation = 0.dp,
         shape = RoundedCornerShape(25),
         modifier = modifier
     ) {

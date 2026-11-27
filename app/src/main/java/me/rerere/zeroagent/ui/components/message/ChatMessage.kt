@@ -29,7 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
+import me.rerere.zeroagent.ui.designsystem.ZeroMessageSelection
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -184,8 +184,9 @@ fun ChatMessage(
         ReplyContextStore.get(actionMessage.id)
     } else null
     val colorScheme = MaterialTheme.colorScheme
+    val sendMotion = if (message.role == MessageRole.USER) me.rerere.zeroagent.ui.designsystem.zeroSentBubbleMotion(message.id) else Modifier
     Column(
-        modifier = modifier.fillMaxWidth().pointerInput(message.id) {
+        modifier = modifier.fillMaxWidth().then(sendMotion).pointerInput(message.id) {
             detectTapGestures(onLongPress = { showActionsSheet = true })
         },
         horizontalAlignment = if (message.role == MessageRole.USER) Alignment.End else Alignment.Start,
@@ -420,6 +421,7 @@ private fun MessagePartsBlock(
     // the bulk of a streaming part is one string whose length differs on every delta, so the
     // comparison short-circuits without walking the text.
     val groupedParts = remember(parts) { parts.groupMessageParts() }
+    val memoryNavigation = LocalNavController.current
     groupedParts.fastForEach { block ->
         when (block) {
             is MessagePartBlock.ThinkingBlock -> {
@@ -433,6 +435,18 @@ private fun MessagePartsBlock(
                         it is ThinkingStep.ToolStep &&
                             it.tool.approvalState is ToolApprovalState.Pending
                     }
+                    val memoryChanged = remember(block.steps) {
+                        block.steps.filterIsInstance<ThinkingStep.ToolStep>().any { (tool) ->
+                            tool.toolName == "memory_tool" && tool.approvalState !is ToolApprovalState.Denied &&
+                                (parseToolOutputContent(tool) as? kotlinx.serialization.json.JsonObject)?.let { result ->
+                                    "id" in result && "error" !in result && ("content" in result || result["success"]?.toString() == "true")
+                                } == true
+                        }
+                    }
+                    if (memoryChanged && assistant != null) me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(
+                        onClick = { memoryNavigation.navigate(me.rerere.zeroagent.Screen.AssistantMemory(assistant.id.toString())) },
+                        selected = true,
+                    ) { Text(stringResource(R.string.zero_v6_memory_updated)) }
                     val toolCount = block.steps.count { it is ThinkingStep.ToolStep || it is ThinkingStep.ServerToolStep }
                     val showSummary = toolCount >= 2 && block.steps.any { it is ThinkingStep.ReasoningStep }
                     val summary = if (showSummary) {
@@ -512,7 +526,7 @@ private fun MessagePartsBlock(
                         val textContent = @Composable {
                             if (role == MessageRole.USER) {
                                 MessageBubbleSurface(
-                                    user = true, opacity = settings.displaySetting.bubbleOpacity,
+                                    user = true, opacity = 1f,
                                     modifier = Modifier.contentReveal(),
                                     onClick = { onUserMessageClick?.invoke() },
                                 ) {
@@ -528,35 +542,21 @@ private fun MessagePartsBlock(
                                     }
                                 }
                             } else {
-                                if (settings.displaySetting.showAssistantBubble) {
-                                    MessageBubbleSurface(
-                                        user = false, opacity = settings.displaySetting.bubbleOpacity,
-                                        modifier = Modifier.contentReveal(),
-                                    ) {
-                                        Column(modifier = Modifier.padding(8.dp)) {
-                                            MarkdownBlock(
-                                                content = part.text.replaceRegexes(
-                                                    assistant = assistant,
-                                                    scope = AssistantAffectScope.ASSISTANT,
-                                                    visual = true,
-                                                ),
-                                                showOutline = !loading && role == MessageRole.ASSISTANT,
-                                                onClickCitation = handleClickCitation,
-                                            )
-                                        }
+                                MessageBubbleSurface(
+                                    user = false, opacity = 1f, generating = loading,
+                                    modifier = Modifier.contentReveal(),
+                                ) {
+                                    Column(modifier = Modifier.padding(8.dp)) {
+                                        MarkdownBlock(
+                                            content = part.text.replaceRegexes(
+                                                assistant = assistant,
+                                                scope = AssistantAffectScope.ASSISTANT,
+                                                visual = true,
+                                            ),
+                                            showOutline = !loading && role == MessageRole.ASSISTANT,
+                                            onClickCitation = handleClickCitation,
+                                        )
                                     }
-                                } else {
-                                    MarkdownBlock(
-                                        content = part.text.replaceRegexes(
-                                            assistant = assistant,
-                                            scope = AssistantAffectScope.ASSISTANT,
-                                            visual = true,
-                                        ),
-                                        showOutline = !loading && role == MessageRole.ASSISTANT,
-                                        onClickCitation = handleClickCitation,
-                                        modifier = Modifier
-                                            .contentReveal()
-                                    )
                                 }
                             }
                         }
@@ -571,7 +571,7 @@ private fun MessagePartsBlock(
                                     textContent()
                                 }
                             } else {
-                                SelectionContainer {
+                                ZeroMessageSelection {
                                     textContent()
                                 }
                             }
@@ -580,7 +580,7 @@ private fun MessagePartsBlock(
 
                     is UIMessagePart.Video -> {
                         Surface(
-                            tonalElevation = 2.dp,
+                            tonalElevation = 0.dp,
                             onClick = {
                                 val intent = Intent(Intent.ACTION_VIEW)
                                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -603,7 +603,7 @@ private fun MessagePartsBlock(
 
                     is UIMessagePart.Audio -> {
                         Surface(
-                            tonalElevation = 2.dp,
+                            tonalElevation = 0.dp,
                             onClick = {
                                 val intent = Intent(Intent.ACTION_VIEW)
                                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -669,7 +669,7 @@ private fun MessagePartsBlock(
                             null -> null
                         }
                         Surface(
-                            tonalElevation = 2.dp,
+                            tonalElevation = 0.dp,
                             onClick = {
                                 try {
                                     val file = part.url.toUri().toFile()

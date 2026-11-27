@@ -8,7 +8,6 @@ import android.content.Intent
 import android.widget.RemoteViews
 import me.rerere.zeroagent.R
 import me.rerere.zeroagent.RouteActivity
-import kotlin.uuid.Uuid
 
 /** No background model calls, cached secrets, or account data in the launcher process. */
 class QuickActionsWidget : AppWidgetProvider() {
@@ -25,8 +24,6 @@ class QuickActionsWidget : AppWidgetProvider() {
             }
             launch(R.id.widget_new_chat, 1) { putExtra("open_new_chat", true) }
             launch(R.id.widget_voice, 2) { putExtra("open_native_voice", true) }
-            launch(R.id.widget_projects, 3) { putExtra("open_productivity", true) }
-            launch(R.id.widget_visual, 4) { putExtra("open_visual_assist", true) }
             manager.updateAppWidget(id, views)
         }
     }

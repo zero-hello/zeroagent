@@ -49,14 +49,14 @@ import androidx.compose.foundation.verticalScroll
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import androidx.compose.material3.Checkbox
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentCard as Card
 import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
 import androidx.compose.material3.FloatingToolbarDefaults.floatingToolbarVerticalNestedScroll
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentModalBottomSheet as ModalBottomSheet
@@ -64,7 +64,7 @@ import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentOutlinedCard as OutlinedCard
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.SegmentedButton
@@ -777,7 +777,7 @@ private fun AddModelButton(
         )
 
         Button(
-            shapes = ButtonDefaults.shapes(), onClick = {
+            onClick = {
                 dialogState.open(Model())
             }
         ) {
@@ -1552,7 +1552,7 @@ private fun ProviderOverrideSettings(
             }
         } else {
             Button(
-                shapes = ButtonDefaults.shapes(), onClick = {
+                onClick = {
                     editingProvider = parentProvider?.copyProvider(
                         id = Uuid.random(),
                         builtIn = false,

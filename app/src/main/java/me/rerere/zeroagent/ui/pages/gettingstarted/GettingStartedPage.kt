@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
@@ -197,7 +197,7 @@ fun GettingStartedPage() {
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Button(
-                        shapes = ButtonDefaults.shapes(), onClick = { finish() },
+                        onClick = { finish() },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(stringResource(R.string.getting_started_finish))

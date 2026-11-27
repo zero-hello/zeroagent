@@ -3,7 +3,7 @@ package me.rerere.zeroagent.ui.pages.setting
 import androidx.compose.material3.ButtonDefaults
 
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.zeroagent.data.datastore.findProvider
 
@@ -27,11 +27,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.Slider
+import me.rerere.zeroagent.ui.designsystem.ZeroSlider as Slider
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import me.rerere.zeroagent.ui.components.ui.Switch
 import androidx.compose.material3.Text

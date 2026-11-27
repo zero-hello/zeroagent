@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
@@ -20,6 +19,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,18 +45,20 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
+import me.rerere.zeroagent.ui.designsystem.ZeroProgressIndicator as CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -78,9 +84,12 @@ import me.rerere.ai.core.MessageRole
 import me.rerere.ai.ui.UIMessage
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.ArrowDown01
 import me.rerere.hugeicons.stroke.ArrowRight01
 import me.rerere.hugeicons.stroke.ArrowUp01
 import me.rerere.hugeicons.stroke.Cancel01
+import me.rerere.hugeicons.stroke.Copy01
+import me.rerere.zeroagent.utils.writeClipboardText
 import me.rerere.hugeicons.stroke.LookTop
 import me.rerere.hugeicons.stroke.Mic01
 import me.rerere.hugeicons.stroke.PlusSign
@@ -88,6 +97,7 @@ import me.rerere.hugeicons.stroke.Stop
 import me.rerere.hugeicons.stroke.VolumeHigh
 import me.rerere.zeroagent.R
 import me.rerere.zeroagent.RouteActivity
+import me.rerere.zeroagent.ui.designsystem.*
 import me.rerere.zeroagent.data.datastore.SettingsStore
 import me.rerere.zeroagent.data.datastore.getAssistantById
 import me.rerere.zeroagent.service.ChatService
@@ -99,6 +109,10 @@ import me.rerere.zeroagent.ui.components.ui.AssistantAvatar
 import me.rerere.zeroagent.ui.hooks.readStringPreference
 import me.rerere.zeroagent.ui.hooks.rememberCustomTtsState
 import org.koin.compose.koinInject
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
+import me.rerere.zeroagent.ui.pages.chat.ChatVM
+import me.rerere.zeroagent.ui.pages.chat.ZeroChatModelSelector
 
 private const val LAST_CONVERSATION_KEY = "lastConversationId"
 
@@ -163,6 +177,8 @@ fun QuickChatPanel(
     onUnfoldStart: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    quickAsk: Boolean = false,
+    externalQuote: String? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -172,6 +188,10 @@ fun QuickChatPanel(
     // the same spot (FloatingBallService plays that half of the morph).
     val unfold = remember { Animatable(0f) }
     var closing by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
+    val handleOffset = remember { Animatable(0f) }
+    val handleDrag = remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    var draggingHandle by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         // Only now is the panel really about to appear, so this is the moment the ball should be
         // told to fold itself away — timing the hand-over from the activity's onCreate instead
@@ -191,7 +211,7 @@ fun QuickChatPanel(
             onClose()
         }
     }
-    BackHandler { requestClose() }
+    val back = rememberZeroPredictiveDismiss { requestClose() }
 
     val chatService = koinInject<ChatService>()
     val settingsStore = koinInject<SettingsStore>()
@@ -211,6 +231,13 @@ fun QuickChatPanel(
 
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
     var input by remember { mutableStateOf("") }
+    var quote by remember(externalQuote) { mutableStateOf(externalQuote) }
+    val palette = ZeroTheme.colors
+    val quickAskModelPicker: @Composable () -> Unit = {
+        val chat: ChatVM = koinViewModel(key = "quick-ask-$conversationId") { parametersOf(conversationId.toString()) }
+        val model by chat.currentChatModel.collectAsStateWithLifecycle()
+        ZeroChatModelSelector(model, settings.providers) { chat.setChatModel(it, updateDefault = false) }
+    }
     fun startVoice() {
         val intent = android.content.Intent(context, me.rerere.zeroagent.RouteActivity::class.java)
             .putExtra("open_native_voice", true).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -223,8 +250,13 @@ fun QuickChatPanel(
 
     fun submit(text: String, closeAfterSend: Boolean) {
         val trimmed = text.trim()
-        if (trimmed.isEmpty()) return
-        chatService.sendMessage(conversationId, listOf(UIMessagePart.Text(trimmed)))
+        if (trimmed.isEmpty() || (quickAsk && isGenerating)) return
+        val question = quote?.let { selected ->
+            val excerpt = quotedChatText(selected)
+            "$excerpt\n\n$trimmed"
+        } ?: trimmed
+        chatService.sendMessage(conversationId, listOf(UIMessagePart.Text(question)))
+        quote = null
         input = ""
         if (closeAfterSend) requestClose()
     }
@@ -234,6 +266,7 @@ fun QuickChatPanel(
     val newButton: @Composable () -> Unit = {
         IconButton(onClick = {
                 input = ""
+            quote = null
             conversationId = Uuid.random()
         }) {
             Icon(HugeIcons.PlusSign, stringResource(R.string.quick_chat_new))
@@ -245,7 +278,11 @@ fun QuickChatPanel(
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_CLEAR_TOP or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP
-                putExtra("conversationId", conversationId.toString())
+                val id = conversationId.toString()
+                putExtra("conversationId", id)
+                if (quickAsk && (quote != null || input.isNotBlank())) {
+                    putExtra(ZeroAskHandoff.EXTRA, ZeroAskHandoff.offer(id, ZeroAskDraft(quote, input)))
+                }
             }
             // Fold away first: switching to the main task would otherwise cover the panel and
             // the fold would never be seen.
@@ -286,18 +323,8 @@ fun QuickChatPanel(
     val messages = conversation.currentMessages.filter {
         it.role == MessageRole.USER || it.role == MessageRole.ASSISTANT
     }
-    val listState = rememberLazyListState()
-    LaunchedEffect(conversationId, messages.size) {
-        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
-    }
-    // A streaming reply grows in place without the message count changing, so follow it too —
-    // instantly, so the view does not drift behind the text as it arrives.
-    val streamTail = messages.lastOrNull()?.parts?.lastOrNull()?.hashCode() ?: 0
-    LaunchedEffect(streamTail) {
-        if (isGenerating && messages.isNotEmpty()) {
-            runCatching { listState.scrollToItem(messages.lastIndex) }
-        }
-    }
+    val listState = key(conversationId) { rememberLazyListState() }
+    val readingHistory by remember(listState) { derivedStateOf { listState.canScrollBackward } }
 
     // Read the latest assistant reply aloud through the app's configured TTS provider.
     val tts = rememberCustomTtsState()
@@ -329,14 +356,19 @@ fun QuickChatPanel(
             .imePadding(),
     ) {
         val density = LocalDensity.current
+        val hasRoomForActions = maxHeight >= 360.dp
         val fullHeight = maxHeight * PANEL_HEIGHT_FRACTION
         val minHeight = fullHeight * PANEL_MIN_HEIGHT_FRACTION
         // Place the panel so the ball lands at BALL_ANCHOR_FRACTION of its height:
         // top = ballY - anchor * height, and we need top + height <= maxHeight.
         val ballY = with(density) { ballCenterY.toDp() }
         val heightForBall = (maxHeight - ballY) / (1f - BALL_ANCHOR_FRACTION)
-        val panelHeight = heightForBall.coerceIn(minHeight, fullHeight)
-        val panelTop = (ballY - panelHeight * BALL_ANCHOR_FRACTION)
+        val quickHeight by androidx.compose.animation.core.animateDpAsState(
+            maxHeight * if (expanded || maxHeight < 440.dp) .97f else .65f,
+            ZeroMotion.fluid(), label = "Quick ask height",
+        )
+        val panelHeight = if (quickAsk) quickHeight.coerceAtMost(maxHeight) else heightForBall.coerceIn(minHeight, fullHeight)
+        val panelTop = if (quickAsk) maxHeight - panelHeight else (ballY - panelHeight * BALL_ANCHOR_FRACTION)
             .coerceAtMost(maxHeight - panelHeight)
             .coerceAtLeast(0.dp)
 
@@ -349,13 +381,14 @@ fun QuickChatPanel(
         // Where the ball sits inside the panel, as a fraction of its height: the point the panel
         // unfolds out of. Normally BALL_ANCHOR_FRACTION; a ball low enough to push the panel onto
         // the bottom edge drags the origin down with it.
-        val ballAnchorY = ((ballY - panelTop) / panelHeight).coerceIn(0f, 1f)
-        val unfoldOrigin = TransformOrigin(if (mirror) 0f else 1f, ballAnchorY)
+        val ballAnchorY = if (panelHeight > 0.dp) ((ballY - panelTop) / panelHeight).coerceIn(0f, 1f) else 1f
+        val unfoldOrigin = if (quickAsk) TransformOrigin(.5f, 1f) else TransformOrigin(if (mirror) 0f else 1f, ballAnchorY)
 
         // Tap anywhere off the panel to dismiss it; the app behind shows through the gap.
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(if (quickAsk) ZeroTheme.scrim.copy(alpha = .14f) else androidx.compose.ui.graphics.Color.Transparent)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -372,10 +405,14 @@ fun QuickChatPanel(
                 // Closing runs the same thing backwards (unfold animates back to 0).
                 .graphicsLayer {
                     val scale = PANEL_SCALE_FROM + (1f - PANEL_SCALE_FROM) * unfold.value
-                    scaleX = scale
-                    scaleY = scale
+                    if (quickAsk) {
+                        val drag = if (draggingHandle) handleDrag.floatValue else handleOffset.value
+                        translationY = 64.dp.toPx() * (1f - unfold.value + .65f * back.value) + drag
+                    }
+                    scaleX = if (quickAsk) 1f else scale
+                    scaleY = if (quickAsk) 1f else scale
                     transformOrigin = unfoldOrigin
-                    alpha = unfold.value
+                    alpha = (unfold.value * (1f - .2f * back.value)).coerceIn(0f, 1f)
                 }
                 // Swallow taps on the panel's own surface (padding, empty history) so they do
                 // not fall through to the dismiss layer behind it.
@@ -386,7 +423,8 @@ fun QuickChatPanel(
                 ),
             shape = RoundedCornerShape(24.dp),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 3.dp,
+            tonalElevation = 0.dp,
+            border = BorderStroke(1.dp, palette.borderSubtle),
         ) {
             Column(
                 modifier = Modifier
@@ -399,12 +437,49 @@ fun QuickChatPanel(
                     ),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                if (quickAsk && hasRoomForActions) {
+                    Box(Modifier.fillMaxWidth().height(26.dp).pointerInput(Unit) {
+                        var movement = 0f
+                        fun settleHandle() {
+                            val start = handleDrag.floatValue
+                            scope.launch {
+                                handleOffset.snapTo(start)
+                                draggingHandle = false
+                                handleOffset.animateTo(0f, ZeroMotion.fluid())
+                            }
+                        }
+                        detectVerticalDragGestures(
+                            onDragStart = {
+                                movement = 0f
+                                handleDrag.floatValue = handleOffset.value
+                                draggingHandle = true
+                            },
+                            onVerticalDrag = { change, amount ->
+                                change.consume()
+                                movement += amount
+                                handleDrag.floatValue = (movement * .48f).coerceIn(-28.dp.toPx(), 96.dp.toPx())
+                            },
+                            onDragCancel = ::settleHandle,
+                            onDragEnd = {
+                                val threshold = 32.dp.toPx()
+                                if (movement < -threshold) expanded = true
+                                else if (movement > threshold) {
+                                    if (expanded) expanded = false else requestClose()
+                                }
+                                settleHandle()
+                            },
+                        )
+                    }, contentAlignment = Alignment.Center) {
+                        Box(Modifier.size(30.dp, 2.dp).background(palette.borderStrong, RoundedCornerShape(1.dp)))
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (mirror) {
                         closeButton()
                         openFullButton()
                         newButton()
                     }
+                    if (quickAsk) Box(Modifier.weight(1f)) { quickAskModelPicker() }
                     val assistant = settings.getAssistantById(conversation.assistantId)
                     if (assistant != null) {
                         AssistantAvatar(
@@ -413,7 +488,7 @@ fun QuickChatPanel(
                         )
                         Spacer(Modifier.width(8.dp))
                     }
-                    Column(modifier = Modifier.weight(1f)) {
+                    if (!quickAsk) Column(modifier = Modifier.weight(1f)) {
                         Text(
                             // The assistant leads the header — never an uploaded avatar on its own
                             // (AssistantAvatar falls back to its model's brand icon) — with the
@@ -442,24 +517,36 @@ fun QuickChatPanel(
                     }
                 }
 
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    if (messages.isEmpty()) {
-                        item {
-                            Text(
-                                text = stringResource(R.string.quick_chat_empty),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        reverseLayout = messages.isNotEmpty(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+                    ) {
+                        if (messages.isEmpty()) {
+                            item {
+                                Text(
+                                    text = stringResource(R.string.quick_chat_empty),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        } else {
+                            // Preserve the visible position while older replies are being read.
+                            item(key = "quick-chat-latest") { Spacer(Modifier.height(1.dp)) }
+                            items(messages.asReversed(), key = { it.id.toString() }) { message ->
+                                MessageSegments(message, copyAnswer = quickAsk && (!isGenerating || message.id != messages.last().id))
+                            }
                         }
                     }
-                    items(messages, key = { it.id.toString() }) { message ->
-                        MessageSegments(message)
+                    if (readingHistory) {
+                        IconButton(
+                            onClick = { scope.launch { listState.animateScrollToItem(0) } },
+                            modifier = Modifier.align(Alignment.BottomEnd),
+                        ) {
+                            Icon(HugeIcons.ArrowDown01, stringResource(R.string.chat_page_scroll_to_bottom))
+                        }
                     }
                 }
 
@@ -467,7 +554,20 @@ fun QuickChatPanel(
                     StatusRow(text = processingStatus.orEmpty())
                 }
 
-                Row(
+                if (quickAsk) {
+                    quote?.let { selection ->
+                        ZeroQuotePreviewCard(selection, stringResource(R.string.quick_chat_close), { quote = null })
+                        if (hasRoomForActions) Row(
+                            Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            listOf(R.string.zero_v6_explain, R.string.zero_v6_translate, R.string.zero_v6_summarize).forEach { action ->
+                                val label = stringResource(action)
+                                ZeroCapsuleButton(onClick = { submit(label, false) }, enabled = !isGenerating) { Text(label) }
+                            }
+                        }
+                    }
+                } else Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -550,12 +650,16 @@ private fun StatusRow(text: String) {
  * one merged wall of text, and thinking/tool runs collapse into a single quiet chip.
  */
 @Composable
-private fun MessageSegments(message: UIMessage) {
+private fun MessageSegments(message: UIMessage, copyAnswer: Boolean) {
     val isUser = message.role == MessageRole.USER
     // Key on the parts list itself: a key of `size + last-part hash` misses in-place edits to any
     // part that is not the tail (see ChatMessage), which renders a stale snapshot that only
     // catches up when the tail happens to change.
     val blocks = remember(message.parts) { message.parts.groupMessageParts() }
+    val context = LocalContext.current
+    val answer = if (copyAnswer && message.role == MessageRole.ASSISTANT) remember(message.parts) {
+        message.parts.filterIsInstance<UIMessagePart.Text>().joinToString("\n\n") { it.text }.trim()
+    } else ""
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -577,6 +681,9 @@ private fun MessageSegments(message: UIMessage) {
                     else -> SegmentChip(stringResource(R.string.quick_chat_segment_attachment))
                 }
             }
+        }
+        if (answer.isNotEmpty()) IconButton(onClick = { context.writeClipboardText(answer) }) {
+            Icon(HugeIcons.Copy01, stringResource(R.string.copy_all))
         }
     }
 }
@@ -600,11 +707,9 @@ private fun SegmentBubble(text: String, isUser: Boolean) {
     Surface(
         modifier = Modifier.fillMaxWidth(0.92f),
         shape = RoundedCornerShape(16.dp),
-        color = if (isUser) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant
-        },
+        color = if (isUser) ZeroTheme.colors.textPrimary else ZeroTheme.colors.surface,
+        contentColor = if (isUser) ZeroTheme.colors.background else ZeroTheme.colors.textPrimary,
+        border = BorderStroke(1.dp, ZeroTheme.colors.borderSubtle),
     ) {
         Text(
             text = text,

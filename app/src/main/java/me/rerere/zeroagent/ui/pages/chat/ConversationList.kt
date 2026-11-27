@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -132,20 +135,10 @@ fun ConversationList(
         }
         if (conversations.itemCount == 0 && unsentNewChats.isEmpty()) {
             item {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.chat_page_no_conversations),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
+                me.rerere.zeroagent.ui.designsystem.ZeroEmptyState(
+                    title = stringResource(R.string.chat_page_no_conversations),
+                    modifier = Modifier.padding(16.dp),
+                )
             }
         }
 
@@ -257,8 +250,9 @@ private fun ConversationItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val focusManager = LocalFocusManager.current
+    val palette = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors
     val backgroundColor = if (selected) {
-        MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp)
+        palette.surfaceElevated
     } else {
         Color.Transparent
     }
@@ -267,7 +261,8 @@ private fun ConversationItem(
     }
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(50f))
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(12.dp))
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = LocalIndication.current,
@@ -280,6 +275,9 @@ private fun ConversationItem(
             )
             .background(backgroundColor),
     ) {
+        if (selected) Box(
+            Modifier.align(Alignment.CenterStart).width(2.dp).height(20.dp).background(palette.accentOlive),
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()

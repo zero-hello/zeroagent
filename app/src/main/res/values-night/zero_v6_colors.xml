@@ -1,0 +1,7 @@
+<resources>
+    <color name="zero_v6_background">#0D0D0D</color>
+    <color name="zero_v6_surface">#141414</color>
+    <color name="zero_v6_ink">#F2F2F2</color>
+    <color name="zero_v6_border">#262626</color>
+    <color name="zero_v6_olive">#94A682</color>
+</resources>

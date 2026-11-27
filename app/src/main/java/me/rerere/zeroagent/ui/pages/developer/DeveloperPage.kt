@@ -19,6 +19,8 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
@@ -62,6 +64,11 @@ import org.koin.compose.koinInject
 
 @Composable
 fun DeveloperPage() {
+    var showUiTest by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    if (showUiTest) {
+        ZeroUiTestScreen(onBack = { showUiTest = false })
+        return
+    }
     val store: SettingsStore = koinInject()
     val diagnostics: AILoggingManager = koinInject()
     val appScope: AppScope = koinInject()
@@ -202,6 +209,14 @@ fun DeveloperPage() {
                             copySummary("$summary\n$counts")
                         },
                     )
+                }
+            }
+            item {
+                me.rerere.zeroagent.ui.designsystem.ZeroHairlineCard(
+                    onClick = { showUiTest = true },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.zero_v6_showcase), Modifier.padding(16.dp))
                 }
             }
             item {

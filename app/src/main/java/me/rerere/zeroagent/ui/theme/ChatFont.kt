@@ -29,6 +29,9 @@ fun ChatFontProvider(
 @Composable
 fun rememberChatFontFamily(displaySetting: DisplaySetting): FontFamily {
     val context = LocalContext.current
+    if (displaySetting.chatFontFamily == ChatFontFamily.DEFAULT) {
+        return androidx.compose.material3.MaterialTheme.typography.bodyLarge.fontFamily ?: FontFamily.SansSerif
+    }
     return remember(
         displaySetting.chatFontFamily,
         displaySetting.chatCustomFontPath,

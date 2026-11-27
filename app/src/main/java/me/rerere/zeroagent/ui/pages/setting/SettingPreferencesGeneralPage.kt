@@ -12,10 +12,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
-import androidx.compose.material3.Slider
+import me.rerere.zeroagent.ui.designsystem.ZeroSlider as Slider
 import me.rerere.zeroagent.ui.components.ui.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as TextField
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue

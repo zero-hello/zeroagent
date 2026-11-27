@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -130,7 +130,7 @@ internal fun PermissionRationaleDialog(
                         }
 
                         Button(
-                            shapes = ButtonDefaults.shapes(), onClick = onOpenSettings,
+                            onClick = onOpenSettings,
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(stringResource(R.string.permission_go_to_settings))
@@ -150,7 +150,7 @@ internal fun PermissionRationaleDialog(
                         }
 
                         Button(
-                            shapes = ButtonDefaults.shapes(), onClick = onProceed,
+                            onClick = onProceed,
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(stringResource(R.string.confirm))

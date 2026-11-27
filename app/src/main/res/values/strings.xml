@@ -2855,4 +2855,5 @@
   <string name="adaptive_memory_choose_entry">Choose a memory or a suggested change.</string>
   <string name="chat_resume_interrupted_reply">Continue interrupted reply</string>
   <string name="access_delegated_current_chat">Tool approval updated for this chat.</string>
+  <string name="zero_v6_image_failed">Could not prepare the image</string>
 </resources>

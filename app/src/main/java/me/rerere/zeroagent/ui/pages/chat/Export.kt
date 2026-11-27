@@ -1,5 +1,6 @@
 package me.rerere.zeroagent.ui.pages.chat
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.ButtonDefaults
 
 import android.content.Context
@@ -16,6 +17,8 @@ import me.rerere.hugeicons.stroke.Search01
 import me.rerere.hugeicons.stroke.Wrench01
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,7 +29,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentCard as Card
 import androidx.compose.material3.CardDefaults
 import me.rerere.zeroagent.ui.components.ui.ExpressiveDivider as HorizontalDivider
@@ -64,12 +67,18 @@ import androidx.core.content.FileProvider
 import androidx.compose.runtime.mutableStateListOf
 import androidx.navigation3.runtime.NavKey
 import me.rerere.zeroagent.Screen
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton
+import me.rerere.zeroagent.ui.designsystem.ZeroFoldedLogo
+import me.rerere.zeroagent.ui.designsystem.ZeroTheme
+import me.rerere.zeroagent.utils.stripMarkdown
+import me.rerere.zeroagent.utils.writeClipboardText
 import me.rerere.zeroagent.ui.context.Navigator
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.request.crossfade
 import com.dokar.sonner.ToastType
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -123,6 +132,7 @@ fun ChatExportSheet(
     val density = LocalDensity.current
     val settings = LocalSettings.current
     var imageExportOptions by remember { mutableStateOf(ImageExportOptions()) }
+    var exportingImage by remember { mutableStateOf(false) }
 
     if (visible) {
         ModalBottomSheet(
@@ -137,6 +147,22 @@ fun ChatExportSheet(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(text = stringResource(id = R.string.chat_page_export_format))
+
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    listOf(false, true).forEach { markdown ->
+                        ZeroCapsuleButton(onClick = {
+                            val text = selectedMessages.joinToString("\n\n") { message ->
+                                val body = message.parts.filterIsInstance<UIMessagePart.Text>().joinToString("\n\n") { it.text }
+                                if (markdown) body else body.stripMarkdown()
+                            }
+                            context.writeClipboardText(text)
+                            onDismissRequest()
+                        }) { Text(stringResource(if (markdown) R.string.zero_v6_copy_markdown else R.string.zero_v6_copy_plain)) }
+                    }
+                }
 
                 val markdownSuccessMessage =
                     stringResource(id = R.string.chat_page_export_success, "Markdown")
@@ -203,9 +229,10 @@ fun ChatExportSheet(
                             horizontalArrangement = Arrangement.End
                         ) {
                             Button(
-                                shapes = ButtonDefaults.shapes(), onClick = {
+                                enabled = !exportingImage, onClick = {
+                                    exportingImage = true
                                     scope.launch {
-                                        runCatching {
+                                        try {
                                             exportToImage(
                                                 context = context,
                                                 scope = scope,
@@ -215,19 +242,16 @@ fun ChatExportSheet(
                                                 settings = settings,
                                                 options = imageExportOptions
                                             )
-                                        }.onFailure {
-                                            it.printStackTrace()
-                                            toaster.show(
-                                                message = "Failed to export image: ${it.message}",
-                                                type = ToastType.Error
-                                            )
+                                            toaster.show(message = imageSuccessMessage, type = ToastType.Success)
+                                            onDismissRequest()
+                                        } catch (cancelled: CancellationException) {
+                                            throw cancelled
+                                        } catch (_: Exception) {
+                                            toaster.show(context.getString(R.string.zero_v6_image_failed), type = ToastType.Error)
+                                        } finally {
+                                            exportingImage = false
                                         }
                                     }
-                                    toaster.show(
-                                        imageSuccessMessage,
-                                        type = ToastType.Success
-                                    )
-                                    onDismissRequest()
                                 }
                             ) {
                                 Text(stringResource(R.string.mermaid_export))
@@ -390,13 +414,7 @@ private suspend fun exportToImage(
 ) {
     val filename = "chat-export-${LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))}.png"
     val composer = BitmapComposer(scope)
-    val activity = context.getActivity()
-    if (activity == null) {
-        withContext(Dispatchers.Main) {
-            Toast.makeText(context, "Failed to get activity", Toast.LENGTH_SHORT).show()
-        }
-        return
-    }
+    val activity = requireNotNull(context.getActivity())
 
     val bitmap = composer.composableToBitmap(
         activity = activity,
@@ -438,11 +456,6 @@ private suspend fun exportToImage(
             file
         )
         shareFile(context, uri, "image/png")
-    } catch (e: Exception) {
-        e.printStackTrace()
-        withContext(Dispatchers.Main) {
-            Toast.makeText(context, "Failed to export image: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
     } finally {
         bitmap.recycle()
     }
@@ -465,7 +478,8 @@ private fun ExportedChatImage(
             LocalToaster provides toasterState
         ) {
             Surface(
-                modifier = Modifier.width(540.dp) // like 1080p but with density independence
+                modifier = Modifier.width(540.dp),
+                border = BorderStroke(1.dp, ZeroTheme.colors.borderSubtle),
             ) {
                 Column(
                     modifier = Modifier
@@ -491,26 +505,21 @@ private fun ExportedChatImage(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        // Use painterResource for the logo
-                        val painter = painterResource(id = R.mipmap.ic_launcher_foreground)
-                        Image(
-                            painter = painter,
-                            contentDescription = stringResource(R.string.accessibility_app_logo),
-                            modifier = Modifier.size(60.dp)
-                        )
+
                     }
 
                     // Messages
-                    messages.forEach { message ->
+                    messages.forEachIndexed { index, message ->
                         ExportedChatMessage(
                             message = message,
                             options = options,
-                            prevMessage = messages.getOrNull(messages.indexOf(message) - 1)
+                            prevMessage = messages.getOrNull(index - 1)
                         )
                     }
 
-                    // Watermark
-                    Column {
+                    HorizontalDivider()
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ZeroFoldedLogo(Modifier.size(22.dp), animate = false)
                         Text(
                             text = stringResource(R.string.export_image_warning),
                             fontSize = 10.sp,

@@ -56,12 +56,7 @@ internal fun WorkspaceWelcome(
             verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
         ) {
             if (!compact) {
-                androidx.compose.material3.Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = MaterialTheme.shapes.extraLarge,
-                ) {
-                    Image(painterResource(R.drawable.zeroagent_foreground), contentDescription = null, modifier = Modifier.size(72.dp))
-                }
+                me.rerere.zeroagent.ui.designsystem.ZeroFoldedLogo(Modifier.size(72.dp))
                 Text("ZeroAgent", style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary)
             }
@@ -76,7 +71,7 @@ internal fun WorkspaceWelcome(
             }
             Spacer(Modifier.height(8.dp))
             BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val columns = welcomeActionColumns(maxWidth.value, LocalDensity.current.fontScale)
+                val columns = welcomeActionColumns(maxWidth.value, LocalDensity.current.fontScale).coerceAtMost(3)
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     maxItemsInEachRow = columns,
@@ -87,7 +82,6 @@ internal fun WorkspaceWelcome(
                         Triple(R.string.zeroagent6_write, R.string.zeroagent6_draft_write, HugeIcons.PencilEdit01),
                         Triple(R.string.zeroagent6_code, R.string.zeroagent6_draft_code, HugeIcons.ComputerTerminal01),
                         Triple(R.string.zeroagent6_analyze, R.string.zeroagent6_draft_analyze, HugeIcons.ChartColumn),
-                        Triple(R.string.zeroagent6_plan, R.string.zeroagent6_draft_plan, HugeIcons.Clock02),
                     )
                     actions.forEach { (title, draft, icon) ->
                         val draftText = stringResource(draft)
@@ -114,15 +108,7 @@ private fun WelcomeActionButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val interactions = remember { MutableInteractionSource() }
-    FilledTonalButton(
-        interactionSource = interactions,
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier.pressScale(interactions, enabled).heightIn(min = 56.dp),
-        shapes = ButtonDefaults.shapes(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
-    ) {
+    me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(onClick = onClick, modifier = modifier, enabled = enabled) {
         Icon(icon, contentDescription = null, Modifier.padding(end = 8.dp).size(20.dp))
         Text(label, Modifier.weight(1f), style = MaterialTheme.typography.labelLarge,
             textAlign = TextAlign.Center)

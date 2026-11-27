@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentModalBottomSheet as ModalBottomSheet
 import androidx.compose.material3.Text
@@ -93,8 +93,8 @@ fun ShareSheet(
                     QRCode(
                         value = payload,
                         modifier = Modifier.clip(RoundedCornerShape(8.dp)).fillMaxWidth().aspectRatio(1f),
-                        color = Color.Black,
-                        backgroundColor = Color.White,
+                        color = me.rerere.zeroagent.ui.designsystem.ZeroTheme.qrInk,
+                        backgroundColor = me.rerere.zeroagent.ui.designsystem.ZeroTheme.qrPaper,
                         description = stringResource(R.string.template_qr_title),
                     )
                 }

@@ -115,11 +115,11 @@ private fun CardGroupListItem(
 
     val topCorner by animateDpAsState(
         targetValue = if (count == 1 || isFirst) CardGroupCorner else CardGroupInnerCorner,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        animationSpec = me.rerere.zeroagent.ui.designsystem.ZeroMotion.snappy(),
     )
     val bottomCorner by animateDpAsState(
         targetValue = if (count == 1 || isLast) CardGroupCorner else CardGroupInnerCorner,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        animationSpec = me.rerere.zeroagent.ui.designsystem.ZeroMotion.snappy(),
     )
 
     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -185,12 +185,12 @@ fun CardGroup(
                 }
             }
         }
-        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(CardGroupCorner))) {
+        me.rerere.zeroagent.ui.designsystem.ZeroHairlineCard(Modifier.fillMaxWidth()) {
             val count = scope.items.size
             scope.items.fastForEachIndexed { index, item ->
                 CardGroupListItem(item = item, count = count, index = index)
                 if (index != count - 1) {
-                    ExpressiveDivider()
+                    androidx.compose.material3.HorizontalDivider(color = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.borderSubtle)
                 }
             }
         }

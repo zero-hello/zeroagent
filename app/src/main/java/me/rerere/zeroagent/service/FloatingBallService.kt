@@ -27,8 +27,6 @@ import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.OvershootInterpolator
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
@@ -44,12 +42,11 @@ import kotlinx.coroutines.launch
 import me.rerere.zeroagent.FLOATING_BALL_NOTIFICATION_CHANNEL_ID
 import me.rerere.zeroagent.R
 import me.rerere.zeroagent.data.datastore.SettingsStore
+import me.rerere.zeroagent.ui.designsystem.ZeroTheme
 import me.rerere.zeroagent.ui.hooks.readStringPreference
 import me.rerere.zeroagent.ui.hooks.writeStringPreference
 import me.rerere.zeroagent.ui.pages.quickchat.QuickChatActivity
 import me.rerere.zeroagent.ui.theme.ColorMode
-import me.rerere.zeroagent.ui.theme.findPresetTheme
-import me.rerere.zeroagent.ui.theme.findThemeById
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.io.File
@@ -99,7 +96,6 @@ class FloatingBallService : Service(), KoinComponent {
         private const val BALL_SIZE_DP = 56
 
         /** Used only if the app theme cannot be resolved; the default look follows the theme. */
-        private const val FALLBACK_BALL_COLOR = 0xFF6750A4.toInt()
 
         private const val IDLE_ANIM_MS = 220L
 
@@ -501,29 +497,15 @@ class FloatingBallService : Service(), KoinComponent {
         )
     }
 
-    /** The app theme's primary colour, honouring dynamic colour / dark mode / custom themes. */
-    private fun themePrimaryColor(): Int = runCatching {
-        val settings = settingsStore.settingsFlow.value
-        val dark = when (colorMode()) {
-            ColorMode.SYSTEM ->
-                (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-                    Configuration.UI_MODE_NIGHT_YES
-
+    private fun themePrimaryColor(): Int {
+        val mode = readStringPreference(COLOR_MODE_KEY, ColorMode.LIGHT.name)
+        val dark = when (ColorMode.entries.firstOrNull { it.name == mode } ?: ColorMode.SYSTEM) {
+            ColorMode.SYSTEM -> (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
             ColorMode.LIGHT -> false
             ColorMode.DARK -> true
         }
-        val scheme = if (settings.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (dark) dynamicDarkColorScheme(this) else dynamicLightColorScheme(this)
-        } else {
-            (findThemeById(settings.themeId, settings.customThemes) ?: findPresetTheme(settings.themeId))
-                .getColorScheme(dark)
-        }
-        scheme.primary.toArgb()
-    }.getOrDefault(FALLBACK_BALL_COLOR)
-
-    private fun colorMode(): ColorMode {
-        val raw = readStringPreference(COLOR_MODE_KEY)
-        return ColorMode.entries.firstOrNull { it.name == raw } ?: ColorMode.SYSTEM
+        return ZeroTheme.paletteFor(dark).textPrimary.toArgb()
     }
 
     /** Decodes the picked image, downsampled to roughly the ball size; cached by path + mtime. */

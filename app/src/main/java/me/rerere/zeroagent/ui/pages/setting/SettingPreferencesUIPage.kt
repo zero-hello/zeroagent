@@ -16,11 +16,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.LocalTextStyle
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
-import androidx.compose.material3.Slider
+import me.rerere.zeroagent.ui.designsystem.ZeroSlider as Slider
 import me.rerere.zeroagent.ui.components.ui.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -150,39 +150,6 @@ fun SettingPreferencesUIPage(vm: SettingVM = koinViewModel()) {
                                 }
                             )
                         },
-                    )
-                    item(
-                        headlineContent = { Text(stringResource(R.string.setting_display_page_show_assistant_bubble_title)) },
-                        supportingContent = { Text(stringResource(R.string.setting_display_page_show_assistant_bubble_desc)) },
-                        trailingContent = {
-                            Switch(
-                                checked = displaySetting.showAssistantBubble,
-                                onCheckedChange = {
-                                    updateDisplaySetting { copy(showAssistantBubble = it) }
-                                }
-                            )
-                        },
-                    )
-                    item(
-                        headlineContent = { Text(stringResource(R.string.setting_display_page_bubble_opacity_title)) },
-                        supportingContent = {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Slider(
-                                    value = displaySetting.bubbleOpacity,
-                                    onValueChange = {
-                                        updateDisplaySetting { copy(bubbleOpacity = it) }
-                                    },
-                                    valueRange = 0.1f..1.0f,
-                                    steps = 8,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(text = "${(displaySetting.bubbleOpacity * 100).roundToInt()}%")
-                            }
-                        }
                     )
                     item(
                         headlineContent = { Text(stringResource(R.string.setting_display_page_chat_list_model_icon_title)) },

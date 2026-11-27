@@ -1,6 +1,5 @@
 package me.rerere.zeroagent.ui.pages.chat
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
@@ -15,10 +14,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.launch
 import me.rerere.zeroagent.ui.components.ui.rememberMotionEnabled
 import me.rerere.zeroagent.ui.motion.MotionTokens
+import me.rerere.zeroagent.ui.designsystem.rememberZeroPredictiveDismiss
 
 /** Adaptive drawer shell. AppDrawerHost is the sole state owner and call site. */
 @Composable
@@ -52,21 +60,37 @@ internal fun ChatDrawerLayout(
             content = content,
         )
     } else {
+        val direction = if (LocalLayoutDirection.current == LayoutDirection.Ltr) 1f else -1f
+        val back = rememberZeroPredictiveDismiss(enabled && drawerState.isOpen) {
+            scope.launch { drawerState.close() }
+        }
         ModalNavigationDrawer(
             drawerState = drawerState,
             gesturesEnabled = enabled,
+            scrimColor = Color.Transparent,
             drawerContent = {
                 // Even with no visible sheet, preserve the two distinct anchors Material
                 // calculates from the width of this slot.
-                Box(Modifier.width(drawerWidth)) {
+                Box(Modifier.width(drawerWidth).graphicsLayer {
+                    translationX = -direction * drawerWidth.toPx() * .25f * back.value
+                }) {
                     if (enabled || drawerState.isOpen || drawerState.isAnimationRunning) drawerContent()
                 }
             },
-            content = content,
+            content = {
+                Box(Modifier.fillMaxSize().graphicsLayer {
+                    val width = drawerWidth.toPx().coerceAtLeast(1f)
+                    val offset = drawerState.currentOffset.takeIf(Float::isFinite) ?: -width
+                    val progress = if (enabled) ((offset + width) / width).coerceIn(0f, 1f) else 0f
+                    val visibleProgress = progress * (1f - .25f * back.value)
+                    translationX = direction * width * visibleProgress
+                    scaleX = 1f - .06f * visibleProgress
+                    scaleY = scaleX
+                    transformOrigin = TransformOrigin(if (direction > 0f) 0f else 1f, .5f)
+                    clip = progress > 0f
+                    shape = RoundedCornerShape(24.dp * visibleProgress)
+                }) { content() }
+            },
         )
-        // Keep the modal drawer ahead of back handlers registered by chat content.
-        BackHandler(enabled = enabled && (drawerState.isOpen || drawerState.targetValue == DrawerValue.Open)) {
-            scope.launch { drawerState.close() }
-        }
     }
 }

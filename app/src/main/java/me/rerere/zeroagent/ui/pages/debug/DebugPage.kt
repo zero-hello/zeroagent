@@ -21,10 +21,10 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import me.rerere.zeroagent.ui.components.ui.ExpressiveDivider as HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
@@ -198,7 +198,7 @@ private fun MainPage(vm: DebugVM) {
         }
         val toaster = LocalToaster.current
         Button(
-            shapes = ButtonDefaults.shapes(), onClick = {
+            onClick = {
                 toaster.show("测试 ${counter++}")
                 toaster.show("测试 ${counter++}", type = ToastType.Info)
                 toaster.show("测试 ${counter++}", type = ToastType.Error)
@@ -207,7 +207,7 @@ private fun MainPage(vm: DebugVM) {
             Text("toast")
         }
         Button(
-            shapes = ButtonDefaults.shapes(), onClick = {
+            onClick = {
                 vm.updateSettings(
                     settings.copy(
                         chatModelId = Uuid.random()
@@ -219,7 +219,7 @@ private fun MainPage(vm: DebugVM) {
         }
 
         Button(
-            shapes = ButtonDefaults.shapes(), onClick = {
+            onClick = {
                 error("测试崩溃 ${Random.nextInt(0..1000)}")
             }
         ) {
@@ -234,13 +234,13 @@ private fun MainPage(vm: DebugVM) {
                 text = "Conversation 数量: ${conversationCount?.toString() ?: "..."}",
                 modifier = Modifier.weight(1f),
             )
-            Button(shapes = ButtonDefaults.shapes(), onClick = { vm.refreshConversationCount() }) {
+            Button(onClick = { vm.refreshConversationCount() }) {
                 Text("刷新")
             }
         }
 
         Button(
-            shapes = ButtonDefaults.shapes(), onClick = {
+            onClick = {
                 vm.createOversizedConversation(30)
                 toaster.show("正在创建 30MB 超大对话...")
             }
@@ -249,7 +249,7 @@ private fun MainPage(vm: DebugVM) {
         }
 
         Button(
-            shapes = ButtonDefaults.shapes(), onClick = {
+            onClick = {
                 vm.createConversationWithMessages(1024)
                 toaster.show("正在创建 1024 条消息对话...")
             }
@@ -275,7 +275,7 @@ private fun MainPage(vm: DebugVM) {
                 modifier = Modifier.weight(1f),
                 singleLine = true,
             )
-            Button(shapes = ButtonDefaults.shapes(), onClick = {
+            Button(onClick = {
                 launchCountInput.toIntOrNull()?.let {
                     vm.updateSettings(settings.copy(launchCount = it))
                 }
@@ -329,7 +329,7 @@ private fun RecoveryPage(vm: DebugVM) {
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(shapes = ButtonDefaults.shapes(), onClick = { vm.scanConversationAssistants() }) {
+            Button(onClick = { vm.scanConversationAssistants() }) {
                 Text("重新扫描")
             }
             Button(

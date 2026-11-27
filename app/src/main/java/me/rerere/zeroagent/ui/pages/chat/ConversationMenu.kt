@@ -9,7 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog
@@ -40,6 +40,8 @@ internal fun ConversationMenu(
     onPreview: () -> Unit,
     onTemporary: (() -> Unit)?,
     onClearDraft: () -> Unit,
+    onOpenTerminal: () -> Unit,
+    onRename: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val locked = rememberPrivacyLock(conversation.id)
@@ -78,10 +80,12 @@ internal fun ConversationMenu(
         )
     }
     Box {
-        IconButton(onClick = { open = true }) {
+        me.rerere.zeroagent.ui.designsystem.ZeroIconButton(onClick = { open = true }) {
             Icon(HugeIcons.LeftToRightListBullet, stringResource(R.string.accessibility_chat_options))
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            if (onRename != null) DropdownMenuItem(text = { Text(stringResource(R.string.zero_v6_rename_chat)) }, onClick = { open = false; onRename() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.workspace_terminal_title)) }, onClick = { open = false; onOpenTerminal() })
             DropdownMenuItem(text = { Text(if (preview) "返回對話" else "瀏覽訊息") }, onClick = { open = false; onPreview() })
             if (onTemporary != null) {
                 DropdownMenuItem(text = { Text(stringResource(R.string.temporary_chat)) }, onClick = { open = false; onTemporary() })

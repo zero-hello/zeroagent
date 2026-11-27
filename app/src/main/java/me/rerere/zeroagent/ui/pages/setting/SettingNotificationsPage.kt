@@ -26,7 +26,7 @@ import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
 import me.rerere.zeroagent.ui.components.ui.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -109,7 +109,7 @@ fun SettingNotificationsPage() {
                         Text(
                             if (bound) stringResource(R.string.setting_page_notifications_status_connected)
                             else stringResource(R.string.setting_page_notifications_status_not_connected),
-                            color = if (bound) Color(0xFF22C55E) else MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (bound) me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.accentOlive else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     },
                     supportingContent = if (!bound) ({

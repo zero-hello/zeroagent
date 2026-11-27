@@ -24,3 +24,4 @@
     <string name="permission_tool_access_detail">Grant only if you plan to use these tools. You can revoke access in Android settings.</string>
     <string name="permission_tool_access_action">Grant access</string>
 </resources>
+

@@ -1,21 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <shortcut
-        android:shortcutId="camera"
-        android:enabled="true"
-        android:icon="@drawable/ic_lucide_camera"
-        android:shortcutShortLabel="@string/shortcut_take_picture"
-        android:shortcutLongLabel="@string/shortcut_take_picture">
-        <intent
-            android:action="android.intent.action.VIEW"
-            android:targetClass="me.rerere.zeroagent.ui.activity.ShortcutHandlerActivity"
-            android:data="zeroagent://shortcut" />
-        <categories android:name="android.shortcut.conversation" />
-    </shortcut>
-    <shortcut
         android:shortcutId="new-chat"
         android:enabled="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/zero_v6_widget_logo"
         android:shortcutShortLabel="@string/shortcut_new_conversation">
         <intent
             android:action="app.zeroagent.shortcut.NEW_CHAT"
@@ -35,7 +23,7 @@
     <shortcut
         android:shortcutId="voice"
         android:enabled="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/zero_v6_widget_voice"
         android:shortcutShortLabel="@string/shortcut_voice_question">
         <intent
             android:action="app.zeroagent.shortcut.VOICE"

@@ -45,8 +45,6 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SettingPreferencesThemePage(vm: SettingVM = koinViewModel()) {
-    val settings by vm.settings.collectAsStateWithLifecycle()
-    var amoledDarkMode by rememberAmoledDarkMode()
     var colorMode by rememberColorMode()
     val selectedColorModeText = when (colorMode) {
         ColorMode.SYSTEM -> stringResource(R.string.setting_page_color_mode_system)
@@ -54,7 +52,6 @@ fun SettingPreferencesThemePage(vm: SettingVM = koinViewModel()) {
         ColorMode.DARK -> stringResource(R.string.setting_page_color_mode_dark)
     }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val navController = LocalNavController.current
 
     Scaffold(
         topBar = {
@@ -93,11 +90,6 @@ fun SettingPreferencesThemePage(vm: SettingVM = koinViewModel()) {
                                 selectedOption = colorMode,
                                 onOptionSelected = {
                                     colorMode = it
-                                    navController.navigate(Screen.SettingPreferencesTheme) {
-                                        popUpTo(Screen.SettingPreferencesTheme) {
-                                            inclusive = true
-                                        }
-                                    }
                                 },
                                 optionToString = {
                                     when (it) {
@@ -110,33 +102,10 @@ fun SettingPreferencesThemePage(vm: SettingVM = koinViewModel()) {
                             )
                         },
                     )
-                    item(
-                        headlineContent = { Text(stringResource(R.string.setting_page_dynamic_color)) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_dynamic_color_desc)) },
-                        trailingContent = {
-                            Switch(
-                                checked = settings.dynamicColor,
-                                onCheckedChange = { vm.updateSettings { current -> current.copy(dynamicColor = it) } },
-                            )
-                        },
-                    )
-                    item(
-                        onClick = { navController.navigate(Screen.SettingTheme) },
-                        headlineContent = { Text(stringResource(R.string.setting_page_theme_setting)) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_theme_setting_desc)) },
-                        trailingContent = { Icon(HugeIcons.ArrowRight01, contentDescription = null) },
-                    )
-                    item(
-                        headlineContent = { Text(stringResource(R.string.setting_display_page_amoled_dark_mode_title)) },
-                        supportingContent = { Text(stringResource(R.string.setting_display_page_amoled_dark_mode_desc)) },
-                        trailingContent = {
-                            Switch(
-                                checked = amoledDarkMode,
-                                onCheckedChange = { amoledDarkMode = it }
-                            )
-                        },
-                    )
                 }
+            }
+            item {
+                me.rerere.zeroagent.ui.designsystem.ZeroAppearanceSettings(Modifier.padding(horizontal = 8.dp))
             }
         }
     }

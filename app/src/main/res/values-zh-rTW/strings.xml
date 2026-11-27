@@ -2298,4 +2298,5 @@
   <string name="adaptive_memory_choose_entry">選擇一筆記憶或待確認的變更。</string>
   <string name="chat_resume_interrupted_reply">接續中斷的回覆</string>
   <string name="access_delegated_current_chat">已更新這個聊天室的工具授權。</string>
+  <string name="zero_v6_image_failed">無法處理這張圖片</string>
 </resources>

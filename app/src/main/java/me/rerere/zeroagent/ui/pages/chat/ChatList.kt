@@ -55,9 +55,9 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
@@ -635,7 +635,8 @@ private fun extractMatchingSnippet(
 private fun buildHighlightedText(
     text: String,
     query: String,
-    highlightColor: Color
+    highlightColor: Color,
+    highlightInk: Color
 ): AnnotatedString {
     if (query.isBlank()) {
         return AnnotatedString(text)
@@ -653,7 +654,7 @@ private fun buildHighlightedText(
             withStyle(
                 style = SpanStyle(
                     background = highlightColor,
-                    color = Color.Black
+                    color = highlightInk
                 )
             ) {
                 append(text.substring(index, index + query.length))
@@ -774,8 +775,9 @@ private fun ChatListPreview(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            val highlightColor = MaterialTheme.colorScheme.tertiaryContainer
-                            val highlightedText = remember(searchQuery, message) {
+                            val highlightColor = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.accentOliveSubtle
+                            val highlightInk = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.textPrimary
+                            val highlightedText = remember(searchQuery, message, highlightColor, highlightInk) {
                                 val fullText = message.toText().trim().ifBlank { "[...]" }
                                 val messageText = extractMatchingSnippet(
                                     text = fullText,
@@ -784,7 +786,8 @@ private fun ChatListPreview(
                                 buildHighlightedText(
                                     text = messageText,
                                     query = searchQuery,
-                                    highlightColor = highlightColor
+                                    highlightColor = highlightColor,
+                                    highlightInk = highlightInk
                                 )
                             }
                             Text(
@@ -861,7 +864,7 @@ private fun BoxScope.MessageJumper(
                     }
                 },
                 shape = CircleShape,
-                tonalElevation = 4.dp,
+                tonalElevation = 0.dp,
                 color = MaterialTheme.colorScheme.surfaceColorAtElevation(
                     4.dp
                 ).copy(alpha = 0.65f)
@@ -884,7 +887,7 @@ private fun BoxScope.MessageJumper(
                     }
                 },
                 shape = CircleShape,
-                tonalElevation = 4.dp,
+                tonalElevation = 0.dp,
                 color = MaterialTheme.colorScheme.surfaceColorAtElevation(
                     4.dp
                 ).copy(alpha = 0.65f)

@@ -24,3 +24,4 @@
     <string name="permission_tool_access_detail">需要使用這些工具時再授權。之後可在 Android 設定撤銷。</string>
     <string name="permission_tool_access_action">授予權限</string>
 </resources>
+

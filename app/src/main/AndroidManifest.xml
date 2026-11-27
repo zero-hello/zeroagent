@@ -190,14 +190,6 @@
         <data android:mimeType="image/*" />
       </intent-filter>
       <intent-filter>
-        <action android:name="android.intent.action.PROCESS_TEXT" />
-
-        <category android:name="android.intent.category.DEFAULT" />
-
-        <data android:mimeType="text/plain" />
-      </intent-filter>
-
-      <intent-filter>
         <action android:name="me.rerere.zeroagent.action.TRANSLATE" />
         <category android:name="android.intent.category.DEFAULT" />
       </intent-filter>
@@ -299,6 +291,21 @@
       android:taskAffinity="me.rerere.zeroagent.quickchat"
       android:theme="@style/Theme.ZeroAgent.QuickChat"
       android:windowSoftInputMode="adjustResize" />
+
+    <activity
+      android:name=".ui.pages.quickchat.ZeroQuickAskActivity"
+      android:exported="true"
+      android:label="@string/zero_v6_quick_ask"
+      android:excludeFromRecents="true"
+      android:taskAffinity="me.rerere.zeroagent.quickask"
+      android:theme="@style/Theme.ZeroAgent.QuickChat"
+      android:windowSoftInputMode="adjustResize">
+      <intent-filter>
+        <action android:name="android.intent.action.PROCESS_TEXT" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:mimeType="text/plain" />
+      </intent-filter>
+    </activity>
 
     <!-- Phase 13: External Automation Intent API. Exported activity that accepts
          RUN_TASK / RUN_CHAT intents from Tasker / MacroDroid / Locale / app callers.

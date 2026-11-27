@@ -25,15 +25,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import androidx.compose.material3.CircularWavyProgressIndicator
 import me.rerere.zeroagent.ui.components.ui.ExpressiveDivider as HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentModalBottomSheet as ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.SheetValue
@@ -244,7 +244,7 @@ fun WebDavTab(
                 Text(stringResource(R.string.backup_page_restore))
             }
             Button(
-                shapes = ButtonDefaults.shapes(), onClick = {
+                onClick = {
                     scope.launch {
                         isBackingUp = true
                         runCatching {
@@ -467,7 +467,7 @@ private fun WebDavBackupItemCard(
                             Text(stringResource(R.string.backup_page_delete))
                         }
                         Button(
-                            shapes = ButtonDefaults.shapes(), onClick = {
+                            onClick = {
                                 onRestore(item)
                             },
                             enabled = !isRestoring

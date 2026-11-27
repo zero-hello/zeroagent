@@ -1,6 +1,8 @@
 package me.rerere.zeroagent.ui.components.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import me.rerere.zeroagent.ui.designsystem.ZeroTheme
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
@@ -54,9 +56,9 @@ fun ZeroAgentScaffold(
 fun ZeroAgentCard(
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.extraLarge,
-    colors: CardColors = CardDefaults.cardColors(),
-    elevation: CardElevation = CardDefaults.cardElevation(),
-    border: BorderStroke? = null,
+    colors: CardColors = CardDefaults.cardColors(containerColor = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.surface),
+    elevation: CardElevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    border: BorderStroke? = BorderStroke(1.dp, me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.borderSubtle),
     content: @Composable ColumnScope.() -> Unit,
 ) = MaterialCard(
     modifier = modifier,
@@ -69,9 +71,9 @@ fun ZeroAgentCard(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     shape: Shape = MaterialTheme.shapes.extraLarge,
-    colors: CardColors = CardDefaults.cardColors(),
-    elevation: CardElevation = CardDefaults.cardElevation(),
-    border: BorderStroke? = null,
+    colors: CardColors = CardDefaults.cardColors(containerColor = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.surface),
+    elevation: CardElevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    border: BorderStroke? = BorderStroke(1.dp, me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.borderSubtle),
     interactionSource: MutableInteractionSource? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -84,14 +86,14 @@ fun ZeroAgentCard(
 @Composable
 fun ZeroAgentOutlinedCard(
     modifier: Modifier = Modifier, shape: Shape = MaterialTheme.shapes.extraLarge,
-    colors: CardColors = CardDefaults.outlinedCardColors(), elevation: CardElevation = CardDefaults.outlinedCardElevation(),
+    colors: CardColors = CardDefaults.outlinedCardColors(containerColor = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.surface), elevation: CardElevation = CardDefaults.outlinedCardElevation(),
     border: BorderStroke = CardDefaults.outlinedCardBorder(), content: @Composable ColumnScope.() -> Unit,
 ) = ZeroAgentCard(modifier, shape, colors, elevation, border, content)
 
 @Composable
 fun ZeroAgentOutlinedCard(
     onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true,
-    shape: Shape = MaterialTheme.shapes.extraLarge, colors: CardColors = CardDefaults.outlinedCardColors(),
+    shape: Shape = MaterialTheme.shapes.extraLarge, colors: CardColors = CardDefaults.outlinedCardColors(containerColor = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.surface),
     elevation: CardElevation = CardDefaults.outlinedCardElevation(), border: BorderStroke = CardDefaults.outlinedCardBorder(enabled),
     interactionSource: MutableInteractionSource? = null, content: @Composable ColumnScope.() -> Unit,
 ) = ZeroAgentCard(onClick, modifier, enabled, shape, colors, elevation, border, interactionSource, content)
@@ -104,8 +106,8 @@ fun ZeroAgentModalBottomSheet(
     sheetState: SheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
     sheetMaxWidth: Dp = BottomSheetDefaults.SheetMaxWidth,
     sheetGesturesEnabled: Boolean = true,
-    shape: Shape = BottomSheetDefaults.ExpandedShape,
-    containerColor: Color = BottomSheetDefaults.ContainerColor,
+    shape: Shape = MaterialTheme.shapes.large,
+    containerColor: Color = ZeroTheme.colors.surface,
     contentColor: Color = if (containerColor == Color.Transparent) MaterialTheme.colorScheme.onSurface else contentColorFor(containerColor),
     tonalElevation: Dp = 0.dp,
     scrimColor: Color = BottomSheetDefaults.ScrimColor,
@@ -116,7 +118,7 @@ fun ZeroAgentModalBottomSheet(
 ) {
     MaterialBottomSheet(
         onDismissRequest = onDismissRequest,
-        modifier = modifier,
+        modifier = modifier.border(1.dp, ZeroTheme.colors.borderSubtle, shape),
         sheetState = sheetState, sheetMaxWidth = sheetMaxWidth, sheetGesturesEnabled = sheetGesturesEnabled,
         shape = shape, containerColor = containerColor,
         contentColor = if (contentColor == Color.Unspecified) MaterialTheme.colorScheme.onSurface else contentColor,

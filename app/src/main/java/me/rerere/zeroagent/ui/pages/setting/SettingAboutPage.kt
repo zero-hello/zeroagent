@@ -97,6 +97,11 @@ fun SettingAboutPage() {
                         style = MaterialTheme.typography.headlineLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
+                    Text(
+                        text = stringResource(R.string.zero_ui_version_name),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
 

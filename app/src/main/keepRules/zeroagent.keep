@@ -78,14 +78,9 @@
 # the native SQLite shim does GetMethodID lookups by name on
 # io.requery.android.database.*. JitPack-built AARs can ship inconsistent
 # consumer-rules; explicit keeps make the next FTS query / DB open survive R8.
-# Plus: DatabaseUtil.kt reflects on CursorWindow.sDefaultCursorWindowSize at startup
-# to set the 32MB cursor window, and R8 renaming that field would silently break it.
 -keep class io.requery.android.database.** { *; }
 -keepclasseswithmembers class io.requery.android.database.** {
     native <methods>;
-}
--keepclassmembers class io.requery.android.database.CursorWindow {
-    static int sDefaultCursorWindowSize;
 }
 
 # llama.cpp streaming: llama_jni.cpp's nativeGenerate resolves its streaming callback by

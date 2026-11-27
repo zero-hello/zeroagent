@@ -93,7 +93,7 @@ fun ShareHandlerPage(text: String, image: String?) {
                             )
                         }
                     },
-                    tonalElevation = 4.dp,
+                    tonalElevation = 0.dp,
                     shape = MaterialTheme.shapes.medium
                 ) {
                     ListItem(

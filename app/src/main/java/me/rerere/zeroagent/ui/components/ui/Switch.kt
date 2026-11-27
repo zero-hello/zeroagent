@@ -44,27 +44,10 @@ fun Switch(
     thumbColorUnchecked: Color = MaterialTheme.colorScheme.outline,
     interactionSource: MutableInteractionSource? = null,
 ) {
-    // Keep the shared API while using Material's focus, ripple, semantics and motion behavior.
-    // Compact settings still receive the same 48 dp minimum touch target.
-    val touchTarget = if (size == SwitchSize.Large) 56.dp else 48.dp
-    androidx.compose.material3.Switch(
-        checked = checked,
-        onCheckedChange = onCheckedChange,
-        modifier = modifier.statePulse(checked && enabled).sizeIn(minWidth = touchTarget, minHeight = touchTarget).then(
-            if (onCheckedChange == null) Modifier.semantics {
-                role = Role.Switch
-                toggleableState = ToggleableState(checked)
-                if (!enabled) disabled()
-            } else Modifier,
-        ),
-        enabled = enabled,
+    me.rerere.zeroagent.ui.designsystem.ZeroAnimatedSwitch(
+        checked = checked, onCheckedChange = onCheckedChange, modifier = modifier,
+        enabled = enabled, touchTarget = if (size == SwitchSize.Large) 56.dp else 48.dp,
         interactionSource = interactionSource,
-        colors = androidx.compose.material3.SwitchDefaults.colors(
-            checkedTrackColor = trackColor,
-            uncheckedTrackColor = trackColorUnchecked,
-            checkedThumbColor = thumbColor,
-            uncheckedThumbColor = thumbColorUnchecked,
-        ),
     )
 }
 

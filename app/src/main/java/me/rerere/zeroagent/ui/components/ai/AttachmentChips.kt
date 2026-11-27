@@ -19,7 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -148,7 +148,7 @@ internal fun MediaFileInputRow(
                             displayNameByRelativePath = displayNameByRelativePath,
                             displayNameByFileName = displayNameByFileName
                         ),
-                        leading = { AttachmentLeadingIcon(icon = HugeIcons.Video01) },
+                        leading = { AttachmentFormatBadge(part.url, "VIDEO") },
                         status = rememberAttachmentStatus(part.url),
                         onRemove = { removePart(part, part.url) },
                         onClick = { openWithSystemChooser(part.url) }
@@ -163,7 +163,7 @@ internal fun MediaFileInputRow(
                             displayNameByRelativePath = displayNameByRelativePath,
                             displayNameByFileName = displayNameByFileName
                         ),
-                        leading = { AttachmentLeadingIcon(icon = HugeIcons.MusicNote03) },
+                        leading = { AttachmentFormatBadge(part.url, "AUDIO") },
                         status = rememberAttachmentStatus(part.url),
                         onRemove = { removePart(part, part.url) },
                         onClick = { openWithSystemChooser(part.url) }
@@ -178,7 +178,7 @@ internal fun MediaFileInputRow(
                             displayNameByRelativePath = displayNameByRelativePath,
                             displayNameByFileName = displayNameByFileName
                         ),
-                        leading = { AttachmentLeadingIcon(icon = HugeIcons.Files02) },
+                        leading = { AttachmentFormatBadge(part.fileName, "FILE") },
                         status = rememberAttachmentStatus(part.url),
                         onRemove = { removePart(part, part.url) },
                         onClick = { openWithSystemChooser(part.url) }
@@ -233,7 +233,7 @@ private fun AttachmentChip(
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                Text(status, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(status, style = MaterialTheme.typography.bodySmall.copy(fontFeatureSettings = "tnum"), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             IconButton(onClick = onRemove) {
                 Icon(
@@ -248,8 +248,8 @@ private fun AttachmentChip(
     if (onClick != null) {
         Surface(
             onClick = onClick,
-            shape = RoundedCornerShape(18.dp),
-            tonalElevation = 1.dp,
+            shape = RoundedCornerShape(12.dp),
+            tonalElevation = 0.dp,
             shadowElevation = 0.dp,
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
@@ -257,8 +257,8 @@ private fun AttachmentChip(
         )
     } else {
         Surface(
-            shape = RoundedCornerShape(18.dp),
-            tonalElevation = 1.dp,
+            shape = RoundedCornerShape(12.dp),
+            tonalElevation = 0.dp,
             shadowElevation = 0.dp,
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
@@ -268,24 +268,18 @@ private fun AttachmentChip(
 }
 
 @Composable
-private fun AttachmentLeadingIcon(
-    icon: ImageVector,
-) {
+private fun AttachmentFormatBadge(name: String, fallback: String) {
+    val format = remember(name, fallback) {
+        name.substringBefore('?').substringAfterLast('/').substringAfterLast('.', "")
+            .takeIf { it.length in 1..5 && it.all(Char::isLetterOrDigit) }
+            ?.uppercase(java.util.Locale.ROOT) ?: fallback
+    }
     Surface(
-        modifier = Modifier.size(34.dp),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        Text(format, Modifier.padding(horizontal = 7.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
     }
 }
 

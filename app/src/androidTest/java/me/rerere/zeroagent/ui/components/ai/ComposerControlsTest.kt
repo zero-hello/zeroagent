@@ -55,7 +55,8 @@ class ComposerControlsTest {
         }
 
         compose.onNodeWithTag("composer_asr").assertDoesNotExist()
-        val actions = listOf("attach", "voice", "model", "reasoning", "send", "stop")
+        compose.onNodeWithTag("composer_voice").assertDoesNotExist()
+        val actions = listOf("attach", "model", "reasoning", "send", "stop")
         val parent = compose.onNodeWithTag("composer_actions").fetchSemanticsNode().boundsInRoot
         val bounds = actions.map { action ->
             val node = compose.onNodeWithTag("composer_$action")

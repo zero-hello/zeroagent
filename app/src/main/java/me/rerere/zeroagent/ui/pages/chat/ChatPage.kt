@@ -28,7 +28,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentModalBottomSheet as ModalBottomSheet
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
@@ -61,6 +60,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalDensity
@@ -104,7 +106,6 @@ import me.rerere.zeroagent.data.files.FilesManager
 import me.rerere.zeroagent.data.files.importComposerAttachment
 import me.rerere.zeroagent.data.chat.ChatExtras
 import me.rerere.zeroagent.ui.theme.LocalDarkMode
-import me.rerere.zeroagent.ui.theme.PresetThemes
 import me.rerere.zeroagent.data.model.Assistant
 import me.rerere.zeroagent.data.model.Conversation
 import me.rerere.zeroagent.data.repository.WorkspaceRepository
@@ -132,13 +133,15 @@ import org.koin.core.parameter.parametersOf
 import kotlin.uuid.Uuid
 
 @Composable
-fun ChatPage(
+internal fun ChatPage(
     id: Uuid,
     text: String?,
     files: List<Uri>,
     nodeId: Uuid? = null,
     importId: String? = null,
     onImportConsumed: () -> Unit = {},
+    askDraft: me.rerere.zeroagent.ui.designsystem.ZeroAskDraft? = null,
+    onAskDraftConsumed: () -> Unit = {},
 ) {
     val vm: ChatVM = koinViewModel(
         parameters = {
@@ -154,7 +157,7 @@ fun ChatPage(
     val loadingJob by vm.conversationJob.collectAsStateWithLifecycle()
     val processingStatus by vm.processingStatus.collectAsStateWithLifecycle()
     val currentChatModel by vm.currentChatModel.collectAsStateWithLifecycle()
-    WarmChatModel(id, currentChatModel, setting.providers, loadingJob != null)
+    val warmingModel = WarmChatModel(id, currentChatModel, setting.providers, loadingJob != null)
     val errors by vm.errors.collectAsStateWithLifecycle()
     // U4 — the sub-agent registry is not collected anywhere in the UI today, so a parent turn that
     // dispatched background work had no live signal at all. Fold it into the status line the chat
@@ -218,16 +221,7 @@ fun ChatPage(
         }
     }
 
-    val themeContext = LocalContext.current
-    val themeFlow = remember(themeContext, id) { ChatExtras.themeFlow(themeContext, id) }
-    val themeId by themeFlow.collectAsStateWithLifecycle(initialValue = ChatExtras.theme(themeContext, id))
-    val palette = PresetThemes.firstOrNull { it.id == themeId }
-    MaterialExpressiveTheme(
-        colorScheme = palette?.getColorScheme(LocalDarkMode.current) ?: MaterialTheme.colorScheme,
-        motionScheme = MaterialTheme.motionScheme,
-        shapes = MaterialTheme.shapes,
-        typography = MaterialTheme.typography,
-    ) {
+    run {
         ChatPageContent(
             onStartVoiceMode = startVoiceMode,
             inputState = inputState,
@@ -244,6 +238,9 @@ fun ChatPage(
             searchHighlight = searchHighlight,
 
             currentChatModel = currentChatModel,
+            warmingModel = warmingModel,
+            askDraft = askDraft,
+            onAskDraftConsumed = onAskDraftConsumed,
             bigScreen = isBigScreen,
             errors = errors,
             onDismissError = { vm.dismissError(it) },
@@ -305,6 +302,9 @@ private fun ChatPageContent(
     chatListState: LazyListState,
     searchHighlight: Uuid?,
     currentChatModel: Model?,
+    warmingModel: Boolean,
+    askDraft: me.rerere.zeroagent.ui.designsystem.ZeroAskDraft?,
+    onAskDraftConsumed: () -> Unit,
     errors: List<ChatError>,
     onDismissError: (Uuid) -> Unit,
     onClearAllErrors: () -> Unit,
@@ -319,6 +319,28 @@ private fun ChatPageContent(
     var previewMode by rememberSaveable { mutableStateOf(false) }
     val assistant = currentChatModel?.let { setting.assistantForModel(it) } ?: setting.getCurrentAssistant()
     var showFilesSheet by remember { mutableStateOf(false) }
+    var activeQuote by remember(conversation.id) { mutableStateOf<String?>(null) }
+    var quoteFocusRequest by remember(conversation.id) { mutableIntStateOf(0) }
+    LaunchedEffect(askDraft, inputState.editingMessage) {
+        val draft = askDraft ?: return@LaunchedEffect
+        if (inputState.isEditing()) return@LaunchedEffect
+        activeQuote = draft.quote
+        if (draft.question.isNotBlank()) {
+            if (inputState.textContent.text.isNotEmpty()) inputState.appendText("\n\n")
+            inputState.appendText(draft.question)
+        }
+        quoteFocusRequest++
+        onAskDraftConsumed()
+    }
+    fun currentDraftWithQuote(): List<UIMessagePart> {
+        val draft = inputState.getContents()
+        val query = activeQuote ?: return draft
+        if (inputState.isEditing()) return draft
+        val quote = me.rerere.zeroagent.ui.designsystem.quotedChatText(query)
+        val firstText = draft.firstOrNull() as? UIMessagePart.Text
+        return if (firstText == null) listOf(UIMessagePart.Text(quote)) + draft
+        else listOf(UIMessagePart.Text("$quote\n\n${firstText.text}")) + draft.drop(1)
+    }
     val attachmentPickerActions = rememberChatAttachmentPickerActions(
         inputState = inputState,
         setting = setting,
@@ -385,15 +407,23 @@ private fun ChatPageContent(
 
     var sentCheck by remember(conversation.id) { mutableStateOf(false) }
     var pendingSentCheck by remember(conversation.id) { mutableStateOf(false) }
+    var composerAnchor by remember(conversation.id) { mutableStateOf<Offset?>(null) }
+    var pendingOrigin by remember(conversation.id) { mutableStateOf<Offset?>(null) }
+    var sendMotion by remember(conversation.id) { mutableStateOf<me.rerere.zeroagent.ui.designsystem.ZeroSendMotion?>(null) }
+    fun markOutgoingMessage() {
+        pendingSentCheck = true
+        pendingOrigin = composerAnchor
+    }
     val maskEnabled by remember(context) { LabPreferences.flow(context, "redaction", "false") }
         .collectAsStateWithLifecycle(LabPreferences.get(context, "redaction", "false"))
     var draftToMask by remember(conversation.id) { mutableStateOf<List<UIMessagePart>?>(null) }
     draftToMask?.takeIf { maskEnabled == "true" }?.let { outgoing ->
         DraftRedactionDialog(outgoing, onSend = { selected ->
             draftToMask = null
-            pendingSentCheck = true
+            markOutgoingMessage()
             vm.handleMessageSend(selected)
             inputState.clearInput()
+            activeQuote = null
         }, onDismiss = { draftToMask = null })
     }
     val lastSavedUserId = conversation.currentMessages.lastOrNull { it.role == me.rerere.ai.core.MessageRole.USER }?.id
@@ -403,8 +433,11 @@ private fun ChatPageContent(
             pendingSentCheck = false
             observedUserId = lastSavedUserId
             sentCheck = true
+            sendMotion = pendingOrigin?.let { me.rerere.zeroagent.ui.designsystem.ZeroSendMotion(lastSavedUserId, it) }
+            pendingOrigin = null
             delay(1300)
             sentCheck = false
+            sendMotion = null
         }
         observedUserId = lastSavedUserId
     }
@@ -509,6 +542,7 @@ private fun ChatPageContent(
                         onCompact = { handleSlash("/compact") },
                     )
                     ChatInput(
+                        modifier = Modifier.onGloballyPositioned { composerAnchor = it.boundsInRoot().bottomRight },
                         onStartVoiceMode = onStartVoiceMode,
                         onUpdateChatModel = onUpdateChatModel,
                         accessControl = {
@@ -555,15 +589,16 @@ private fun ChatPageContent(
                                     messageId = inputState.editingMessage!!,
                                 )
                             } else {
-                                val outgoing = inputState.getContents()
+                                val outgoing = currentDraftWithQuote()
                                 if (maskEnabled == "true" && outgoing.isNotEmpty()) {
                                     draftToMask = outgoing
                                     return@ChatInput
                                 }
-                                pendingSentCheck = true
+                                markOutgoingMessage()
                                 vm.handleMessageSend(outgoing)
                             }
                             inputState.clearInput()
+                            activeQuote = null
                         },
                         onLongSendClick = {
                             if (inputState.isEditing()) {
@@ -572,15 +607,19 @@ private fun ChatPageContent(
                                     messageId = inputState.editingMessage!!,
                                 )
                             } else {
-                                vm.handleMessageSend(content = inputState.getContents(), answer = false)
+                                vm.handleMessageSend(content = currentDraftWithQuote(), answer = false)
                             }
                             inputState.clearInput()
+                            activeQuote = null
                         },
                         onUpdateReasoningLevel = { level ->
                             currentChatModel?.id?.let { modelId ->
                                 vm.updateSettings { it.withChatModelReasoning(modelId, level) }
                             }
                         },
+                        selectedQuote = activeQuote,
+                        onRemoveQuote = { activeQuote = null },
+                        quoteFocusRequest = quoteFocusRequest,
                         onMoreClick = {
                             showFilesSheet = true
                         },
@@ -624,13 +663,20 @@ private fun ChatPageContent(
                     }
                 }
                 if (vm.pendingDelete != null) {
-                    androidx.compose.material3.Snackbar(
+                    me.rerere.zeroagent.ui.designsystem.ZeroToast(
                         modifier = Modifier.align(Alignment.TopCenter).padding(top = listInset.calculateTopPadding() + 8.dp)
                             .padding(horizontal = 12.dp).zIndex(3f),
                         action = { androidx.compose.material3.TextButton(onClick = vm::undoDeleteMessage) { Text("復原") } },
                     ) { Text("這則訊息即將刪除") }
                 }
                 CompositionLocalProvider(
+                    me.rerere.zeroagent.ui.designsystem.LocalSelectedTextAsk provides { selected ->
+                        if (!inputState.isEditing()) {
+                            activeQuote = selected.take(4_000)
+                            quoteFocusRequest += 1
+                        }
+                    },
+                    me.rerere.zeroagent.ui.designsystem.LocalZeroSendMotion provides sendMotion.takeIf { motionEnabled },
                     LocalConversationReplyMotion provides liveReplyMotion,
                     LocalPendingMessageReview provides reviewStore,
                 ) {
@@ -737,11 +783,12 @@ private fun ChatPageContent(
                     )
                     TopBar(
                         settings = setting,
-                        assistant = assistant,
                         model = currentChatModel,
+                        warmingModel = warmingModel,
                         conversation = conversation,
                         onTemporaryChat = if (privateChatEnabled == "true") ({ showTemporary = true }) else null,
                         onClearDraft = vm::clearSavedDraft,
+                        onModelSelect = onUpdateChatModel,
                         bigScreen = bigScreen,
                         onOpenDrawer = onOpenDrawer,
                         onOpenTerminal = {
@@ -869,27 +916,27 @@ private fun ChatFilesPickerSheet(
 @Composable
 private fun TopBar(
     settings: Settings,
-    assistant: Assistant,
     model: Model?,
+    warmingModel: Boolean,
     conversation: Conversation,
     onOpenDrawer: () -> Unit,
     onOpenTerminal: () -> Unit,
     onTemporaryChat: (() -> Unit)?,
     onClearDraft: () -> Unit,
+    onModelSelect: (Model) -> Unit,
 
     bigScreen: Boolean,
     previewMode: Boolean,
     onClickMenu: () -> Unit,
     onNewChat: () -> Unit,
 ) {
-    val toaster = LocalToaster.current
     // 与抽屉的 Rename 菜单项共享同一个重命名对话框状态，见 ChatDrawerVM.conversationToRename
     val activity = LocalActivity.current as ComponentActivity
     val drawerVm: ChatDrawerVM = koinViewModel(viewModelStoreOwner = activity)
 
-    TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-        navigationIcon = {
+    me.rerere.zeroagent.ui.designsystem.ZeroTopFloatingBar(
+
+        navigation = {
             if (!bigScreen) {
                 ChatTopBarButton(
                     onClick = onOpenDrawer,
@@ -898,47 +945,11 @@ private fun TopBar(
                 }
             }
         },
-        title = {
-            val editTitleWarning = stringResource(R.string.chat_page_edit_title_warning)
-            Surface(
-                onClick = {
-                    if (conversation.messageNodes.isNotEmpty()) {
-                        drawerVm.requestRenameConversation(conversation)
-                    } else {
-                        toaster.show(editTitleWarning, type = ToastType.Warning)
-                    }
-                },
-                color = Color.Transparent,
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column {
-                    val provider = model?.findProvider(providers = settings.providers, checkOverwrite = false)
-                    Text(
-                        text = conversation.title.ifBlank { stringResource(R.string.chat_page_new_chat) },
-                        maxLines = 1,
-                        style = MaterialTheme.typography.bodyMedium,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (model != null && provider != null) {
-                        Text(
-                            text = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 1,
-                            color = LocalContentColor.current.copy(0.65f),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 12.sp,
-                            )
-                        )
-                    }
-                    }
-                }
-            }
-        },
+        title = { ZeroChatModelSelector(model, settings.providers, warmingModel, onModelSelect) },
         actions = {
-            ChatTopBarButton(onClick = onOpenTerminal) {
-                Icon(HugeIcons.ComputerTerminal01, stringResource(R.string.workspace_terminal_title))
-            }
-            ConversationMenu(conversation, previewMode, onClickMenu, onTemporaryChat, onClearDraft)
+            ConversationMenu(conversation, previewMode, onClickMenu, onTemporaryChat, onClearDraft,
+                onOpenTerminal = onOpenTerminal,
+                onRename = if (conversation.messageNodes.isNotEmpty()) ({ drawerVm.requestRenameConversation(conversation) }) else null)
 
             ChatTopBarButton(
                 onClick = {
@@ -955,14 +966,5 @@ private fun TopBar(
 /** Compact tonal controls over the conversation background. */
 @Composable
 private fun ChatTopBarButton(onClick: () -> Unit, content: @Composable () -> Unit) {
-    androidx.compose.material3.FilledTonalIconButton(
-        onClick = onClick,
-        shapes = IconButtonDefaults.shapes(),
-        modifier = Modifier.padding(horizontal = 4.dp).size(48.dp),
-        colors = androidx.compose.material3.IconButtonDefaults.filledTonalIconButtonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-        ),
-        content = content,
-    )
+    me.rerere.zeroagent.ui.designsystem.ZeroIconButton(onClick = onClick, content = content)
 }

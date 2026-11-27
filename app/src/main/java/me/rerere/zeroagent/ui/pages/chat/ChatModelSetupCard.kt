@@ -6,10 +6,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -70,13 +71,13 @@ internal fun ChatModelSetupCard(
                 modifier = Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                me.rerere.zeroagent.ui.designsystem.ZeroFoldedLogo(Modifier.align(Alignment.CenterHorizontally).size(64.dp))
                 Text(stringResource(R.string.chat_setup_title), style = MaterialTheme.typography.headlineSmall)
                 Text(stringResource(R.string.chat_setup_body), style = MaterialTheme.typography.bodyMedium)
                 var choosingProvider by remember { mutableStateOf(false) }
                 Box {
                     Button(
                         onClick = { if (providers.isEmpty()) onAllProvidersClick() else choosingProvider = true },
-                        shapes = ButtonDefaults.shapes(),
                     ) { Text(stringResource(R.string.chat_setup_provider)) }
                     DropdownMenu(expanded = choosingProvider, onDismissRequest = { choosingProvider = false }) {
                         providers.forEach { provider ->
@@ -119,7 +120,6 @@ private fun StarterGgufDownload() {
         OutlinedButton(
             onClick = { vm.startManualDownload(starter.resolveUrl()) },
             enabled = progress == null && !paused && capabilities?.cpuAvailable == true,
-            shapes = ButtonDefaults.shapes(),
         ) {
             Text(stringResource(R.string.chat_setup_local, starter.displayName, Formatter.formatFileSize(context, starter.sizeBytes)))
         }

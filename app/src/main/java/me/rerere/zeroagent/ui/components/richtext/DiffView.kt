@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 
-internal val DiffAddedColor = Color(0xFF4CAF50)
-internal val DiffRemovedColor = Color(0xFFEF5350)
+internal val DiffAddedColor: Color @Composable get() = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.diffAdded
+internal val DiffRemovedColor: Color @Composable get() = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors.destructive
 
 /** unified diff 的增删行数统计 */
 internal data class DiffStats(val additions: Int, val deletions: Int)

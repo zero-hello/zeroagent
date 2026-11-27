@@ -1,0 +1,28 @@
+<resources>
+    <string name="zero_ui_version_name" translatable="false">ZeroAgent UI v2</string>
+    <string name="zero_v6_sound">Interaction sounds</string>
+    <string name="zero_v6_font">Interface font</string>
+    <string name="zero_v6_font_cache_info">Downloaded and imported fonts stay on this device.</string>
+    <string name="zero_v6_system_font">System font</string>
+    <string name="zero_v6_local_font">Imported font</string>
+    <string name="zero_v6_download_font">Download %1$s</string>
+    <string name="zero_v6_font_failed">Could not load the font. Your current font is still active.</string>
+    <string name="zero_v6_import_font">Import TTF or OTF</string>
+    <string name="zero_v6_clear_fonts">Clear downloaded and imported fonts</string>
+    <string name="zero_v6_clear_fonts_message">Deletes the local font copies. If you are using one, ZeroAgent switches to the system font.</string>
+    <string name="zero_v6_quick_ask" translatable="false">問問ZeroAgent</string>
+    <string name="zero_v6_explain">Explain</string>
+    <string name="zero_v6_translate">Translate</string>
+    <string name="zero_v6_summarize">Summarize</string>
+    <string name="zero_v6_widget_prompt">Ask Zero Agent…</string>
+    <string name="zero_v6_showcase">UI components and interactions</string>
+    <string name="zero_v6_model_local">On-device models</string>
+    <string name="zero_v6_model_cloud">Cloud models</string>
+    <string name="zero_v6_rename_chat">Rename conversation</string>
+    <string name="zero_v6_copy_plain">Copy plain text</string>
+    <string name="zero_v6_copy_markdown">Copy Markdown</string>
+    <string name="zero_v6_captions_expand">Show transcript</string>
+    <string name="zero_v6_captions_collapse">Collapse transcript</string>
+    <string name="zero_v6_hang_up">End call</string>
+    <string name="zero_v6_memory_updated">Memory updated</string>
+</resources>

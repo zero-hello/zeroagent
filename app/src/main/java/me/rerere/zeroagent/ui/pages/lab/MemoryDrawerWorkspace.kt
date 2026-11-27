@@ -25,12 +25,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
+import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
+import me.rerere.zeroagent.ui.components.ui.Switch as Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -245,7 +245,7 @@ internal fun MemoryDrawerWorkspace(modifier: Modifier) {
         AlertDialog(onDismissRequest = { settingExpiry = null }, title = { Text("保留期限") }, text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("填寫日期後，會保留到當天結束。留空可取消期限。")
-                androidx.compose.material3.OutlinedTextField(
+                me.rerere.zeroagent.ui.designsystem.ZeroTextField(
                     value = expiryInput,
                     onValueChange = { expiryInput = it.take(10) },
                     label = { Text("年-月-日") },

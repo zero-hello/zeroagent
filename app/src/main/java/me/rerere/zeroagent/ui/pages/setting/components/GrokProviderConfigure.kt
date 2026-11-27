@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentCard as Card
 import androidx.compose.material3.CardDefaults
 import me.rerere.zeroagent.ui.components.ui.ExpressiveDivider as HorizontalDivider
@@ -111,7 +111,7 @@ fun GrokProviderConfigure(
         )
 
         Button(
-            shapes = ButtonDefaults.shapes(), onClick = oauthManager::startLogin,
+            onClick = oauthManager::startLogin,
             modifier = Modifier.fillMaxWidth(),
             enabled = oauthStatus !is GrokOAuthStatus.Starting &&
                 oauthStatus !is GrokOAuthStatus.AwaitingApproval,

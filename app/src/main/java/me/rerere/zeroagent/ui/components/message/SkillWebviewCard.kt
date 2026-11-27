@@ -70,7 +70,7 @@ internal fun SkillWebviewCardOrNull(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
-        tonalElevation = 2.dp,
+        tonalElevation = 0.dp,
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             // Overline: tells the user whether the skill expected an iframe (embedded) or

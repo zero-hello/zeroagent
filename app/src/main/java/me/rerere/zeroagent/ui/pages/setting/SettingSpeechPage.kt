@@ -11,7 +11,7 @@ import me.rerere.hugeicons.stroke.Add01
 import me.rerere.hugeicons.stroke.Voice
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import me.rerere.hugeicons.stroke.Mic01
 import me.rerere.hugeicons.stroke.Tools
 import me.rerere.hugeicons.stroke.Delete01
@@ -37,7 +37,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -114,7 +114,7 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
         ModalBottomSheet(onDismissRequest = { editing = null }, sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded))) {
             Column(Modifier.fillMaxWidth().fillMaxHeight(.85f).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 TTSProviderConfigure(setting = current, onValueChange = { current = it }, modifier = Modifier.weight(1f))
-                Button(shapes = ButtonDefaults.shapes(), onClick = { vm.updateSettings { state -> state.copy(ttsProviders = state.ttsProviders.map { if (it.id == current.id) current else it }) }; editing = null }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.zeroagent11_save)) }
+                Button(onClick = { vm.updateSettings { state -> state.copy(ttsProviders = state.ttsProviders.map { if (it.id == current.id) current else it }) }; editing = null }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.zeroagent11_save)) }
             }
         }
     }

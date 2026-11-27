@@ -18,12 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentModalBottomSheet as ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -163,7 +163,7 @@ fun UIAvatar(
                 onClick?.invoke()
                 if (onUpdate != null) showPickOption = true
             },
-            tonalElevation = 4.dp,
+            tonalElevation = 0.dp,
             color = MaterialTheme.colorScheme.secondaryContainer,
         ) {
             Box(
@@ -246,7 +246,7 @@ fun UIAvatar(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
-                        shapes = ButtonDefaults.shapes(), onClick = {
+                        onClick = {
                             showPickOption = false
                             imagePickerLauncher.launch("image/*")
                         },
@@ -255,7 +255,7 @@ fun UIAvatar(
                         Text(text = stringResource(id = R.string.avatar_pick_image))
                     }
                     Button(
-                        shapes = ButtonDefaults.shapes(), onClick = {
+                        onClick = {
                             showPickOption = false
                             showEmojiPicker = true
                         },
@@ -264,7 +264,7 @@ fun UIAvatar(
                         Text(text = stringResource(id = R.string.avatar_pick_emoji))
                     }
                     Button(
-                        shapes = ButtonDefaults.shapes(), onClick = {
+                        onClick = {
                             showPickOption = false
                             urlInput = ""
                             showUrlInput = true
@@ -274,7 +274,7 @@ fun UIAvatar(
                         Text(text = stringResource(id = R.string.avatar_input_url))
                     }
                     Button(
-                        shapes = ButtonDefaults.shapes(), onClick = {
+                        onClick = {
                             showPickOption = false
                             onUpdate?.invoke(Avatar.Dummy)
                         },
@@ -466,7 +466,7 @@ private fun PreviewUIAvatar() {
         )
 
         Button(
-            shapes = ButtonDefaults.shapes(), onClick = {
+            onClick = {
                 loading = !loading
             }
         ) {

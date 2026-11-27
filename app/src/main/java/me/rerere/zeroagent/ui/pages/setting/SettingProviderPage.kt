@@ -40,17 +40,17 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FilterChip
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentModalBottomSheet as ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
 import androidx.compose.material3.SheetValue
@@ -499,7 +499,6 @@ private fun ImportProviderButton(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
-                            shape = MaterialTheme.shapes.large
                         ) {
                             Row(
                                 horizontalArrangement = Arrangement.Center,
@@ -532,7 +531,6 @@ private fun ImportProviderButton(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
-                            shape = MaterialTheme.shapes.large
                         ) {
                             Row(
                                 horizontalArrangement = Arrangement.Center,
@@ -677,7 +675,6 @@ internal fun AddButton(onAdd: (ProviderSetting) -> Unit) {
                         Text(stringResource(R.string.cancel))
                     }
                     Button(
-                        shapes = ButtonDefaults.shapes(),
                         enabled = dialogState.currentState?.name?.isNotBlank() == true,
                         onClick = { dialogState.confirm() },
                     ) {

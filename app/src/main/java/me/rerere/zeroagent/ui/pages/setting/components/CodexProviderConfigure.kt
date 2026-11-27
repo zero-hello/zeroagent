@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentCard as Card
 import androidx.compose.material3.CardDefaults
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
@@ -110,7 +110,7 @@ fun CodexProviderConfigure(
         )
 
         Button(
-            shapes = ButtonDefaults.shapes(), onClick = oauthManager::startLogin,
+            onClick = oauthManager::startLogin,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(R.string.codex_sign_in))

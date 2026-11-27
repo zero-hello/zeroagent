@@ -17,19 +17,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentAlertDialog as AlertDialog
-import androidx.compose.material3.Button
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton as Button
 import androidx.compose.foundation.clickable
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import me.rerere.zeroagent.ui.components.ui.Switch
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -790,22 +790,11 @@ private fun ColumnScope.ProviderConfigureLiteRT(
         }
     }
 
-    // Download progress indicator.
     downloadProgress?.let { progress ->
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            if (progress.totalBytes != null && progress.totalBytes > 0) {
-                LinearProgressIndicator(
-                    progress = { progress.percent / 100f },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            } else {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
-            Text(
-                text = stringResource(R.string.local_llm_download_progress, progress.percent),
-                style = MaterialTheme.typography.labelSmall,
-            )
-        }
+        me.rerere.zeroagent.ui.components.ui.DownloadProgressIndicator(
+            me.rerere.zeroagent.ui.components.ui.DownloadProgress(progress.bytesRead, progress.totalBytes),
+            Modifier.fillMaxWidth(),
+        )
     }
 
     // Error text + optional "Delete model" action when a model file is the likely culprit.
@@ -912,22 +901,11 @@ private fun ColumnScope.ProviderConfigureLlamaCpp(
         }
     }
 
-    // Download progress indicator.
     downloadProgress?.let { progress ->
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            if (progress.totalBytes != null && progress.totalBytes > 0) {
-                LinearProgressIndicator(
-                    progress = { progress.percent / 100f },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            } else {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
-            Text(
-                text = stringResource(R.string.local_llm_download_progress, progress.percent),
-                style = MaterialTheme.typography.labelSmall,
-            )
-        }
+        me.rerere.zeroagent.ui.components.ui.DownloadProgressIndicator(
+            me.rerere.zeroagent.ui.components.ui.DownloadProgress(progress.bytesRead, progress.totalBytes),
+            Modifier.fillMaxWidth(),
+        )
     }
 
     // Error text.
@@ -976,7 +954,7 @@ private fun HuggingFaceFileRow(
                 )
             } else {
                 Button(
-                    shapes = ButtonDefaults.shapes(), onClick = onInstall,
+                    onClick = onInstall,
                     enabled = !downloadInProgress,
                 ) {
                     Text(stringResource(R.string.local_llm_catalog_install))
@@ -1068,7 +1046,7 @@ private fun LlamaCppCatalogEntryCard(
                     )
                 } else {
                     Button(
-                        shapes = ButtonDefaults.shapes(), onClick = onInstall,
+                        onClick = onInstall,
                         enabled = !downloadInProgress,
                     ) {
                         Text(stringResource(R.string.local_llm_catalog_install))
@@ -1182,7 +1160,7 @@ private fun LiteRtCatalogEntryCard(
                     )
                 } else {
                     Button(
-                        shapes = ButtonDefaults.shapes(), onClick = onInstall,
+                        onClick = onInstall,
                         enabled = !downloadInProgress,
                     ) {
                         Text(stringResource(R.string.local_llm_catalog_install))
@@ -1224,7 +1202,7 @@ private fun InstalledModelRow(
             }
             Spacer(Modifier.weight(1f))
             Button(
-                shapes = ButtonDefaults.shapes(), onClick = {
+                onClick = {
                     onRename(renameText)
                     renaming = false
                 },
@@ -1338,7 +1316,7 @@ fun ColumnScope.LocalModelDownloadContent(provider: ProviderSetting) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Button(
-            shapes = ButtonDefaults.shapes(), onClick = {
+            onClick = {
                 vm.startManualDownload(manualUrl)
                 manualUrl = ""
             },
@@ -1426,7 +1404,7 @@ fun ColumnScope.LocalModelDownloadContent(provider: ProviderSetting) {
                 modifier = Modifier.weight(1f),
             )
             Button(
-                shapes = ButtonDefaults.shapes(), onClick = { vm.searchHuggingFace(hfQuery) },
+                onClick = { vm.searchHuggingFace(hfQuery) },
                 enabled = !hfSearchInProgress,
             ) {
                 Text(
@@ -1529,8 +1507,10 @@ fun ColumnScope.LocalModelDownloadContent(provider: ProviderSetting) {
 
     }
     downloadProgress?.let { progress ->
-        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        Text(stringResource(R.string.local_llm_download_progress, progress.percent))
+        me.rerere.zeroagent.ui.components.ui.DownloadProgressIndicator(
+            me.rerere.zeroagent.ui.components.ui.DownloadProgress(progress.bytesRead, progress.totalBytes),
+            Modifier.fillMaxWidth(),
+        )
     }
     errorMessage?.let { Text(LocalContext.current.localizedErrorMessage(raw = it), color = MaterialTheme.colorScheme.error) }
 }
