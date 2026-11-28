@@ -203,7 +203,7 @@ private fun ActionOutcomeIcon(outcome: BrowserAiActionOutcome, modifier: Modifie
  * FAILED entries are additionally wrapped in [R.string.browser_ai_action_failed].
  */
 @Composable
-private fun actionSentence(action: BrowserAiAction): String {
+internal fun actionSentence(action: BrowserAiAction): String {
     val detail = action.detail?.take(80).orEmpty()
     val base = when (action.kind) {
         BrowserAiActionKind.OPEN -> stringResource(R.string.browser_ai_action_open, detail)

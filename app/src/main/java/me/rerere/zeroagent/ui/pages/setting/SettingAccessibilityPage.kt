@@ -208,6 +208,7 @@ fun SettingAccessibilityPage(vm: SettingVM = koinViewModel()) {
                     stringResource(R.string.zeroagent_phone_manage_hint, assistant.disabledLocalTools.size),
                 ).joinToString("\n\n"),
                 icon = HugeIcons.SmartPhone01,
+                active = assistant.hasPhoneControlTools(),
                 actions = buildList {
                     if (!assistant.hasPhoneControlTools() || "agent-core" !in assistant.enabledSkills) {
                         add(SettingsAction(
@@ -249,6 +250,7 @@ fun SettingAccessibilityPage(vm: SettingVM = koinViewModel()) {
                 }.joinToString("\n\n"),
                 icon = HugeIcons.Settings03,
                 announceChanges = true,
+                active = running,
                 actions = buildList {
                     add(SettingsAction(
                         label = stringResource(R.string.setting_page_accessibility_open_settings),
@@ -355,6 +357,7 @@ fun SettingAccessibilityPage(vm: SettingVM = koinViewModel()) {
                     stringResource(R.string.setting_page_accessibility_overlay_help),
                 ).joinToString("\n\n"),
                 icon = HugeIcons.SmartPhone01,
+                active = assistant.hasPhoneControlTools(),
                 actions = listOf(SettingsAction(
                     label = stringResource(R.string.accessibility_overlay_manage),
                     onClick = {

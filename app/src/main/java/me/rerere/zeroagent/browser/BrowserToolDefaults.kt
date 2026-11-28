@@ -1,7 +1,7 @@
 package me.rerere.zeroagent.browser
 
 /**
- * Authoritative list of the 17 browser tools the LLM can drive, plus their default
+ * Authoritative list of browser tools the LLM can drive, plus their default
  * enabled/disabled state. Read tools (cheap, don't touch the page) default ON;
  * write tools (mutate state, can be misused) default OFF; the loop-control tool
  * defaults ON because the AI can't escape the browser loop without it.
@@ -19,6 +19,7 @@ object BrowserToolDefaults {
     const val GET_TEXT = "browser_get_text"
     const val GET_DOM = "browser_get_dom"
     const val GET_LINKS = "browser_get_links"
+    const val PAGE_OUTLINE = "browser_page_outline"
     const val BACK = "browser_back"
     const val FORWARD = "browser_forward"
     const val WAIT_FOR = "browser_wait_for"
@@ -42,7 +43,7 @@ object BrowserToolDefaults {
     const val DONE = "browser_done"
 
     val READ_TOOLS: Set<String> = setOf(
-        OPEN, CURRENT_URL, SCREENSHOT, GET_TEXT, GET_DOM, GET_LINKS, BACK, FORWARD, WAIT_FOR,
+        OPEN, CURRENT_URL, SCREENSHOT, GET_TEXT, GET_DOM, GET_LINKS, PAGE_OUTLINE, BACK, FORWARD, WAIT_FOR,
     )
 
     val WRITE_TOOLS: Set<String> = setOf(
@@ -53,7 +54,7 @@ object BrowserToolDefaults {
 
     /** Stable display order for the Settings page. Read first, then write, then loop-control. */
     val ALL_TOOLS: List<String> = listOf(
-        OPEN, CURRENT_URL, SCREENSHOT, GET_TEXT, GET_DOM, GET_LINKS, BACK, FORWARD, WAIT_FOR,
+        OPEN, CURRENT_URL, SCREENSHOT, GET_TEXT, GET_DOM, GET_LINKS, PAGE_OUTLINE, BACK, FORWARD, WAIT_FOR,
         CLICK, TYPE, SCROLL, SUBMIT, SELECT, PRESS_KEY, EVAL_JS, CLICK_AND_READ,
         DONE,
     )

@@ -5,18 +5,19 @@ import android.util.Log
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.IOException
-import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import io.pebbletemplates.pebble.PebbleEngine
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -109,11 +110,7 @@ private val Context.settingsStore: DataStore<Preferences>
 private fun createSettingsDataStore(context: Context): DataStore<Preferences> {
     val file = context.preferencesDataStoreFile(SETTINGS_STORE_NAME)
     return PreferenceDataStoreFactory.create(
-        corruptionHandler = ReplaceFileCorruptionHandler { error ->
-            // Legacy settings files may contain plaintext credentials. Never copy them on failure.
-            Log.e(TAG, "Settings datastore corrupted (${error.javaClass.simpleName}), resetting")
-            emptyPreferences()
-        },
+        // Keep unreadable settings on disk for recovery instead of overwriting them.
         migrations = listOf(
             NamespaceMigration(),
             PreferenceStoreV1Migration(),
@@ -333,7 +330,7 @@ class SettingsStore(
     private val dataStore = context.settingsStore
 
     // 读取失败时绝不能回退为空配置, 否则默认值会被当成用户数据写回, 覆盖全部设置
-    // 偶发 IO 错误重试, 仍失败则向上抛出 (文件损坏由 corruptionHandler 处理)
+    // 偶发 IO 错误重试, 仍失败则向上抛出 ，保留原文件以供恢复
     val settingsFlowRaw = dataStore.data
         .map { preferences ->
             val oldVoice = ProviderPrefs.readVoiceAccount(preferences)
@@ -639,7 +636,11 @@ class SettingsStore(
             get<PebbleEngine>().templateCache.invalidateAll()
         }
 
+    private val _settingsReadFailed = MutableStateFlow(false)
+    val settingsReadFailed = _settingsReadFailed.asStateFlow()
+
     val settingsFlow = settingsFlowRaw
+        .onCompletion { cause -> if (cause is IOException) _settingsReadFailed.value = true }
         .distinctUntilChanged()
         .toMutableStateFlow(scope, Settings.dummy())
 

@@ -1,6 +1,5 @@
 package me.rerere.zeroagent.ui.designsystem
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,16 +16,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 
 @Composable
 private fun zeroTextFieldColors(): TextFieldColors {
@@ -53,12 +54,53 @@ fun ZeroTextField(
     singleLine: Boolean = false, maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE, minLines: Int = 1,
     interactionSource: MutableInteractionSource? = null,
     shape: Shape = MaterialTheme.shapes.medium, colors: TextFieldColors = zeroTextFieldColors(),
-) = OutlinedTextField(value, onValueChange, modifier, enabled = enabled, readOnly = readOnly,
-    textStyle = textStyle, label = label, placeholder = placeholder, leadingIcon = leadingIcon, trailingIcon = trailingIcon,
-    prefix = prefix, suffix = suffix, supportingText = supportingText, isError = isError,
-    visualTransformation = visualTransformation, keyboardOptions = keyboardOptions, keyboardActions = keyboardActions,
-    singleLine = singleLine, maxLines = maxLines, minLines = minLines, interactionSource = interactionSource,
-    shape = shape, colors = colors)
+    debouncePersistence: Boolean = false,
+) {
+    var editor by remember { mutableStateOf(TextFieldValue(value)) }
+    var focused by remember { mutableStateOf(false) }
+    var unapplied by remember { mutableStateOf(false) }
+    var lastSubmitted by remember { mutableStateOf(value) }
+    val persist by rememberUpdatedState(onValueChange)
+
+    fun submit() {
+        if (!unapplied || editor.text == lastSubmitted) return
+        lastSubmitted = editor.text
+        unapplied = false
+        persist(editor.text)
+    }
+
+    LaunchedEffect(value) {
+        if ((!focused || readOnly) && !unapplied && value != editor.text) {
+            editor = TextFieldValue(value, TextRange(editor.selection.end.coerceIn(0, value.length)))
+            lastSubmitted = value
+        }
+    }
+    LaunchedEffect(editor.text, editor.composition, debouncePersistence) {
+        if (debouncePersistence && editor.composition == null && unapplied) {
+            delay(220)
+            submit()
+        }
+    }
+    DisposableEffect(Unit) { onDispose { if (editor.composition == null) submit() } }
+    OutlinedTextField(
+        value = editor,
+        onValueChange = { next ->
+            if (next.text != editor.text) unapplied = next.text != lastSubmitted
+            editor = next
+            if (!debouncePersistence) submit()
+        },
+        modifier = modifier.onFocusChanged { state ->
+            if (focused && !state.isFocused) submit()
+            focused = state.isFocused
+        },
+        enabled = enabled, readOnly = readOnly, textStyle = textStyle, label = label,
+        placeholder = placeholder, leadingIcon = leadingIcon, trailingIcon = trailingIcon,
+        prefix = prefix, suffix = suffix, supportingText = supportingText, isError = isError,
+        visualTransformation = visualTransformation, keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions, singleLine = singleLine, maxLines = maxLines,
+        minLines = minLines, interactionSource = interactionSource, shape = shape, colors = colors,
+    )
+}
 
 @Composable
 fun ZeroTextField(
@@ -91,14 +133,24 @@ fun ZeroSlider(
 ) {
     val source = interactionSource ?: remember { MutableInteractionSource() }
     val dragging by source.collectIsDraggedAsState()
-    val scale by animateFloatAsState(if (dragging) 1.18f else 1f, ZeroMotion.bouncy(), label = "Slider thumb")
+    var preview by remember { mutableFloatStateOf(value) }
+    var changing by remember { mutableStateOf(false) }
+    LaunchedEffect(value, valueRange) { if (!changing) preview = value.coerceIn(valueRange) }
+    val scale = if (dragging) 1.18f else 1f
     val c = ZeroTheme.colors
     val feedback = rememberZeroFeedback()
-    Slider(value = value, onValueChange = {
-        if (steps > 0 && it != value) feedback(ZeroFeedbackEvent.Step)
-        onValueChange(it)
+    Slider(value = preview.coerceIn(valueRange), onValueChange = { next ->
+        if (steps > 0 && next != preview) feedback(ZeroFeedbackEvent.Step)
+        preview = next
+        changing = true
+        if (onValueChangeFinished != null) onValueChange(next)
     }, modifier = modifier.heightIn(min = 48.dp), enabled = enabled, valueRange = valueRange,
-        steps = steps, onValueChangeFinished = onValueChangeFinished, interactionSource = source, colors = colors,
+        steps = steps, onValueChangeFinished = {
+            if (changing) {
+                changing = false
+                if (onValueChangeFinished != null) onValueChangeFinished() else onValueChange(preview)
+            }
+        }, interactionSource = source, colors = colors,
         thumb = {
             Box(Modifier.size(16.dp).graphicsLayer { scaleX = scale; scaleY = scale }
                 .background(c.surface, CircleShape).border(1.dp, c.borderStrong, CircleShape), contentAlignment = Alignment.Center) {

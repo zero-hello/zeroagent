@@ -192,6 +192,7 @@ fun ChatExportSheet(
 
                 val imageSuccessMessage =
                     stringResource(id = R.string.chat_page_export_success, "Image")
+                val imageFailureMessage = stringResource(R.string.zero_v6_image_failed)
                 OutlinedCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -247,7 +248,7 @@ fun ChatExportSheet(
                                         } catch (cancelled: CancellationException) {
                                             throw cancelled
                                         } catch (_: Exception) {
-                                            toaster.show(context.getString(R.string.zero_v6_image_failed), type = ToastType.Error)
+                                            toaster.show(imageFailureMessage, type = ToastType.Error)
                                         } finally {
                                             exportingImage = false
                                         }

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 import me.rerere.zeroagent.data.db.entity.MemoryEntity
 
@@ -23,6 +24,19 @@ interface MemoryDAO {
 
     @Query("SELECT * FROM memoryentity WHERE id = :id")
     suspend fun getMemoryById(id: Int): MemoryEntity?
+
+    @Query("""
+        SELECT EXISTS(SELECT 1 FROM memoryentity WHERE assistant_id = :assistantId
+            AND TRIM(content) = :content COLLATE NOCASE AND (expires_at IS NULL OR expires_at > :now))
+    """)
+    suspend fun hasActiveMemory(assistantId: String, content: String, now: Long): Boolean
+
+    @Transaction
+    suspend fun insertCapturedMemory(assistantId: String, content: String, now: Long): Boolean {
+        if (hasActiveMemory(assistantId, content, now)) return false
+        insertMemory(MemoryEntity(assistantId = assistantId, content = content))
+        return true
+    }
 
     @Insert
     suspend fun insertMemory(memory: MemoryEntity): Long

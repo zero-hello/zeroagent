@@ -1,7 +1,6 @@
 package me.rerere.zeroagent.ui.pages.setting
 
 import me.rerere.zeroagent.data.datastore.getCurrentAssistant
-import me.rerere.zeroagent.ui.motion.motionElement
 import android.content.Context
 import android.graphics.Typeface
 import android.net.Uri
@@ -17,13 +16,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Icon
 import me.rerere.zeroagent.ui.designsystem.ZeroIconButton as IconButton
-import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.LocalTextStyle
 import me.rerere.zeroagent.ui.components.ui.ZeroAgentScaffold as Scaffold
 import me.rerere.zeroagent.ui.designsystem.ZeroSlider as Slider
 import me.rerere.zeroagent.ui.components.ui.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +30,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -102,22 +99,18 @@ fun SettingPreferencesUIPage(vm: SettingVM = koinViewModel()) {
         }
     }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-
     Scaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
+            TopAppBar(
                 title = {
-                    Text(stringResource(R.string.setting_page_preferences_ui), Modifier.motionElement("title:${me.rerere.zeroagent.Screen.SettingPreferencesUI}"))
+                    Text(stringResource(R.string.setting_page_preferences_ui))
                 },
                 navigationIcon = {
                     BackButton()
                 },
-                scrollBehavior = scrollBehavior,
                 colors = CustomColors.topBarColors
             )
         },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = CustomColors.topBarColors.containerColor
     ) { contentPadding ->
         LazyColumn(

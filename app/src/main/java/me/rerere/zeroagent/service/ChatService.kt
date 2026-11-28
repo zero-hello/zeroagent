@@ -1855,6 +1855,9 @@ class ChatService(
             Logging.log(TAG, "handleMessageComplete: $it")
             Logging.log(TAG, it.stackTraceToString())
         }.onSuccess {
+            if (messageRange == null && continuingMessageId == null && assistant.enableMemory) {
+                capturePersonalMemory(conversationId, assistant)
+            }
             val finalConversation = getConversationFlow(conversationId).value
 
             if (isStalledTurn(succeeded = true, lastMessage = finalConversation.currentMessages.lastOrNull())) {
@@ -1911,6 +1914,43 @@ class ChatService(
             }.onFailure { e ->
                 Log.d(TAG, "flushAutomationPlaybook($fileName) failed: ${e.message}")
             }
+        }
+    }
+
+    private suspend fun capturePersonalMemory(conversationId: Uuid, assistant: Assistant) {
+        val conversation = getConversationFlow(conversationId).value
+        val messages = conversation.currentMessages
+        val response = messages.lastOrNull() ?: return
+        if (isStalledTurn(succeeded = true, lastMessage = response) || response.personalMemoryUpdated) return
+        val userIndex = messages.indexOfLast { it.role == MessageRole.USER && !it.isSynthetic }
+        if (userIndex < 0 || userIndex == messages.lastIndex) return
+        if (messages.subList(userIndex + 1, messages.size).any { it.personalMemoryUpdated }) return
+        val user = messages[userIndex]
+        if (user.parts.any { it !is UIMessagePart.Text }) return
+        val facts = me.rerere.zeroagent.data.memory.PersonalMemoryCapture.extract(user.toText())
+        if (facts.isEmpty()) return
+        val scope = if (assistant.useGlobalMemory) MemoryRepository.GLOBAL_MEMORY_ID else assistant.id.toString()
+        var changed = false
+        try {
+            if ("memory_tool" in toolApprovalPreferences.currentBlacklist()) return
+            for (fact in facts) {
+                val change = me.rerere.zeroagent.data.lab.MemoryChange(scope, null, null, fact, conversationId.toString())
+                if (me.rerere.zeroagent.data.lab.LabMemoryReview.propose(context, change, allowAdditive = true)) {
+                    if (memoryRepository.addCapturedMemory(scope, fact)) changed = true
+                }
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Log.w(TAG, "Personal memory capture failed", error)
+        }
+        if (changed) updateConversationState(conversationId) { current ->
+            current.copy(messageNodes = current.messageNodes.map { node ->
+                if (node.currentMessage.id != response.id) node
+                else node.copy(messages = node.messages.map { message ->
+                    if (message.id == response.id) message.copy(personalMemoryUpdated = true) else message
+                })
+            })
         }
     }
 

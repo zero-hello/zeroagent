@@ -45,8 +45,8 @@ private fun findMatchesUnified(
         root = root,
         filter = { n, _ ->
             when (by) {
-                "text" -> n.text?.toString() == value
-                "content_description" -> n.contentDescription?.toString() == value
+                "text" -> !n.isPassword && n.text?.toString() == value
+                "content_description" -> !n.isPassword && n.contentDescription?.toString() == value
                 "view_id_resource_name" -> n.viewIdResourceName == value
                 else -> false
             }
@@ -91,8 +91,8 @@ private fun parseSelector(input: kotlinx.serialization.json.JsonElement): Triple
 
 /** The value a node exposes on [by]'s axis, or null when it has none. */
 private fun axisValue(node: AccessibilityNodeInfo, by: String): String? = when (by) {
-    "text" -> node.text?.toString()?.takeIf { it.isNotBlank() }
-    "content_description" -> node.contentDescription?.toString()?.takeIf { it.isNotBlank() }
+    "text" -> if (node.isPassword) null else node.text?.toString()?.takeIf { it.isNotBlank() }
+    "content_description" -> if (node.isPassword) null else node.contentDescription?.toString()?.takeIf { it.isNotBlank() }
     "view_id_resource_name" -> node.viewIdResourceName?.takeIf { it.isNotBlank() }
     else -> null
 }

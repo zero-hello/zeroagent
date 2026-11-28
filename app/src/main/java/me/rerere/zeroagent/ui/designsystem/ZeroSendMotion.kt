@@ -1,6 +1,7 @@
 package me.rerere.zeroagent.ui.designsystem
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,7 +33,7 @@ internal fun zeroSentBubbleMotion(messageId: Uuid): Modifier {
     LaunchedEffect(transition, distance != null) {
         if (distance != null) {
             transition.consumed = true
-            progress.animateTo(1f, ZeroMotion.bouncy())
+            progress.animateTo(1f, spring(dampingRatio = 0.78f, stiffness = 185f))
         }
     }
     return Modifier.onGloballyPositioned { coordinates ->

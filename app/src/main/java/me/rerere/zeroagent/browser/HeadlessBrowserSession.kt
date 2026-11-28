@@ -4,12 +4,15 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.view.View
-import android.webkit.CookieManager
+import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.LinearLayout
-import java.io.File
+import androidx.webkit.ProfileStore
+import androidx.webkit.WebStorageCompat
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
+import kotlinx.coroutines.CompletableDeferred
 
 /**
  * Pass 3: hosts a WebView offscreen, in the application process, for headless AI-driven
@@ -33,9 +36,7 @@ import java.io.File
  * sites that do this check. This is a documented spec behaviour (§Headless rendering
  * caveats) and is the load-bearing reason the headless mode is viable for v1.
  *
- * **Profile dir.** Same `${filesDir}/browser-profile/` cookies + localStorage as the
- * foreground Activity. WebView's storage paths are process-singletons, so a headless
- * session shares logged-in cookies with what the user manually browsed earlier.
+ * Browser storage is scoped to the Agent Chromium profile.
  *
  * **Session lifetime.** The owner ([HeadlessBrowserSessionPool]) keeps one session per
  * conv id alive across multiple tool calls. The session is torn down when:
@@ -51,6 +52,7 @@ class HeadlessBrowserSession(private val context: Context) {
 
     private var webView: WebView? = null
     private var host: LinearLayout? = null
+    private var defaultAgent = ""
 
     /**
      * Lazily create the WebView on first call; subsequent calls return the same instance
@@ -66,17 +68,12 @@ class HeadlessBrowserSession(private val context: Context) {
     @Synchronized
     fun start(callerConvId: String): WebView {
         val existing = webView
-        if (existing != null) return existing
+        if (existing != null) {
+            applyDisplay(existing)
+            return existing
+        }
 
-        // Best-effort profile dir creation. WebView falls back to its default location if
-        // creation fails — we never want to crash the headless host on first call.
-        val profileDir = File(context.filesDir, "browser-profile")
-        if (!profileDir.exists()) profileDir.mkdirs()
-
-        // CookieManager is process-global; setAcceptCookie is idempotent — calling here
-        // covers the case where the headless session is the FIRST WebView the process has
-        // ever created (foreground BrowserActivity hasn't run, so it hasn't done this yet).
-        CookieManager.getInstance().setAcceptCookie(true)
+        check(isAgentProfileSupported() && !HeadlessBrowserSessionPool.clearingProfile) { "Agent browser profile is unavailable" }
 
         val parent = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -87,6 +84,7 @@ class HeadlessBrowserSession(private val context: Context) {
         }
 
         val wv = WebView(context).apply {
+            WebViewCompat.setProfile(this, AGENT_BROWSER_PROFILE)
             // Shared with foreground — every render-related setting (mixedContentMode,
             // hardware layer, autoplay, UA strip, file:// access) lives in
             // configureWebViewForRikka. Before this helper existed, headless mode lacked
@@ -94,6 +92,8 @@ class HeadlessBrowserSession(private val context: Context) {
             // silently streamed all-white PNGs to the user's Telegram chat on the long
             // tail of mainstream sites. See BrowserWebViewConfig.kt for the history.
             configureWebViewForRikka(this)
+            defaultAgent = settings.userAgentString
+            applyDisplay(this)
             // Headless mode renders via WebView.draw(canvas), which CANNOT capture
             // hardware-accelerated layers — those go straight from the WebView's HW layer to
             // the GPU compositor without ever touching a software canvas. configureWebViewForRikka
@@ -105,7 +105,7 @@ class HeadlessBrowserSession(private val context: Context) {
             // Visibility shim — re-injected on every page start. WebViewClient.onPageStarted
             // fires before page JS runs, which is the only window where overriding the
             // descriptor changes future reads.
-            webViewClient = object : WebViewClient() {
+            webViewClient = object : BrowserNavigationClient() {
                 override fun shouldOverrideUrlLoading(
                     view: WebView?,
                     request: WebResourceRequest?,
@@ -113,14 +113,14 @@ class HeadlessBrowserSession(private val context: Context) {
                     return request?.url?.scheme !in setOf("http", "https", "about")
                 }
 
-                override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
+                override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                     super.onPageStarted(view, url, favicon)
-                    view.evaluateJavascript(VISIBILITY_SHIM_JS, null)
+                    if (view?.settings?.javaScriptEnabled == true) view.evaluateJavascript(VISIBILITY_SHIM_JS, null)
                 }
             }
-            // Per-WebView third-party cookie enable — must be called after the WebView
-            // exists. The CookieManager singleton above only governs first-party.
-            CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+            val cookies = WebViewCompat.getProfile(this).cookieManager
+            cookies.setAcceptCookie(true)
+            cookies.setAcceptThirdPartyCookies(this, false)
         }
 
         parent.addView(
@@ -148,7 +148,6 @@ class HeadlessBrowserSession(private val context: Context) {
      */
     fun stop() {
         val wv = webView
-        val h = host
         // Null the fields synchronously so the pool sees the session as stopped immediately,
         // even though the actual WebView teardown is marshalled to the main thread below.
         webView = null
@@ -158,7 +157,7 @@ class HeadlessBrowserSession(private val context: Context) {
             runCatching {
                 wv.stopLoading()
                 wv.loadUrl("about:blank")
-                h?.removeView(wv)
+                (wv.parent as? ViewGroup)?.removeView(wv)
                 wv.destroy()
             }.onFailure {
                 // Teardown is best-effort — a throw here (e.g. WebView already destroyed on a
@@ -177,6 +176,20 @@ class HeadlessBrowserSession(private val context: Context) {
             teardown.run()
         } else {
             Handler(Looper.getMainLooper()).post(teardown)
+        }
+    }
+
+    private fun applyDisplay(view: WebView) {
+        val display = BrowserController.agentDisplay
+        view.settings.apply {
+            javaScriptEnabled = display.javaScript
+            loadsImagesAutomatically = display.images
+            blockNetworkImage = !display.images
+            userAgentString = display.userAgent.ifBlank {
+                if (display.desktop) defaultAgent.replace(Regex("\\([^)]*Android[^)]*\\)"), "(X11; Linux x86_64)")
+                    .replace(" Mobile Safari/", " Safari/")
+                else defaultAgent
+            }
         }
     }
 
@@ -222,6 +235,11 @@ class HeadlessBrowserSession(private val context: Context) {
  * the process lifetime. Every [getOrCreate] therefore sweeps and closes sessions idle longer
  * than [idleTtlMs] first, so an abandoned WebView can't outlive one task window.
  */
+internal const val AGENT_BROWSER_PROFILE = "ZeroAgentChromium"
+
+internal fun isAgentProfileSupported(): Boolean =
+    WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE)
+
 object HeadlessBrowserSessionPool {
 
     /**
@@ -297,10 +315,38 @@ object HeadlessBrowserSessionPool {
         e.session.stop()
     }
 
-    /** Test seam: clear all sessions. Not used in production. */
+    @Volatile
+    internal var clearingProfile = false
+        private set
+
+    internal suspend fun eraseProfile(): Boolean {
+        if (!isAgentProfileSupported() || clearingProfile || BrowserController.isManualControlActive()) return false
+        check(Looper.myLooper() == Looper.getMainLooper())
+        val profiles = ProfileStore.getInstance()
+        if (AGENT_BROWSER_PROFILE !in profiles.allProfileNames) return true
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.DELETE_BROWSING_DATA)) return false
+        clearingProfile = true
+        val done = CompletableDeferred<Boolean>()
+        try {
+            clearAll()
+            val profile = profiles.getProfile(AGENT_BROWSER_PROFILE) ?: error("Browser profile disappeared")
+            WebStorageCompat.deleteBrowsingData(profile.webStorage, Runnable {
+                clearingProfile = false
+                done.complete(true)
+            })
+        } catch (error: RuntimeException) {
+            clearingProfile = false
+            throw error
+        }
+        return done.await()
+    }
+
     internal fun clearAll() {
         synchronized(lock) {
-            sessions.values.forEach { runCatching { it.session.stop() } }
+            sessions.forEach { (id, entry) ->
+                BrowserController.clearModeIfHeadless(id)
+                entry.session.stop()
+            }
             sessions.clear()
         }
     }

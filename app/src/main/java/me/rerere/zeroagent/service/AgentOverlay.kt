@@ -2,6 +2,9 @@ package me.rerere.zeroagent.service
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
+import androidx.compose.ui.graphics.toArgb
+import me.rerere.zeroagent.ui.designsystem.ZeroTheme
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
@@ -35,16 +38,22 @@ object AgentOverlay {
             if (view != null) { title?.text = label; return@post }
             val wm = app.getSystemService(WindowManager::class.java)
             val density = app.resources.displayMetrics.density
+            val night = localized.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+            val palette = ZeroTheme.paletteFor(night == Configuration.UI_MODE_NIGHT_YES)
             val pill = LinearLayout(localized).apply {
                 orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
                 setPadding((14*density).toInt(), (4*density).toInt(), (6*density).toInt(), (4*density).toInt())
-                background = GradientDrawable().apply { cornerRadius = 100*density; setColor(0xF0273042.toInt()); setStroke((density).toInt().coerceAtLeast(1), 0xFF66738C.toInt()) }
-                elevation = 6*density
+                background = GradientDrawable().apply {
+                    cornerRadius = 100 * density
+                    setColor(palette.surface.toArgb())
+                    setStroke(density.toInt().coerceAtLeast(1), palette.borderStrong.toArgb())
+                }
+                elevation = 2 * density
             }
             val font = runCatching { androidx.core.content.res.ResourcesCompat.getFont(localized, R.font.manrope) }.getOrNull()
             title = TextView(localized).apply {
                 font?.let { typeface = it }
-                this.text = label; setTextColor(Color.WHITE); textSize = 12f; maxLines = 2
+                this.text = label; setTextColor(palette.textPrimary.toArgb()); textSize = 12f; maxLines = 2
                 maxWidth = (200*density).toInt()
             }
             pill.addView(title)
@@ -52,7 +61,7 @@ object AgentOverlay {
                 font?.let { typeface = it }
                 this.text = localized.getString(R.string.zeroagent_voice_pause_agent); contentDescription = this.text
                 isAllCaps = false; textSize = 12f; minWidth = 0; minimumWidth = 0
-                setTextColor(Color.WHITE); setBackgroundColor(Color.TRANSPARENT)
+                setTextColor(palette.textPrimary.toArgb()); setBackgroundColor(Color.TRANSPARENT)
                 setOnClickListener {
                     // The cancellation latch and chat queue are set synchronously before returning.
                     runCatching { pauseAction?.invoke() }

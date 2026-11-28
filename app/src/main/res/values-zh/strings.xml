@@ -2549,4 +2549,24 @@
   <string name="adaptive_memory_choose_entry">选择一条记忆或待确认的变更。</string>
   <string name="chat_resume_interrupted_reply">继续中断的回复</string>
   <string name="access_delegated_current_chat">已更新这个聊天室的工具授权。</string>
+    <string name="zeroflow_browser_clear_failed">无法清除 Agent 浏览器会话，请确认 Android System WebView 已更新。</string>
+    <string name="zeroflow_agent_browser">Agent 浏览器</string>
+    <string name="zeroflow_browser_expand_preview">默认展开预览</string>
+    <string name="zeroflow_browser_desktop">请求桌面版网站</string>
+    <string name="zeroflow_browser_load_images">加载图片</string>
+    <string name="zeroflow_browser_custom_agent">自定义 User-Agent</string>
+    <string name="zeroflow_browser_take_control">接管操作</string>
+    <string name="zeroflow_browser_return_control">交还 Agent</string>
+    <string name="zeroflow_browser_wait_for_tool">请等待当前浏览器操作完成。</string>
+    <string name="zeroflow_browser_action">浏览步骤 %1$d</string>
+    <string name="zeroflow_memory_updated">已更新记忆</string>
+    <string name="zeroflow_phone_stop">停止手机操作</string>
+    <string name="zeroflow_settings_load_failed">暂时无法读取设置，原设置文件仍保存在此设备。</string>
+    <string name="zeroflow_media_images">图片</string>
+    <string name="zeroflow_media_camera">相机</string>
+    <string name="zeroflow_media_attachment">附件</string>
+    <string name="zeroflow_browser_interactive">完整交互</string>
+    <string name="zeroflow_browser_page_timeout">页面超时</string>
+    <string name="zeroflow_browser_outline_title">页面大纲</string>
+    <string name="zeroflow_browser_outline_description">读取画面上的标题和页面区块。</string>
 </resources>

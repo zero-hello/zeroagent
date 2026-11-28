@@ -125,7 +125,13 @@ internal class GenerationRequestExecutor(
         } else null
         val projectPrefix = project?.let { "\n專案：${it.name}\n" }
         val projectStart = projectPrefix?.let { assistant.systemPrompt.indexOf(it) } ?: -1
-        val includedMemories = memories.filterNot { "memory:${it.id}" in excludedContext }
+        val latestRequest = messages.lastOrNull { it.role == MessageRole.USER && !it.isSynthetic }
+        val includedMemories = if (assistant.enableMemory) {
+            selectPromptMemories(
+                memories.filterNot { "memory:${it.id}" in excludedContext },
+                latestRequest?.parts?.filterIsInstance<UIMessagePart.Text>()?.joinToString("\n") { it.text }.orEmpty(),
+            )
+        } else emptyList()
         val replacesAssistantPrompt = assistant.allowConversationSystemPrompt && !conversationSystemPrompt.isNullOrBlank()
         val contextCandidates = if (trackContext) buildList {
             recalledPrompt?.let { add(ReplyContextEntry("recalled", "語氣背景", it)) }

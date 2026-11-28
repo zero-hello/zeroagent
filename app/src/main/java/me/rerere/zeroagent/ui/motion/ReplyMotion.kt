@@ -56,6 +56,31 @@ internal fun trailingRevealStart(previous: String, next: String): Int? {
     return start.takeIf { it < next.length }
 }
 
+/** Keeps large streaming chunks from appearing all at once. Completion immediately shows the final text. */
+@Composable
+internal fun rememberBufferedReply(key: Any, text: String, streaming: Boolean): String {
+    if (!streaming) return text
+    val target by rememberUpdatedState(text)
+    var visible by remember(key) { mutableStateOf("") }
+    LaunchedEffect(key) {
+        while (true) {
+            snapshotFlow { target }.first { it != visible }
+            while (target != visible) {
+                visible = nextReplySlice(visible, target)
+                if (target != visible) delay(48)
+            }
+        }
+    }
+    return visible
+}
+
+internal fun nextReplySlice(visible: String, target: String): String {
+    if (!target.startsWith(visible)) return target
+    val remaining = target.codePointCount(visible.length, target.length)
+    val count = (remaining / 12).coerceAtLeast(5).coerceAtMost(remaining)
+    return target.substring(0, target.offsetByCodePoints(visible.length, count))
+}
+
 private data class GlyphRange(val start: Int, val end: Int, val appearedAt: Long, val paw: Boolean)
 
 internal data class ReplyTextMotion(val modifier: Modifier, val onTextLayout: (TextLayoutResult) -> Unit)

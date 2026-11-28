@@ -10,9 +10,14 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import me.rerere.zeroagent.service.ZeroAgentAccessibilityService
 
@@ -228,8 +233,22 @@ internal fun screenStateJson(
  * key present) pass through untouched. Never throws; envelope capture failures degrade to
  * screen_changed=null.
  */
+internal fun expectedGesturePackage(input: JsonElement): String? =
+    (input.jsonObject["package_name"] as? JsonPrimitive)?.contentOrNull?.trim()?.takeIf(String::isNotEmpty)
+
+internal fun gestureForegroundError(expectedPackage: String?, actualPackage: String?): JsonObject? {
+    if (expectedPackage == null || expectedPackage == actualPackage) return null
+    return buildJsonObject {
+        put("error", "wrong_foreground_app")
+        put("expected_package", expectedPackage)
+        actualPackage?.let { put("current_package", it) }
+        put("recovery", "Observe the current screen before retrying. No gesture was sent.")
+    }
+}
+
 internal suspend fun withActionEnvelope(
     svc: ZeroAgentAccessibilityService,
+    expectedPackage: String? = null,
     act: suspend (ZeroAgentAccessibilityService) -> JsonObject,
 ): JsonObject {
     // "before" reuses the previous action's "after" hash when nothing moved in between, so the
@@ -240,6 +259,10 @@ internal suspend fun withActionEnvelope(
     }
     val actionStart = SystemClock.uptimeMillis()
     val result = try {
+        if (expectedPackage != null) {
+            val currentPackage = svc.rootInActiveWindow?.packageName?.toString()
+            gestureForegroundError(expectedPackage, currentPackage)?.let { return it }
+        }
         act(svc)
     } catch (c: CancellationException) {
         throw c
@@ -273,5 +296,11 @@ internal suspend fun withActionEnvelope(
         settleTimedOut = !quiet,
         root = settleRoot,
     )
-    return JsonObject(result + ("after" to state))
+    val evidence = when {
+        (result["success"] as? JsonPrimitive)?.booleanOrNull == false -> "action_rejected"
+        !quiet || changed == null -> "unconfirmed"
+        changed -> "screen_changed"
+        else -> "no_screen_change"
+    }
+    return JsonObject(result + mapOf("after" to state, "verification" to JsonPrimitive(evidence)))
 }

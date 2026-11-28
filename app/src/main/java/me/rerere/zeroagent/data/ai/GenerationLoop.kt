@@ -260,13 +260,14 @@ class GenerationLoop(
                         onCreation = { content ->
                             memoryRepo.getMemoriesOfAssistant(memoryAssistantId)
                                 .firstOrNull { it.content.trim().equals(content, ignoreCase = true) }
+                                ?.let { it to false }
                                 ?: run {
                                     check(me.rerere.zeroagent.data.lab.LabMemoryReview.propose(context,
                                         me.rerere.zeroagent.data.lab.MemoryChange(memoryAssistantId, null, null, content, conversationId?.toString()),
                                         allowAdditive = true)) {
                                         "Memory was not saved. The user can confirm pending changes in the memory drawer."
                                     }
-                                    memoryRepo.addMemory(memoryAssistantId, content)
+                                    memoryRepo.addMemory(memoryAssistantId, content) to true
                                 }
                         },
                         onUpdate = { id, content ->

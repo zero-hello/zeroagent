@@ -34,6 +34,10 @@ fun swipeTool(
     parameters = {
         InputSchema.Obj(
             properties = buildJsonObject {
+                put("package_name", buildJsonObject {
+                    put("type", "string")
+                    put("description", "Expected foreground package from the last screen read. Stops the gesture if the app changed.")
+                })
                 put("start_x", buildJsonObject { put("type", "number"); put("description", "Start x px") })
                 put("start_y", buildJsonObject { put("type", "number"); put("description", "Start y px") })
                 put("end_x", buildJsonObject { put("type", "number"); put("description", "End x px") })
@@ -74,7 +78,7 @@ fun swipeTool(
             )
         }
         val payload = AccessibilityServiceHandle.withService { svc ->
-            withActionEnvelope(svc) { _ ->
+            withActionEnvelope(svc, expectedGesturePackage(input)) { _ ->
                 val dm = svc.resources.displayMetrics
                 if (coordsOutOfBounds(sx, sy, dm.widthPixels, dm.heightPixels) ||
                     coordsOutOfBounds(ex, ey, dm.widthPixels, dm.heightPixels)

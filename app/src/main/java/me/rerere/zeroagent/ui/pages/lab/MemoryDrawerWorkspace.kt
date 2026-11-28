@@ -49,6 +49,7 @@ import me.rerere.zeroagent.data.db.entity.MemoryEntity
 import me.rerere.zeroagent.data.lab.LabMemoryReview
 import me.rerere.zeroagent.data.lab.LabPreferences
 import me.rerere.zeroagent.data.lab.MemoryChange
+import me.rerere.zeroagent.data.memory.PersonalMemoryCapture
 import me.rerere.zeroagent.data.productivity.ProjectStore
 import me.rerere.zeroagent.data.repository.MemoryRepository
 import org.koin.compose.koinInject
@@ -96,7 +97,30 @@ internal fun MemoryDrawerWorkspace(modifier: Modifier) {
             }
         }
     }
+    var search by rememberSaveable { mutableStateOf("") }
+    var category by rememberSaveable { mutableStateOf<String?>(null) }
+    val categoryLabels = mapOf(
+        PersonalMemoryCapture.Category.PREFERENCE to "偏好",
+        PersonalMemoryCapture.Category.HABIT to "習慣",
+        PersonalMemoryCapture.Category.PROFILE to "個人背景",
+        PersonalMemoryCapture.Category.WORKFLOW to "工作流程",
+        PersonalMemoryCapture.Category.IMPORTANT to "重要事項",
+        PersonalMemoryCapture.Category.OTHER to "其他",
+    )
     val controls: @Composable () -> Unit = {
+        me.rerere.zeroagent.ui.designsystem.ZeroTextField(
+            value = search,
+            onValueChange = { search = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("搜尋記憶") },
+            singleLine = true,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(onClick = { category = null }, selected = category == null) { Text("全部") }
+            categoryLabels.forEach { (item, label) ->
+                me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(onClick = { category = item.name }, selected = category == item.name) { Text(label) }
+            }
+        }
         Text("記憶存在本機，到期後會移除。設定期限的記憶不會加入聊天匯出。")
         ListItem(
             headlineContent = { Text("暫停 AI 新增或修改記憶") },
@@ -141,7 +165,11 @@ internal fun MemoryDrawerWorkspace(modifier: Modifier) {
             }
         }
     }
-    val sortedRecords = remember(records) { records.sortedBy { it.assistantId } }
+    val sortedRecords = records.filter { record ->
+        val query = search.trim()
+        (category == null || PersonalMemoryCapture.category(record.content).name == category) &&
+            (record.content.contains(query, ignoreCase = true) || scopeName(record.assistantId).contains(query, ignoreCase = true))
+    }.sortedBy { it.assistantId }
     var selection by rememberSaveable { mutableStateOf<String?>(null) }
     val selectedSuggestion = pending.firstOrNull { "suggestion:${it.key}" == selection }
     val selectedRecord = records.firstOrNull { "memory:${it.id}" == selection }

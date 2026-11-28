@@ -37,6 +37,10 @@ fun tapTool(
     parameters = {
         InputSchema.Obj(
             properties = buildJsonObject {
+                put("package_name", buildJsonObject {
+                    put("type", "string")
+                    put("description", "Expected foreground package from the last screen read. Stops the gesture if the app changed.")
+                })
                 put("x", buildJsonObject {
                     put("type", "number")
                     put("description", "Absolute x in pixels of the active display")
@@ -66,7 +70,7 @@ fun tapTool(
             )
         }
         val payload = AccessibilityServiceHandle.withService { svc ->
-            withActionEnvelope(svc) { _ ->
+            withActionEnvelope(svc, expectedGesturePackage(input)) { _ ->
                 val dm = svc.resources.displayMetrics
                 if (coordsOutOfBounds(x, y, dm.widthPixels, dm.heightPixels)) {
                     return@withActionEnvelope buildJsonObject {
@@ -115,6 +119,10 @@ fun longPressTool(
     parameters = {
         InputSchema.Obj(
             properties = buildJsonObject {
+                put("package_name", buildJsonObject {
+                    put("type", "string")
+                    put("description", "Expected foreground package from the last screen read. Stops the gesture if the app changed.")
+                })
                 put("x", buildJsonObject {
                     put("type", "number")
                     put("description", "Absolute x in pixels")
@@ -158,7 +166,7 @@ fun longPressTool(
             )
         }
         val payload = AccessibilityServiceHandle.withService { svc ->
-            withActionEnvelope(svc) { _ ->
+            withActionEnvelope(svc, expectedGesturePackage(input)) { _ ->
                 val dm = svc.resources.displayMetrics
                 if (coordsOutOfBounds(x, y, dm.widthPixels, dm.heightPixels)) {
                     return@withActionEnvelope buildJsonObject {

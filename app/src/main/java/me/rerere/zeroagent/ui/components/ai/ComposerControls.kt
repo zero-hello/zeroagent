@@ -79,7 +79,7 @@ internal fun ComposerActionRow(
                 }
             }
         }
-        Row(verticalAlignment = Alignment.Bottom) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onAttach, modifier = Modifier.testTag("composer_attach")) {
                 Icon(HugeIcons.Add01, stringResource(R.string.quick_chat_segment_attachment))
             }

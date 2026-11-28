@@ -2,6 +2,7 @@ package me.rerere.zeroagent.data.ai.tools
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -19,7 +20,7 @@ import java.time.LocalDate
 
 fun buildMemoryTools(
     json: Json,
-    onCreation: suspend (String) -> AssistantMemory,
+    onCreation: suspend (String) -> Pair<AssistantMemory, Boolean>,
     onUpdate: suspend (Int, String) -> AssistantMemory,
     onDelete: suspend (Int) -> Unit
 ): List<Tool> = listOf(
@@ -31,7 +32,8 @@ fun buildMemoryTools(
             - No relevant record: `create` + `content`
             - Existing relevant record: `edit` + `id` + `content`
             - Outdated/irrelevant record: `delete` + `id`
-            Memories will automatically appear in the <memories> tag in later conversations.
+            When a conversation reveals a durable preference or recurring workflow, save it proactively if appropriate.
+            Relevant memories may appear in the <memories> tag in later conversations.
             Do not store sensitive information (e.g., ethnicity, religion, sexual orientation, political views, sex life, criminal records).
             Save concise, durable facts: confirmed preferences, decisions, tested solutions and ongoing commitments.
             Extract the useful fact rather than copying a turn. Keep different facts as separate records.
@@ -79,13 +81,17 @@ fun buildMemoryTools(
             val payload = when (action) {
                 "create" -> {
                     val content = params["content"]?.jsonPrimitive?.contentOrNull ?: error("content is required")
-                    json.encodeToJsonElement(AssistantMemory.serializer(), onCreation(validateLongTermMemory(content)))
+                    val (memory, changed) = onCreation(validateLongTermMemory(content))
+                    val record = json.encodeToJsonElement(AssistantMemory.serializer(), memory).jsonObject
+                    JsonObject(record + ("zeroagent_memory_changed" to JsonPrimitive(changed)))
                 }
 
                 "edit" -> {
                     val id = params["id"]?.jsonPrimitive?.intOrNull ?: error("id is required")
                     val content = params["content"]?.jsonPrimitive?.contentOrNull ?: error("content is required")
-                    json.encodeToJsonElement(AssistantMemory.serializer(), onUpdate(id, validateLongTermMemory(content)))
+                    val memory = onUpdate(id, validateLongTermMemory(content))
+                    val record = json.encodeToJsonElement(AssistantMemory.serializer(), memory).jsonObject
+                    JsonObject(record + ("zeroagent_memory_changed" to JsonPrimitive(true)))
                 }
 
                 "delete" -> {
@@ -93,6 +99,7 @@ fun buildMemoryTools(
                     onDelete(id)
                     buildJsonObject {
                         put("success", true)
+                        put("zeroagent_memory_changed", true)
                         put("id", id)
                     }
                 }

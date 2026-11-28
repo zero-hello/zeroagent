@@ -41,11 +41,10 @@ fun SettingsActionCard(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     announceChanges: Boolean = false,
+    active: Boolean? = null,
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            shape = MaterialTheme.shapes.extraLarge,
+        me.rerere.zeroagent.ui.designsystem.ZeroHairlineCard(
             modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
                 if (announceChanges) liveRegion = LiveRegionMode.Polite
             },
@@ -65,8 +64,16 @@ fun SettingsActionCard(
                 }
                 val descriptionContent: @Composable () -> Unit = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(title, style = MaterialTheme.typography.titleMediumEmphasized,
-                        modifier = Modifier.semantics { heading() })
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (active != null) {
+                            val colors = me.rerere.zeroagent.ui.designsystem.ZeroTheme.colors
+                            androidx.compose.foundation.Canvas(Modifier.size(7.dp)) {
+                                drawCircle(if (active) colors.accentOlive else colors.destructive)
+                            }
+                        }
+                        Text(title, style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.semantics { heading() })
+                    }
                     Text(description, style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -88,11 +95,10 @@ fun SettingsActionCard(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 actions.forEach { action ->
-                    FilledTonalButton(
+                    me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(
                         onClick = action.onClick,
                         enabled = action.enabled,
                         modifier = Modifier.heightIn(min = 48.dp),
-                        shapes = ButtonDefaults.shapes(),
                     ) { Text(action.label) }
                 }
             }

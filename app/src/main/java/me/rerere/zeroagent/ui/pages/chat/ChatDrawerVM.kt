@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
 import androidx.paging.insertSeparators
 import androidx.paging.map
 import kotlinx.coroutines.flow.Flow
@@ -75,17 +76,23 @@ class ChatDrawerVM(
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    private val _historyQuery = MutableStateFlow("")
+    val historyQuery: StateFlow<String> = _historyQuery.asStateFlow()
+
+    fun searchHistory(value: String) { _historyQuery.value = value }
+
     val conversations: Flow<PagingData<ConversationListItem>> =
-        combine(assistantIdFlow, _selectedFolderId) { assistantId, folderId ->
-            assistantId to folderId
-        }
-            .flatMapLatest { (assistantId, folderId) ->
-                if (folderId == null) {
-                    conversationRepo.getUnfiledConversationsPaging()
-                } else {
-                    conversationRepo.getConversationsOfFolderPaging(folderId)
+        combine(_historyQuery.map(String::trim).distinctUntilChanged(), _selectedFolderId) { query, folderId ->
+            query to folderId
+        }.flatMapLatest { (query, folderId) ->
+            when {
+                query.isNotEmpty() -> conversationRepo.searchConversationsPaging(query).map { page ->
+                    page.filter { !me.rerere.zeroagent.ui.components.ui.ChatPrivacy.chatLocked(context, it.id) }
                 }
+                folderId == null -> conversationRepo.getUnfiledConversationsPaging()
+                else -> conversationRepo.getConversationsOfFolderPaging(folderId)
             }
+        }
             .map { pagingData ->
                 pagingData
                     .map { ConversationListItem.Item(it) }

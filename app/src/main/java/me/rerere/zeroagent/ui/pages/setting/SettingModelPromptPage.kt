@@ -18,13 +18,19 @@ import me.rerere.zeroagent.ui.designsystem.ZeroTextField as OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import me.rerere.ai.core.ReasoningLevel
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.ArrowRight01
@@ -53,7 +59,7 @@ internal fun PromptSettingsPage(settings: Settings, vm: SettingVM, contentPaddin
                 promptDescription = stringResource(R.string.setting_model_page_translate_prompt_vars),
                 promptValue = settings.translatePrompt,
                 onPromptChange = { vm.updateSettings { current -> current.copy(translatePrompt = it) } },
-                onResetPrompt = { vm.updateSettings { current -> current.copy(translatePrompt = DEFAULT_TRANSLATION_PROMPT) } },
+                defaultPrompt = DEFAULT_TRANSLATION_PROMPT,
                 reasoningLevel = ReasoningLevel.fromBudgetTokens(settings.translateThinkingBudget),
                 reasoningModel = settings.findModelById(settings.translateModeId),
                 onUpdateReasoningLevel = { vm.updateSettings { current -> current.copy(translateThinkingBudget = it.budgetTokens) } },
@@ -65,7 +71,7 @@ internal fun PromptSettingsPage(settings: Settings, vm: SettingVM, contentPaddin
                 promptDescription = stringResource(R.string.setting_model_page_suggestion_prompt_vars),
                 promptValue = settings.titlePrompt,
                 onPromptChange = { vm.updateSettings { current -> current.copy(titlePrompt = it) } },
-                onResetPrompt = { vm.updateSettings { current -> current.copy(titlePrompt = DEFAULT_TITLE_PROMPT) } },
+                defaultPrompt = DEFAULT_TITLE_PROMPT,
             )
         }
         item {
@@ -74,7 +80,7 @@ internal fun PromptSettingsPage(settings: Settings, vm: SettingVM, contentPaddin
                 promptDescription = stringResource(R.string.setting_model_page_suggestion_prompt_vars),
                 promptValue = settings.suggestionPrompt,
                 onPromptChange = { vm.updateSettings { current -> current.copy(suggestionPrompt = it) } },
-                onResetPrompt = { vm.updateSettings { current -> current.copy(suggestionPrompt = DEFAULT_SUGGESTION_PROMPT) } },
+                defaultPrompt = DEFAULT_SUGGESTION_PROMPT,
             )
         }
         item {
@@ -83,7 +89,7 @@ internal fun PromptSettingsPage(settings: Settings, vm: SettingVM, contentPaddin
                 promptDescription = stringResource(R.string.setting_model_page_ocr_prompt_vars),
                 promptValue = settings.ocrPrompt,
                 onPromptChange = { vm.updateSettings { current -> current.copy(ocrPrompt = it) } },
-                onResetPrompt = { vm.updateSettings { current -> current.copy(ocrPrompt = DEFAULT_OCR_PROMPT) } },
+                defaultPrompt = DEFAULT_OCR_PROMPT,
             )
         }
         item {
@@ -92,7 +98,7 @@ internal fun PromptSettingsPage(settings: Settings, vm: SettingVM, contentPaddin
                 promptDescription = stringResource(R.string.setting_model_page_compress_prompt_vars),
                 promptValue = settings.compressPrompt,
                 onPromptChange = { vm.updateSettings { current -> current.copy(compressPrompt = it) } },
-                onResetPrompt = { vm.updateSettings { current -> current.copy(compressPrompt = DEFAULT_COMPRESS_PROMPT) } },
+                defaultPrompt = DEFAULT_COMPRESS_PROMPT,
             )
         }
     }
@@ -104,7 +110,7 @@ private fun PromptSettingItem(
     promptDescription: String,
     promptValue: String,
     onPromptChange: (String) -> Unit,
-    onResetPrompt: () -> Unit,
+    defaultPrompt: String,
     reasoningLevel: ReasoningLevel? = null,
     reasoningModel: me.rerere.ai.provider.Model? = null,
     onUpdateReasoningLevel: ((ReasoningLevel) -> Unit)? = null,
@@ -138,6 +144,24 @@ private fun PromptSettingItem(
     }
 
     if (showEditor) {
+        var editor by remember { mutableStateOf(TextFieldValue(promptValue)) }
+        var submitted by remember { mutableStateOf(promptValue) }
+        val persist by rememberUpdatedState(onPromptChange)
+
+        fun saveDraft() {
+            if (editor.composition != null || editor.text == submitted) return
+            submitted = editor.text
+            persist(editor.text)
+        }
+
+        LaunchedEffect(editor.text, editor.composition) {
+            if (editor.composition == null && editor.text != submitted) {
+                delay(220)
+                saveDraft()
+            }
+        }
+        DisposableEffect(Unit) { onDispose { saveDraft() } }
+
         ModalBottomSheet(
             onDismissRequest = { showEditor = false },
         ) {
@@ -158,12 +182,15 @@ private fun PromptSettingItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OutlinedTextField(
-                    value = promptValue,
-                    onValueChange = onPromptChange,
+                    value = editor,
+                    onValueChange = { editor = it },
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 15,
                 )
-                TextButton(shapes = ButtonDefaults.shapes(), onClick = onResetPrompt) {
+                TextButton(shapes = ButtonDefaults.shapes(), onClick = {
+                    editor = TextFieldValue(defaultPrompt, selection = TextRange(defaultPrompt.length))
+                    saveDraft()
+                }) {
                     Text(stringResource(R.string.setting_model_page_reset_to_default))
                 }
             }

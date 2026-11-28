@@ -2299,4 +2299,27 @@
   <string name="chat_resume_interrupted_reply">接續中斷的回覆</string>
   <string name="access_delegated_current_chat">已更新這個聊天室的工具授權。</string>
   <string name="zero_v6_image_failed">無法處理這張圖片</string>
+    <string name="zeroflow_browser_select_all">全選</string>
+    <string name="zeroflow_browser_clear_selection">取消全選</string>
+    <string name="zeroflow_browser_read_only">唯讀閱讀</string>
+    <string name="zeroflow_browser_clear_failed">無法清除 Agent 瀏覽器工作階段，請確認 Android System WebView 已更新。</string>
+    <string name="zeroflow_agent_browser">Agent 瀏覽器</string>
+    <string name="zeroflow_browser_expand_preview">預設展開預覽</string>
+    <string name="zeroflow_browser_desktop">要求桌面版網站</string>
+    <string name="zeroflow_browser_load_images">載入圖片</string>
+    <string name="zeroflow_browser_custom_agent">自訂 User-Agent</string>
+    <string name="zeroflow_browser_take_control">接管操作</string>
+    <string name="zeroflow_browser_return_control">交還 Agent</string>
+    <string name="zeroflow_browser_wait_for_tool">請等目前的瀏覽器操作完成。</string>
+    <string name="zeroflow_browser_action">瀏覽步驟 %1$d</string>
+    <string name="zeroflow_memory_updated">已更新記憶</string>
+    <string name="zeroflow_phone_stop">停止手機操作</string>
+    <string name="zeroflow_settings_load_failed">目前無法讀取設定，原設定檔仍保存在這台裝置。</string>
+    <string name="zeroflow_media_images">圖片</string>
+    <string name="zeroflow_media_camera">相機</string>
+    <string name="zeroflow_media_attachment">附件</string>
+    <string name="zeroflow_browser_interactive">完整互動</string>
+    <string name="zeroflow_browser_page_timeout">頁面逾時</string>
+    <string name="zeroflow_browser_outline_title">頁面大綱</string>
+    <string name="zeroflow_browser_outline_description">讀取畫面上的標題和頁面區塊。</string>
 </resources>

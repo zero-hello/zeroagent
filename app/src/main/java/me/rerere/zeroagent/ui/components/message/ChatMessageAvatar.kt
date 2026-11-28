@@ -85,7 +85,8 @@ fun ChatMessageAssistantAvatar(
                 ) {
                     if (settings.displaySetting.showModelName) {
                         Text(
-                            text = assistant.name.ifEmpty { stringResource(R.string.assistant_page_default_assistant) },
+                            text = model?.let { me.rerere.zeroagent.ui.pages.chat.chatModelLabel(it, settings.providers) }
+                                ?: assistant.name.ifEmpty { stringResource(R.string.assistant_page_default_assistant) },
                             style = MaterialTheme.typography.labelLargeEmphasized,
                             maxLines = 1,
                         )
@@ -106,7 +107,7 @@ fun ChatMessageAssistantAvatar(
                 ) {
                     if (settings.displaySetting.showModelName) {
                         Text(
-                            text = model.displayName,
+                            text = me.rerere.zeroagent.ui.pages.chat.chatModelLabel(model, settings.providers),
                             style = MaterialTheme.typography.labelLargeEmphasized,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,

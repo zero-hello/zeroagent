@@ -93,11 +93,12 @@ fun ConversationList(
     onMoveToFolder: (Conversation) -> Unit = {},
     unsentNewChats: List<Uuid> = emptyList(),
     onOpenUnsentChat: (Uuid) -> Unit = {},
+    searching: Boolean = false,
 ) {
     var hasScrolledToCurrent by remember(currentConversationId) { mutableStateOf(false) }
 
-    LaunchedEffect(currentConversationId, conversations.itemCount, unsentNewChats, hasScrolledToCurrent) {
-        if (hasScrolledToCurrent || currentConversationId == null) return@LaunchedEffect
+    LaunchedEffect(currentConversationId, conversations.itemCount, unsentNewChats, hasScrolledToCurrent, searching) {
+        if (searching || hasScrolledToCurrent || currentConversationId == null) return@LaunchedEffect
         val currentIndex = conversations.itemSnapshotList.items.indexOfFirst {
             (it as? ConversationListItem.Item)?.conversation?.id == currentConversationId
         }
@@ -133,10 +134,10 @@ fun ConversationList(
                 )
             }
         }
-        if (conversations.itemCount == 0 && unsentNewChats.isEmpty()) {
+        if (conversations.itemCount == 0 && unsentNewChats.isEmpty() && conversations.loadState.refresh is androidx.paging.LoadState.NotLoading) {
             item {
                 me.rerere.zeroagent.ui.designsystem.ZeroEmptyState(
-                    title = stringResource(R.string.chat_page_no_conversations),
+                    title = stringResource(if (searching) R.string.settings_search_no_results else R.string.chat_page_no_conversations),
                     modifier = Modifier.padding(16.dp),
                 )
             }

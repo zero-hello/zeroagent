@@ -28,7 +28,7 @@ fun ModelGenerationControls(model: Model, provider: ProviderSetting?, onChange: 
     fun change(fn: (ModelGenerationSettings) -> ModelGenerationSettings) = onChange(model.copy(generation = fn(g)))
     Text(stringResource(R.string.zeroagent11_model_parameters), style = MaterialTheme.typography.titleMedium)
     Text(stringResource(R.string.zeroagent11_model_parameters_hint), style = MaterialTheme.typography.bodySmall)
-    OutlinedTextField(value = g.systemPrompt, onValueChange = { text -> change { it.copy(systemPrompt = text) } },
+    me.rerere.zeroagent.ui.designsystem.ZeroTextField(value = g.systemPrompt, debouncePersistence = true, onValueChange = { text -> change { it.copy(systemPrompt = text) } },
         label = { Text(stringResource(R.string.zeroagent11_system_prompt)) }, modifier = Modifier.fillMaxWidth(), minLines = 3, maxLines = 10)
     NumericModelParameter(model.id.toString(), "temperature", stringResource(R.string.zeroagent11_temperature), g.temperature?.toString().orEmpty(),
         ModelParameterCapabilities.supports(model, provider, "temperature"), 0.0..if (provider is ProviderSetting.Claude) 1.0 else 2.0) { value -> change { it.copy(temperature = value?.toFloat()) } }

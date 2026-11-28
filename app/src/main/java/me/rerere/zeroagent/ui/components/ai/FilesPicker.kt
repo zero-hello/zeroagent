@@ -136,40 +136,25 @@ internal fun FilesPicker(
             .fillMaxWidth()
             .padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        FlowRow(
-            modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally),
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            TakePicButton(onLaunchCamera = onTakePic)
-
-            ImagePickButton(onClick = onPickImage)
-
-            if (supportsVideo) {
-                VideoPickButton(onClick = onPickVideo)
-            }
-
-            if (supportsAudio) {
-                AudioPickButton(onClick = onPickAudio)
-            }
-
-            FilePickButton(onClick = onPickFile)
-
-            onStartVoiceMode?.let { start ->
-                BigIconTextButton(
-                    icon = { Icon(HugeIcons.Voice, contentDescription = null) },
-                    text = { Text(stringResource(R.string.chat_page_voice_title)) },
-                    onClick = start,
-                )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            BigIconTextButton(Modifier.weight(1f), { Icon(HugeIcons.Image02, null) },
+                { Text(stringResource(R.string.zeroflow_media_images)) }, onPickImage)
+            BigIconTextButton(Modifier.weight(1f), { Icon(HugeIcons.Camera01, null) },
+                { Text(stringResource(R.string.zeroflow_media_camera)) }, onTakePic)
+            BigIconTextButton(Modifier.weight(1f), { Icon(HugeIcons.Files02, null) },
+                { Text(stringResource(R.string.zeroflow_media_attachment)) }, onPickFile)
+        }
+        if (supportsVideo || supportsAudio || onStartVoiceMode != null) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (supportsVideo) VideoPickButton(onClick = onPickVideo)
+                if (supportsAudio) AudioPickButton(onClick = onPickAudio)
+                onStartVoiceMode?.let { start ->
+                    BigIconTextButton(icon = { Icon(HugeIcons.Voice, null) },
+                        text = { Text(stringResource(R.string.chat_page_voice_title)) }, onClick = start)
+                }
             }
         }
 
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Model / web-search switching, moved out of the input bar: one row, two half-width cards,
-        // each opening its own picker. Sits under the divider and above the workspace card.
         InputQuickConfigRow(
             model = currentModel,
             settings = settings,
@@ -519,30 +504,17 @@ private fun BigIconTextButton(
     text: @Composable () -> Unit,
     onClick: () -> Unit,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(
-                interactionSource = interactionSource, indication = LocalIndication.current, onClick = onClick
-            )
-            .semantics {
-                role = Role.Button
-            }
-            .wrapContentWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(8.dp)
+    me.rerere.zeroagent.ui.designsystem.ZeroHairlineCard(
+        onClick = onClick,
+        modifier = modifier,
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Box(
-                modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
-            ) {
-                icon()
-            }
-        }
-        ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-            text()
+            icon()
+            ProvideTextStyle(MaterialTheme.typography.labelMedium, text)
         }
     }
 }

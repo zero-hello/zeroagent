@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,15 @@ private val Context.browserDataStore by preferencesDataStore(name = "browser_pre
  * read-only browser on first install: navigate, screenshot, read text — but no clicks
  * or JS until they explicitly opt in.
  */
+data class AgentBrowserDisplay(
+    val previewExpanded: Boolean = false,
+    val desktop: Boolean = false,
+    val javaScript: Boolean = true,
+    val images: Boolean = true,
+    val userAgent: String = "",
+    val pageTimeoutSeconds: Long = 8,
+)
+
 class BrowserPreferences(private val context: Context) {
 
     private val store = context.browserDataStore
@@ -41,6 +51,35 @@ class BrowserPreferences(private val context: Context) {
 
     private val perToolTimeoutKey = longPreferencesKey("per_tool_timeout_ms")
     private val singleTaskTimeoutKey = longPreferencesKey("single_task_timeout_ms")
+    private val previewKey = booleanPreferencesKey("agent_preview_expanded")
+    private val desktopKey = booleanPreferencesKey("agent_desktop")
+    private val javaScriptKey = booleanPreferencesKey("agent_javascript")
+    private val imagesKey = booleanPreferencesKey("agent_images")
+    private val userAgentKey = stringPreferencesKey("agent_user_agent")
+    private val pageTimeoutKey = longPreferencesKey("agent_page_timeout_seconds")
+
+    private fun readDisplay(prefs: Preferences) = AgentBrowserDisplay(
+        previewExpanded = prefs[previewKey] ?: false,
+        desktop = prefs[desktopKey] ?: false,
+        javaScript = prefs[javaScriptKey] ?: true,
+        images = prefs[imagesKey] ?: true,
+        userAgent = prefs[userAgentKey].orEmpty(),
+        pageTimeoutSeconds = (prefs[pageTimeoutKey] ?: 8).coerceIn(2, 60),
+    )
+
+    fun displayFlow(): Flow<AgentBrowserDisplay> = store.data.map(::readDisplay).distinctUntilChanged()
+
+    suspend fun updateDisplay(transform: (AgentBrowserDisplay) -> AgentBrowserDisplay) {
+        store.edit { prefs ->
+            val display = transform(readDisplay(prefs))
+            prefs[previewKey] = display.previewExpanded
+            prefs[desktopKey] = display.desktop
+            prefs[javaScriptKey] = display.javaScript
+            prefs[imagesKey] = display.images
+            prefs[pageTimeoutKey] = display.pageTimeoutSeconds.coerceIn(2, 60)
+            prefs[userAgentKey] = display.userAgent.filter { it in ' '..'~' }.take(512).trim()
+        }
+    }
 
     init {
         // Push the persisted (or default) timeout values into [BrowserController] — the
@@ -49,6 +88,7 @@ class BrowserPreferences(private val context: Context) {
         // app start, so this collector arms the values before the first tool call and keeps
         // them in sync when the user edits them in Settings → Browser.
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        scope.launch { displayFlow().collect { BrowserController.agentDisplay = it } }
         scope.launch {
             perToolTimeoutFlow()
                 .distinctUntilChanged()
@@ -98,7 +138,23 @@ class BrowserPreferences(private val context: Context) {
     }
 
     suspend fun setToolEnabled(toolName: String, enabled: Boolean) {
-        store.edit { it[keyFor(toolName)] = enabled }
+        setToolsEnabled(listOf(toolName), enabled)
+    }
+
+    suspend fun setToolsEnabled(tools: Collection<String>, enabled: Boolean) {
+        store.edit { prefs ->
+            tools.filter { it in BrowserToolDefaults.ALL_TOOLS }.forEach { prefs[keyFor(it)] = enabled }
+        }
+    }
+
+    suspend fun useToolPreset(interactive: Boolean) {
+        store.edit { prefs ->
+            BrowserToolDefaults.ALL_TOOLS.forEach { tool ->
+                prefs[keyFor(tool)] = tool in BrowserToolDefaults.READ_TOOLS ||
+                    tool in BrowserToolDefaults.LOOP_CONTROL_TOOLS ||
+                    (interactive && tool in BrowserToolDefaults.WRITE_TOOLS && tool != BrowserToolDefaults.EVAL_JS)
+            }
+        }
     }
 
     /**

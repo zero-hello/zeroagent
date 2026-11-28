@@ -2856,4 +2856,27 @@
   <string name="chat_resume_interrupted_reply">Continue interrupted reply</string>
   <string name="access_delegated_current_chat">Tool approval updated for this chat.</string>
   <string name="zero_v6_image_failed">Could not prepare the image</string>
+    <string name="zeroflow_browser_select_all">Select all</string>
+    <string name="zeroflow_browser_clear_selection">Deselect all</string>
+    <string name="zeroflow_browser_read_only">Read only</string>
+    <string name="zeroflow_browser_clear_failed">Unable to clear the Agent browser session. Check that Android System WebView is up to date.</string>
+    <string name="zeroflow_agent_browser">Agent browser</string>
+    <string name="zeroflow_browser_expand_preview">Expand previews by default</string>
+    <string name="zeroflow_browser_desktop">Request desktop sites</string>
+    <string name="zeroflow_browser_load_images">Load images</string>
+    <string name="zeroflow_browser_custom_agent">Custom User-Agent</string>
+    <string name="zeroflow_browser_take_control">Take over</string>
+    <string name="zeroflow_browser_return_control">Return to Agent</string>
+    <string name="zeroflow_browser_wait_for_tool">Wait for the current browser action to finish.</string>
+    <string name="zeroflow_browser_action">Browser step %1$d</string>
+    <string name="zeroflow_memory_updated">Memory updated</string>
+    <string name="zeroflow_phone_stop">Stop phone operation</string>
+    <string name="zeroflow_settings_load_failed">Unable to read settings. Your saved settings file is still on this device.</string>
+    <string name="zeroflow_media_images">Images</string>
+    <string name="zeroflow_media_camera">Camera</string>
+    <string name="zeroflow_media_attachment">Attachment</string>
+    <string name="zeroflow_browser_interactive">Interactive</string>
+    <string name="zeroflow_browser_page_timeout">Page timeout</string>
+    <string name="zeroflow_browser_outline_title">Page outline</string>
+    <string name="zeroflow_browser_outline_description">Read visible headings and page sections.</string>
 </resources>

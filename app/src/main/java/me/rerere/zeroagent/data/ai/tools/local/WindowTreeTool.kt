@@ -43,9 +43,11 @@ internal fun nodeToJson(
         add(rect.left); add(rect.top); add(rect.right); add(rect.bottom)
     })
     node.className?.toString()?.takeIf { it.isNotEmpty() }?.let { put("class", it) }
-    node.text?.toString()?.takeIf { it.isNotEmpty() }?.let { put("text", it) }
-    node.contentDescription?.toString()?.takeIf { it.isNotEmpty() }?.let {
-        put("content_description", it)
+    if (node.isPassword) {
+        put("password", true)
+    } else {
+        node.text?.toString()?.takeIf { it.isNotEmpty() }?.let { put("text", it) }
+        node.contentDescription?.toString()?.takeIf { it.isNotEmpty() }?.let { put("content_description", it) }
     }
     node.viewIdResourceName?.takeIf { it.isNotEmpty() }?.let { put("view_id", it) }
     if (node.isClickable) put("clickable", true)
@@ -61,7 +63,7 @@ internal fun nodeToJson(
  * already hold the node's screen bounds.
  */
 internal fun nodeSignature(node: AccessibilityNodeInfo, rect: Rect): String =
-    "${node.className}|${node.text}|${node.contentDescription}|" +
+    (if (node.isPassword) "${node.className}|<password>|" else "${node.className}|${node.text}|${node.contentDescription}|") +
         "${rect.left},${rect.top},${rect.right},${rect.bottom}"
 
 internal fun defaultFilter(n: AccessibilityNodeInfo, depth: Int): Boolean {

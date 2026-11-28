@@ -20,8 +20,8 @@ import kotlin.math.exp
 import kotlin.math.sin
 
 internal enum class ZeroFeedbackEvent(val frequency: Int, val milliseconds: Int) {
-    Send(620, 48), Tools(450, 45), Select(575, 42), Toggle(510, 34), Step(390, 30),
-    Complete(740, 85), VoiceStart(560, 68), VoiceEnd(360, 72), VoiceInterrupt(420, 42),
+    Send(620, 76), Tools(450, 86), ToolsClose(600, 78), Select(575, 42), Toggle(510, 62), Step(390, 30),
+    Complete(740, 116), Command(710, 48), ToolStart(390, 55), ToolComplete(520, 70), VoiceStart(560, 68), VoiceEnd(360, 72), VoiceInterrupt(420, 42),
 }
 
 private class ZeroSound(context: Context) {
@@ -44,7 +44,7 @@ private class ZeroSound(context: Context) {
                 ZeroFeedbackEvent.entries.forEach { event ->
                     if (samples.containsKey(event)) return@forEach
                     runCatching {
-                        val file = File(app.cacheDir, "zero_feedback_v6_${event.name}.wav")
+                        val file = File(app.cacheDir, "zeroflow_feedback_v2_${event.name}.wav")
                         if (!file.isFile) file.writeBytes(wave(event))
                         pool.load(file.absolutePath, 1).takeIf { it > 0 }?.let { samples[event] = it }
                     }
@@ -63,14 +63,29 @@ private class ZeroSound(context: Context) {
     private fun wave(event: ZeroFeedbackEvent): ByteArray {
         val rate = 22_050
         val count = rate * event.milliseconds / 1_000
+        val notes = when (event) {
+            ZeroFeedbackEvent.Tools -> doubleArrayOf(1.0, 1.32)
+            ZeroFeedbackEvent.ToolsClose -> doubleArrayOf(1.0, .76)
+            ZeroFeedbackEvent.Complete -> doubleArrayOf(1.0, 1.25, 1.5)
+            ZeroFeedbackEvent.Toggle -> doubleArrayOf(.9, 1.15)
+            ZeroFeedbackEvent.Send -> doubleArrayOf(1.0, 1.38)
+            ZeroFeedbackEvent.ToolComplete -> doubleArrayOf(1.0, 1.28)
+            else -> doubleArrayOf(1.0)
+        }
         return ByteBuffer.allocate(44 + count * 2).order(ByteOrder.LITTLE_ENDIAN).apply {
             put("RIFF".toByteArray()); putInt(36 + count * 2); put("WAVEfmt ".toByteArray())
             putInt(16); putShort(1); putShort(1); putInt(rate); putInt(rate * 2); putShort(2); putShort(16)
             put("data".toByteArray()); putInt(count * 2)
             repeat(count) { sample ->
                 val position = sample.toDouble() / count
-                val envelope = (position * 20).coerceAtMost(1.0) * exp(-5.0 * position) * (1 - position)
-                putShort((sin(2 * PI * event.frequency * sample / rate) * envelope * 8_000).toInt().toShort())
+                val phase = position * notes.size
+                val note = phase.toInt().coerceAtMost(notes.lastIndex)
+                val progress = phase - note
+                val envelope = (progress * 18).coerceAtMost(1.0) * exp(-3.8 * progress) * (1 - progress)
+                val seconds = progress * event.milliseconds / (1000 * notes.size)
+                val angle = 2 * PI * event.frequency * notes[note] * seconds
+                val tone = sin(angle) + .13 * sin(angle * 2)
+                putShort((tone * envelope * 7_000).toInt().toShort())
             }
         }.array()
     }

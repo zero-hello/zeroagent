@@ -3,6 +3,11 @@ package me.rerere.zeroagent.ui.pages.setting.browser
 import androidx.compose.material3.ButtonDefaults
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.Alignment
+import me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -70,6 +75,7 @@ fun SettingBrowserPage(
 
     var showClearConfirm by remember { mutableStateOf(false) }
     val cleared = stringResource(R.string.setting_browser_clear_data_done)
+    val clearFailed = stringResource(R.string.zeroflow_browser_clear_failed)
 
     if (showClearConfirm) {
         AlertDialog(
@@ -79,8 +85,9 @@ fun SettingBrowserPage(
             confirmButton = {
                 TextButton(shapes = ButtonDefaults.shapes(), onClick = {
                     showClearConfirm = false
-                    vm.clearBrowsingData(ctx) {
-                        toaster.show(cleared, type = ToastType.Success)
+                    vm.clearBrowsingData { success ->
+                        if (success) toaster.show(cleared, type = ToastType.Success)
+                        else toaster.show(clearFailed, type = ToastType.Error)
                     }
                 }) {
                     Text(stringResource(R.string.setting_browser_clear_data_confirm))
@@ -132,6 +139,44 @@ fun SettingBrowserPage(
                 )
             }
 
+            val display by vm.display.collectAsStateWithLifecycle()
+            CardGroup(title = { Text(stringResource(R.string.zeroflow_agent_browser)) }) {
+                item(
+                    headlineContent = { Text(stringResource(R.string.zeroflow_browser_expand_preview)) },
+                    trailingContent = { Switch(display.previewExpanded, { value -> vm.updateDisplay { it.copy(previewExpanded = value) } }) },
+                )
+                item(
+                    headlineContent = { Text(stringResource(R.string.zeroflow_browser_desktop)) },
+                    trailingContent = { Switch(display.desktop, { value -> vm.updateDisplay { it.copy(desktop = value) } }) },
+                )
+                item(
+                    headlineContent = { Text("JavaScript") },
+                    trailingContent = { Switch(display.javaScript, { value -> vm.updateDisplay { it.copy(javaScript = value) } }) },
+                )
+                item(
+                    headlineContent = { Text(stringResource(R.string.zeroflow_browser_load_images)) },
+                    trailingContent = { Switch(display.images, { value -> vm.updateDisplay { it.copy(images = value) } }) },
+                )
+                item(
+                    headlineContent = { Text(stringResource(R.string.zeroflow_browser_page_timeout)) },
+                    trailingContent = {
+                        TimeoutInput(
+                            currentValue = display.pageTimeoutSeconds,
+                            unitLabel = stringResource(R.string.setting_browser_per_tool_timeout_unit),
+                            onCommit = { seconds -> vm.updateDisplay { it.copy(pageTimeoutSeconds = seconds) } },
+                        )
+                    },
+                )
+            }
+            OutlinedTextField(
+                value = display.userAgent,
+                onValueChange = { value -> vm.updateDisplay { it.copy(userAgent = value) } },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(stringResource(R.string.zeroflow_browser_custom_agent)) },
+                debouncePersistence = true,
+            )
+
             // Section: Tools enabled — three sub-CardGroups grouped by category, each with
             // a small heading above. Mirrors AssistantLocalToolPage's category-divider pattern.
             Text(
@@ -139,6 +184,20 @@ fun SettingBrowserPage(
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp),
             )
+
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val allTools = BrowserToolDefaults.ALL_TOOLS
+                val allEnabled = allTools.all { toolStates[it] == true }
+                ZeroCapsuleButton(onClick = { vm.setToolsEnabled(allTools, !allEnabled) }) {
+                    Text(stringResource(if (allEnabled) R.string.zeroflow_browser_clear_selection else R.string.zeroflow_browser_select_all))
+                }
+                ZeroCapsuleButton(onClick = { vm.useToolPreset(false) }) {
+                    Text(stringResource(R.string.zeroflow_browser_read_only))
+                }
+                ZeroCapsuleButton(onClick = { vm.useToolPreset(true) }) {
+                    Text(stringResource(R.string.zeroflow_browser_interactive))
+                }
+            }
 
             ToolCategorySection(
                 heading = stringResource(R.string.setting_browser_category_read),
@@ -148,6 +207,7 @@ fun SettingBrowserPage(
                     .sortedBy { BrowserToolDefaults.ALL_TOOLS.indexOf(it) },
                 toolStates = toolStates,
                 onToggle = vm::setToolEnabled,
+                onToggleGroup = vm::setToolsEnabled,
             )
             ToolCategorySection(
                 heading = stringResource(R.string.setting_browser_category_write),
@@ -155,6 +215,7 @@ fun SettingBrowserPage(
                     .sortedBy { BrowserToolDefaults.ALL_TOOLS.indexOf(it) },
                 toolStates = toolStates,
                 onToggle = vm::setToolEnabled,
+                onToggleGroup = vm::setToolsEnabled,
             )
             ToolCategorySection(
                 heading = stringResource(R.string.setting_browser_category_loop_control),
@@ -162,6 +223,7 @@ fun SettingBrowserPage(
                     .sortedBy { BrowserToolDefaults.ALL_TOOLS.indexOf(it) },
                 toolStates = toolStates,
                 onToggle = vm::setToolEnabled,
+                onToggleGroup = vm::setToolsEnabled,
             )
 
             // Section: Defaults & limits
@@ -248,13 +310,17 @@ private fun ToolCategorySection(
     tools: List<String>,
     toolStates: Map<String, Boolean>,
     onToggle: (String, Boolean) -> Unit,
+    onToggleGroup: (List<String>, Boolean) -> Unit,
 ) {
-    Text(
-        text = heading,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 16.dp, top = 8.dp),
-    )
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(heading, modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+        val enabled = tools.all { toolStates[it] ?: BrowserToolDefaults.DEFAULT_ENABLED[it] ?: false }
+        Switch(checked = enabled, onCheckedChange = { onToggleGroup(tools, it) })
+    }
     CardGroup {
         tools.forEach { toolName ->
             val checked = toolStates[toolName] ?: BrowserToolDefaults.DEFAULT_ENABLED[toolName] ?: false
@@ -280,6 +346,7 @@ private fun toolDisplayTitle(toolName: String): String = when (toolName) {
     BrowserToolDefaults.GET_TEXT -> stringResource(R.string.setting_browser_tool_get_text_title)
     BrowserToolDefaults.GET_DOM -> stringResource(R.string.setting_browser_tool_get_dom_title)
     BrowserToolDefaults.GET_LINKS -> stringResource(R.string.setting_browser_tool_get_links_title)
+    BrowserToolDefaults.PAGE_OUTLINE -> stringResource(R.string.zeroflow_browser_outline_title)
     BrowserToolDefaults.BACK -> stringResource(R.string.setting_browser_tool_back_title)
     BrowserToolDefaults.FORWARD -> stringResource(R.string.setting_browser_tool_forward_title)
     BrowserToolDefaults.WAIT_FOR -> stringResource(R.string.setting_browser_tool_wait_for_title)
@@ -302,6 +369,7 @@ private fun toolDisplayDesc(toolName: String): String = when (toolName) {
     BrowserToolDefaults.GET_TEXT -> stringResource(R.string.setting_browser_tool_get_text_desc)
     BrowserToolDefaults.GET_DOM -> stringResource(R.string.setting_browser_tool_get_dom_desc)
     BrowserToolDefaults.GET_LINKS -> stringResource(R.string.setting_browser_tool_get_links_desc)
+    BrowserToolDefaults.PAGE_OUTLINE -> stringResource(R.string.zeroflow_browser_outline_description)
     BrowserToolDefaults.BACK -> stringResource(R.string.setting_browser_tool_back_desc)
     BrowserToolDefaults.FORWARD -> stringResource(R.string.setting_browser_tool_forward_desc)
     BrowserToolDefaults.WAIT_FOR -> stringResource(R.string.setting_browser_tool_wait_for_desc)

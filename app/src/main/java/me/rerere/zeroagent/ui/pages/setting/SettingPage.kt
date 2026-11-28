@@ -93,7 +93,7 @@ fun SettingPage(vm: SettingVM = koinViewModel(), showBackButton: Boolean = false
                 top = insets.calculateTopPadding() + 8.dp,
                 bottom = insets.calculateBottomPadding() + 24.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             if (!settings.hasConfiguredModel()) item("setup") {
                 CardGroup {

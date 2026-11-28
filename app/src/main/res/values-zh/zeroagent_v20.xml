@@ -53,7 +53,7 @@
     <string name="memory_mood_consent">要下載並驗證約 132 MB 的多語言模型，在裝置上分析情緒嗎？這不會增加工具的存取權限。</string>
     <string name="update_installed_changes_v200">可以搜尋與分類對話、在聊天室內快速調整模型，並依對話保存草稿。本版也加入無痕對話、隱私鎖、系統捷徑和可選用的截圖提示，並修正 Root 模式下的終端機啟動問題。</string>
     <string name="update_open_backup">前往備份</string>
-    <string name="fun_features_description">貓咪掌印和心情天氣小卡。</string>
+    <string name="fun_features_description">探索对话彩蛋与个性化互动。</string>
     <string name="zeroagent_lab_title">ZeroAgent Lab</string>
-    <string name="zeroagent_lab_description">試試可自由開關的新工具。</string>
+    <string name="zeroagent_lab_description">提前体验ZeroAgent的实验性内容</string>
 </resources>

@@ -77,6 +77,8 @@ object BrowserController {
 
     private const val MAX_RECENT_ACTIONS = 20
 
+    @Volatile internal var agentDisplay = AgentBrowserDisplay()
+
     /**
      * Hard cap on a single AI-driven task to bound runaway loops. User-configurable via
      * Settings → Browser (GitHub issue #4) — [BrowserPreferences] writes the persisted value
@@ -151,6 +153,36 @@ object BrowserController {
      * second silently overwrites the first — a later screenshot then routes to the wrong chat.
      */
     private val bindLock = Any()
+    private var runningBrowserTools = 0
+    private var manualOwner: String? = null
+    private val _previewOwner = MutableStateFlow<String?>(null)
+    internal val previewOwner = _previewOwner.asStateFlow()
+
+    internal fun enterBrowserTool(caller: String?, opening: Boolean): Boolean = synchronized(bindLock) {
+        val bound = mode
+        if (manualOwner != null || runningBrowserTools != 0 ||
+            (bound is Mode.Headless && bound.callerConvId != caller && !opening)) {
+            false
+        } else {
+            runningBrowserTools++
+            true
+        }
+    }
+
+    internal fun leaveBrowserTool() = synchronized(bindLock) { runningBrowserTools-- }
+
+    internal fun acquireManualControl(caller: String): WebView? = synchronized(bindLock) {
+        val bound = mode as? Mode.Headless ?: return@synchronized null
+        if (bound.callerConvId != caller || runningBrowserTools != 0 || manualOwner != null) return@synchronized null
+        manualOwner = caller
+        bound.webView
+    }
+
+    internal fun isManualControlActive(): Boolean = synchronized(bindLock) { manualOwner != null }
+
+    internal fun releaseManualControl(caller: String) = synchronized(bindLock) {
+        if (manualOwner == caller) manualOwner = null
+    }
 
     /**
      * Pass 2 publishes a fresh deferred each time the binding is cleared, so a tool that
@@ -305,6 +337,7 @@ object BrowserController {
             val current = m.activityRef.get()
             if (current === webView || current == null) {
                 mode = Mode.Idle
+                _previewOwner.value = null
                 // Reset task timer + action log when the visible Activity is torn down. Headless
                 // mode has its own teardown via [unbindHeadless]; this branch is foreground-only.
                 currentTaskStartedAt = null
@@ -365,6 +398,7 @@ object BrowserController {
                 Mode.Idle -> Unit
             }
             mode = Mode.Headless(callerConvId, webView)
+            _previewOwner.value = callerConvId
             // Fresh session for this conv — drop its de-dupe memory so the first stream of a
             // new task isn't suppressed by a URL match against a previous task on the same id.
             streamDedupe.remove(callerConvId)
@@ -412,6 +446,7 @@ object BrowserController {
             val m = mode
             if (m is Mode.Headless && m.callerConvId == callerConvId) {
                 mode = Mode.Idle
+                _previewOwner.value = null
                 currentTaskStartedAt = null
                 _taskActive.value = false
                 resetActionTrail()
@@ -442,6 +477,7 @@ object BrowserController {
             val m = mode
             if (m is Mode.Headless && m.callerConvId == callerConvId) {
                 mode = Mode.Idle
+                _previewOwner.value = null
                 currentTaskStartedAt = null
                 _taskActive.value = false
                 resetActionTrail()

@@ -69,7 +69,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalFocusManager
@@ -135,6 +134,8 @@ import me.rerere.zeroagent.utils.SoundEffectPlayer
 import org.koin.compose.koinInject
 import kotlin.uuid.Uuid
 
+data class ComposerToolActions(val openEditor: () -> Unit, val openReasoning: (() -> Unit)?)
+
 @Composable
 fun ChatInput(
     state: ChatInputState,
@@ -144,7 +145,7 @@ fun ChatInput(
     model: Model?,
 
     onUpdateReasoningLevel: (me.rerere.ai.core.ReasoningLevel) -> Unit,
-    onMoreClick: () -> Unit,
+    onMoreClick: (ComposerToolActions) -> Unit,
     selectedQuote: String? = null,
     onRemoveQuote: () -> Unit = {},
     quoteFocusRequest: Int = 0,
@@ -231,8 +232,6 @@ fun ChatInput(
         model?.generation?.reasoningLevel ?: assistant.reasoningLevel,
     )
     var showReasoningPicker by remember(model?.id, provider?.id) { mutableStateOf(false) }
-    var showToolIsland by remember { mutableStateOf(false) }
-    val toolBack = me.rerere.zeroagent.ui.designsystem.rememberZeroPredictiveDismiss(showToolIsland) { showToolIsland = false }
     if (showReasoningPicker) ReasoningPicker(
         reasoningLevel = reasoningLevel,
         supportedLevels = reasoningOptions.levels,
@@ -269,52 +268,12 @@ fun ChatInput(
                 onFinishEdit = onFinishEditQueuedMessage,
                 onResume = onResumeMessageQueue,
             )
-            if (completionProviders.isNotEmpty() && !state.isEditing()) {
-                ComposerShortcutRow(
-                    state = state,
-                    hasWorkspace = completionProviders.any { it.id == "workspace_files" },
-                    onFocus = { composerFocus.requestFocus() },
-                )
-            }
             selectedQuote?.let { quote ->
                 me.rerere.zeroagent.ui.designsystem.ZeroQuotePreviewCard(
                     quote, stringResource(R.string.quick_chat_close), onRemoveQuote,
                 )
             }
             if (state.messageContent.isNotEmpty()) MediaFileInputRow(state = state)
-            androidx.compose.animation.AnimatedVisibility(
-                visible = showToolIsland,
-                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(
-                    me.rerere.zeroagent.ui.designsystem.ZeroMotion.bouncy(), expandFrom = Alignment.Bottom,
-                ),
-                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically(
-                    me.rerere.zeroagent.ui.designsystem.ZeroMotion.fluid(), shrinkTowards = Alignment.Bottom,
-                ),
-            ) {
-                me.rerere.zeroagent.ui.designsystem.ZeroHairlineCard(Modifier.fillMaxWidth().graphicsLayer {
-                    alpha = 1f - .4f * toolBack.value
-                    translationY = 12.dp.toPx() * toolBack.value
-                }) {
-                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton({ showToolIsland = false; onMoreClick() }) {
-                            Icon(HugeIcons.Add01, null, Modifier.size(16.dp))
-                            Text(stringResource(R.string.quick_chat_segment_attachment))
-                        }
-                        if (showReasoning && reasoningOptions.levels.size > 1) {
-                            me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton({
-                                showToolIsland = false
-                                focusManager.clearFocus(force = true)
-                                keyboardController?.hide()
-                                showReasoningPicker = true
-                            }, selected = reasoningLevel.isEnabled) { Text(stringResource(R.string.reasoning_picker_title)) }
-                        }
-                        me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton({ showToolIsland = false; isFullScreen = true }) {
-                            Text(stringResource(R.string.text_area_fullscreen_edit))
-                        }
-                    }
-                }
-            }
             val colors = ZeroTheme.colors
             Surface(
                 modifier = Modifier
@@ -363,7 +322,17 @@ fun ChatInput(
                     ComposerActionRow(
                         loading = loading,
                         hasDraft = !state.isEmpty(),
-                        onAttach = { feedback(ZeroFeedbackEvent.Tools); showToolIsland = !showToolIsland },
+                        onAttach = {
+                            focusManager.clearFocus(force = true)
+                            keyboardController?.hide()
+                            feedback(ZeroFeedbackEvent.Tools)
+                            onMoreClick(ComposerToolActions(
+                                openEditor = { isFullScreen = true },
+                                openReasoning = if (showReasoning && reasoningOptions.levels.size > 1) {
+                                    { showReasoningPicker = true }
+                                } else null,
+                            ))
+                        },
                         onVoiceCall = onStartVoiceMode,
                         onSend = { sendMessage() },
                         onStop = onCancelClick,
@@ -482,14 +451,22 @@ private fun TextInputRow(
             }
         }
 
-        completionList?.takeIf { it.items.isNotEmpty() }?.let { list ->
-            CompletionPopup(
-                completionList = list,
-                onItemClick = { item ->
-                    state.applyCompletion(list.replacementRange, item)
-                    completionList = null
-                },
-            )
+        val visibleCompletion = completionList?.takeIf { it.items.isNotEmpty() }
+        var lastCompletion by remember { mutableStateOf<ChatCompletionList?>(null) }
+        androidx.compose.runtime.SideEffect { if (visibleCompletion != null) lastCompletion = visibleCompletion }
+        val feedback = rememberZeroFeedback()
+        val slashVisible = visibleCompletion?.providerId == "zeroagent-slash"
+        LaunchedEffect(slashVisible) { if (slashVisible) feedback(ZeroFeedbackEvent.Command) }
+        androidx.compose.animation.AnimatedVisibility(
+            visible = visibleCompletion != null,
+            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(expandFrom = Alignment.Bottom),
+            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically(shrinkTowards = Alignment.Bottom),
+        ) {
+            val list = visibleCompletion ?: lastCompletion ?: return@AnimatedVisibility
+            CompletionPopup(list, onItemClick = { item ->
+                if (visibleCompletion === list) state.applyCompletion(list.replacementRange, item)
+                completionList = null
+            })
         }
 
         TextField(
@@ -600,8 +577,8 @@ private fun CompletionPopup(
             .heightIn(max = 280.dp),
         shape = RoundedCornerShape(18.dp),
         tonalElevation = 0.dp,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = BorderStroke(1.dp, ZeroTheme.colors.borderSubtle),
+        color = ZeroTheme.colors.surface,
     ) {
         LazyColumn(
             modifier = Modifier

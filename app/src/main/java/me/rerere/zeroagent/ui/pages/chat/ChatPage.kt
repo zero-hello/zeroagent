@@ -1,5 +1,6 @@
 package me.rerere.zeroagent.ui.pages.chat
 
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.IconButtonDefaults
 
 import me.rerere.zeroagent.ui.motion.*
@@ -110,6 +111,7 @@ import me.rerere.zeroagent.data.model.Assistant
 import me.rerere.zeroagent.data.model.Conversation
 import me.rerere.zeroagent.data.repository.WorkspaceRepository
 import me.rerere.zeroagent.service.ChatError
+import me.rerere.zeroagent.ui.components.ai.ComposerToolActions
 import me.rerere.zeroagent.ui.components.ai.ChatAttachmentPickerActions
 import me.rerere.zeroagent.ui.components.ai.completion.*
 import me.rerere.zeroagent.Screen
@@ -318,7 +320,7 @@ private fun ChatPageContent(
     val turnFooters by vm.turnFooters.collectAsStateWithLifecycle()
     var previewMode by rememberSaveable { mutableStateOf(false) }
     val assistant = currentChatModel?.let { setting.assistantForModel(it) } ?: setting.getCurrentAssistant()
-    var showFilesSheet by remember { mutableStateOf(false) }
+    var composerTools by remember(conversation.id) { mutableStateOf<ComposerToolActions?>(null) }
     var activeQuote by remember(conversation.id) { mutableStateOf<String?>(null) }
     var quoteFocusRequest by remember(conversation.id) { mutableIntStateOf(0) }
     LaunchedEffect(askDraft, inputState.editingMessage) {
@@ -344,7 +346,7 @@ private fun ChatPageContent(
     val attachmentPickerActions = rememberChatAttachmentPickerActions(
         inputState = inputState,
         setting = setting,
-        onAttachmentAdded = { showFilesSheet = false },
+        onAttachmentAdded = { composerTools = null },
     )
 
     var slashCompress by remember { mutableStateOf(false) }
@@ -620,8 +622,8 @@ private fun ChatPageContent(
                         selectedQuote = activeQuote,
                         onRemoveQuote = { activeQuote = null },
                         quoteFocusRequest = quoteFocusRequest,
-                        onMoreClick = {
-                            showFilesSheet = true
+                        onMoreClick = { actions ->
+                            composerTools = actions
                         },
                     )
                 }
@@ -680,6 +682,14 @@ private fun ChatPageContent(
                     LocalConversationReplyMotion provides liveReplyMotion,
                     LocalPendingMessageReview provides reviewStore,
                 ) {
+                val currentPhoneTool = if (loadingJob != null) {
+                    conversation.currentMessages.asReversed().firstOrNull { message ->
+                        message.role == me.rerere.ai.core.MessageRole.ASSISTANT
+                    }?.parts?.filterIsInstance<me.rerere.ai.ui.UIMessagePart.Tool>()?.lastOrNull { tool ->
+                        me.rerere.zeroagent.data.ai.PhoneAgentGuidance.isPhoneTool(tool.toolName) &&
+                            tool.executionStartedAt != null && !tool.isExecuted
+                    }
+                } else null
                 if (conversation.currentMessages.isNotEmpty() || loadingJob != null || errors.isNotEmpty()) ChatList(
                     innerPadding = listInset,
                     conversation = conversation,
@@ -688,6 +698,8 @@ private fun ChatPageContent(
                     searchHighlight = searchHighlight,
                     loading = loadingJob != null,
                     processingStatus = processingStatus,
+                    phoneOperationActive = currentPhoneTool != null,
+                    onStopPhoneOperation = vm::stopGeneration,
                     previewMode = previewMode,
                     settings = setting,
 
@@ -785,29 +797,16 @@ private fun ChatPageContent(
                         settings = setting,
                         model = currentChatModel,
                         warmingModel = warmingModel,
-                        conversation = conversation,
-                        onTemporaryChat = if (privateChatEnabled == "true") ({ showTemporary = true }) else null,
-                        onClearDraft = vm::clearSavedDraft,
                         onModelSelect = onUpdateChatModel,
                         bigScreen = bigScreen,
                         onOpenDrawer = onOpenDrawer,
-                        onOpenTerminal = {
-                            navController.navigate(Screen.WorkspaceTerminal("android-shell"))
-                        },
-
-                        previewMode = previewMode,
-                        onNewChat = {
-                            navigateToChatPage(navController)
-                        },
-                        onClickMenu = {
-                            previewMode = !previewMode
-                        },
+                        onNewChat = { navigateToChatPage(navController) },
                     )
                 }
             }
         }
 
-        if (showFilesSheet) {
+        composerTools?.let { actions ->
             ChatFilesPickerSheet(
                 inputState = inputState,
                 setting = setting,
@@ -820,7 +819,11 @@ private fun ChatPageContent(
                 onUpdateChatModel = onUpdateChatModel,
                 onUpdateSearchService = onUpdateSearchService,
                 onStartVoiceMode = onStartVoiceMode,
-                onDismiss = { showFilesSheet = false },
+                onDismiss = { composerTools = null },
+                previewMode = previewMode,
+                onPreview = { composerTools = null; previewMode = !previewMode },
+                composerActions = actions,
+                onTemporary = if (privateChatEnabled == "true") ({ composerTools = null; showTemporary = true }) else null,
             )
         }
     }
@@ -828,6 +831,7 @@ private fun ChatPageContent(
 
 @Composable
 private fun ChatFilesPickerSheet(
+    composerActions: ComposerToolActions,
     inputState: ChatInputState,
     setting: Settings,
     conversation: Conversation,
@@ -839,15 +843,18 @@ private fun ChatFilesPickerSheet(
     onUpdateChatModel: (Model) -> Unit,
     onUpdateSearchService: (Int) -> Unit,
     onStartVoiceMode: () -> Unit,
+    previewMode: Boolean,
+    onPreview: () -> Unit,
+    onTemporary: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
     val navController = LocalNavController.current
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
+    val feedback = me.rerere.zeroagent.ui.designsystem.rememberZeroFeedback()
     var showInjectionSheet by remember { mutableStateOf(false) }
     var showCompressDialog by remember { mutableStateOf(false) }
 
     fun dismissAll() {
+        feedback(me.rerere.zeroagent.ui.designsystem.ZeroFeedbackEvent.ToolsClose)
         showInjectionSheet = false
         showCompressDialog = false
         onDismiss()
@@ -857,16 +864,18 @@ private fun ChatFilesPickerSheet(
         initialValue = SheetValue.Hidden,
         enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
     )
+    val activity = LocalActivity.current as ComponentActivity
+    val drawerVm: ChatDrawerVM = koinViewModel(viewModelStoreOwner = activity)
     ModalBottomSheet(
         sheetState = filesSheetState,
         onDismissRequest = { dismissAll() },
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        dragHandle = null,
     ) {
-        TextButton(onClick = {
-            dismissAll()
-            navController.navigate(Screen.Productivity(conversation.id.toString()))
-        }, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            Text("效率工具 · 專案、模型比較與文件")
-        }
+        androidx.compose.foundation.layout.Column(
+            Modifier.weight(1f, fill = false).verticalScroll(androidx.compose.foundation.rememberScrollState()),
+        ) {
         FilesPicker(
             conversation = conversation,
             state = inputState,
@@ -908,8 +917,31 @@ private fun ChatFilesPickerSheet(
             onPickVideo = attachmentPickerActions.onPickVideo,
             onPickAudio = attachmentPickerActions.onPickAudio,
             onPickFile = attachmentPickerActions.onPickFile,
-            onStartVoiceMode = null,
+            onStartVoiceMode = { dismissAll(); onStartVoiceMode() },
         )
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = { dismissAll(); composerActions.openEditor() }) {
+                Text(stringResource(R.string.text_area_fullscreen_edit))
+            }
+            composerActions.openReasoning?.let { openReasoning ->
+                TextButton(onClick = { dismissAll(); openReasoning() }) {
+                    Text(stringResource(R.string.reasoning_picker_title))
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = {
+                dismissAll()
+                navController.navigate(Screen.Productivity(conversation.id.toString()))
+            }, modifier = Modifier.weight(1f)) { Text("效率工具 · 專案、模型比較與文件") }
+            ConversationMenu(conversation, previewMode, onPreview, onTemporary, vm::clearSavedDraft,
+                onOpenTerminal = { dismissAll(); navController.navigate(Screen.WorkspaceTerminal("android-shell")) },
+                onRename = if (conversation.messageNodes.isNotEmpty()) ({
+                    dismissAll(); drawerVm.requestRenameConversation(conversation)
+                }) else null,
+            )
+        }
+        }
     }
 }
 
@@ -918,24 +950,12 @@ private fun TopBar(
     settings: Settings,
     model: Model?,
     warmingModel: Boolean,
-    conversation: Conversation,
     onOpenDrawer: () -> Unit,
-    onOpenTerminal: () -> Unit,
-    onTemporaryChat: (() -> Unit)?,
-    onClearDraft: () -> Unit,
     onModelSelect: (Model) -> Unit,
-
     bigScreen: Boolean,
-    previewMode: Boolean,
-    onClickMenu: () -> Unit,
     onNewChat: () -> Unit,
 ) {
-    // 与抽屉的 Rename 菜单项共享同一个重命名对话框状态，见 ChatDrawerVM.conversationToRename
-    val activity = LocalActivity.current as ComponentActivity
-    val drawerVm: ChatDrawerVM = koinViewModel(viewModelStoreOwner = activity)
-
     me.rerere.zeroagent.ui.designsystem.ZeroTopFloatingBar(
-
         navigation = {
             if (!bigScreen) {
                 ChatTopBarButton(
@@ -947,10 +967,6 @@ private fun TopBar(
         },
         title = { ZeroChatModelSelector(model, settings.providers, warmingModel, onModelSelect) },
         actions = {
-            ConversationMenu(conversation, previewMode, onClickMenu, onTemporaryChat, onClearDraft,
-                onOpenTerminal = onOpenTerminal,
-                onRename = if (conversation.messageNodes.isNotEmpty()) ({ drawerVm.requestRenameConversation(conversation) }) else null)
-
             ChatTopBarButton(
                 onClick = {
                     onNewChat()

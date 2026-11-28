@@ -76,10 +76,11 @@ fun SettingAboutPage() {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
+                me.rerere.zeroagent.ui.designsystem.ZeroHairlineCard(Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
+                        .padding(horizontal = 16.dp, vertical = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -102,6 +103,7 @@ fun SettingAboutPage() {
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
                 }
             }
 

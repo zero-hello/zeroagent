@@ -77,6 +77,9 @@ class MemoryRepository(private val memoryDAO: MemoryDAO) {
         )
     }
 
+    suspend fun addCapturedMemory(assistantId: String, content: String): Boolean =
+        memoryDAO.insertCapturedMemory(assistantId, content, System.currentTimeMillis())
+
     suspend fun addMemory(assistantId: String, content: String): AssistantMemory {
         val memory = AssistantMemory(
             id = 0,

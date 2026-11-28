@@ -46,7 +46,7 @@ internal fun ZeroChatModelSelector(model: Model?, providers: List<ProviderSettin
             open = true
             showPopup = true
         }, modifier = Modifier.widthIn(max = 330.dp), selected = model != null, pulse = warming) {
-            Text(model?.displayName?.ifBlank { model.modelId } ?: stringResource(R.string.model_list_select_model),
+            Text(model?.let { chatModelLabel(it, providers) } ?: stringResource(R.string.model_list_select_model),
                 maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelLarge)
         }
         if (showPopup) {
@@ -103,4 +103,9 @@ private object BelowModelButton : PopupPositionProvider {
         val top = anchorBounds.bottom.coerceAtMost((windowSize.height - popupContentSize.height).coerceAtLeast(0))
         return IntOffset(left, top)
     }
+}
+internal fun chatModelLabel(model: Model, providers: List<ProviderSetting>): String {
+    val provider = providers.firstOrNull { provider -> provider.models.any { it.id == model.id } }
+    val name = model.displayName.ifBlank { model.modelId }
+    return provider?.name?.takeIf { it.isNotBlank() }?.let { "$it: $name" } ?: name
 }

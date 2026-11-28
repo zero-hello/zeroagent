@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import me.rerere.zeroagent.ui.motion.rememberBufferedReply
 import me.rerere.zeroagent.ui.motion.LocalReplyMotion
 import me.rerere.zeroagent.ui.motion.LocalConversationReplyMotion
 import androidx.compose.runtime.LaunchedEffect
@@ -221,6 +222,7 @@ fun ChatMessage(
                 role = message.role,
                 parts = message.parts,
                 annotations = message.annotations,
+                personalMemoryUpdated = message.personalMemoryUpdated,
                 loading = loading,
                 generationActive = generationActive,
                 model = model,
@@ -359,6 +361,7 @@ private fun MessagePartsBlock(
     model: Model?,
     parts: List<UIMessagePart>,
     annotations: List<UIMessageAnnotation>,
+    personalMemoryUpdated: Boolean,
     loading: Boolean,
     generationActive: Boolean = loading,
     onToolApproval: ((toolCallId: String, approved: Boolean, reason: String, scope: me.rerere.zeroagent.service.ChatService.ApprovalScope, toolName: String) -> Unit)? = null,
@@ -376,6 +379,19 @@ private fun MessagePartsBlock(
     val lastTextPart = parts.indexOfLast { it is UIMessagePart.Text }
     val replyMotion = LocalConversationReplyMotion.current.takeIf { loading && role == MessageRole.ASSISTANT }
 
+    val memoryChanged = remember(parts) {
+        parts.filterIsInstance<UIMessagePart.Tool>().any { tool ->
+            tool.toolName == "memory_tool" &&
+                ((parseToolOutputContent(tool) as? kotlinx.serialization.json.JsonObject)
+                    ?.get("zeroagent_memory_changed") as? kotlinx.serialization.json.JsonPrimitive)?.content == "true"
+        }
+    }
+    if (memoryChanged || personalMemoryUpdated) {
+        val nav = me.rerere.zeroagent.ui.context.LocalNavController.current
+        me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(
+            onClick = { nav.navigate(me.rerere.zeroagent.Screen.ZeroAgentLab) }, selected = true,
+        ) { Text(stringResource(R.string.zeroflow_memory_updated)) }
+    }
     val handleClickCitation: (String) -> Unit = remember {
         handler@{ citationId ->
             partsState.forEach { part ->
@@ -421,7 +437,6 @@ private fun MessagePartsBlock(
     // the bulk of a streaming part is one string whose length differs on every delta, so the
     // comparison short-circuits without walking the text.
     val groupedParts = remember(parts) { parts.groupMessageParts() }
-    val memoryNavigation = LocalNavController.current
     groupedParts.fastForEach { block ->
         when (block) {
             is MessagePartBlock.ThinkingBlock -> {
@@ -435,18 +450,6 @@ private fun MessagePartsBlock(
                         it is ThinkingStep.ToolStep &&
                             it.tool.approvalState is ToolApprovalState.Pending
                     }
-                    val memoryChanged = remember(block.steps) {
-                        block.steps.filterIsInstance<ThinkingStep.ToolStep>().any { (tool) ->
-                            tool.toolName == "memory_tool" && tool.approvalState !is ToolApprovalState.Denied &&
-                                (parseToolOutputContent(tool) as? kotlinx.serialization.json.JsonObject)?.let { result ->
-                                    "id" in result && "error" !in result && ("content" in result || result["success"]?.toString() == "true")
-                                } == true
-                        }
-                    }
-                    if (memoryChanged && assistant != null) me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(
-                        onClick = { memoryNavigation.navigate(me.rerere.zeroagent.Screen.AssistantMemory(assistant.id.toString())) },
-                        selected = true,
-                    ) { Text(stringResource(R.string.zero_v6_memory_updated)) }
                     val toolCount = block.steps.count { it is ThinkingStep.ToolStep || it is ThinkingStep.ServerToolStep }
                     val showSummary = toolCount >= 2 && block.steps.any { it is ThinkingStep.ReasoningStep }
                     val summary = if (showSummary) {
@@ -523,6 +526,7 @@ private fun MessagePartsBlock(
                         // non-user messages: user messages don't carry this metadata.
                         val renderedAsWebviewCard =
                             role != MessageRole.USER && SkillWebviewCardOrNull(part)
+                        val visibleText = rememberBufferedReply(block.index, part.text, replyMotion != null && block.index == lastTextPart)
                         val textContent = @Composable {
                             if (role == MessageRole.USER) {
                                 MessageBubbleSurface(
@@ -532,7 +536,7 @@ private fun MessagePartsBlock(
                                 ) {
                                     Column(modifier = Modifier.padding(8.dp)) {
                                         MarkdownBlock(
-                                            content = part.text.replaceRegexes(
+                                            content = visibleText.replaceRegexes(
                                                 assistant = assistant,
                                                 scope = AssistantAffectScope.USER,
                                                 visual = true,
@@ -548,7 +552,7 @@ private fun MessagePartsBlock(
                                 ) {
                                     Column(modifier = Modifier.padding(8.dp)) {
                                         MarkdownBlock(
-                                            content = part.text.replaceRegexes(
+                                            content = visibleText.replaceRegexes(
                                                 assistant = assistant,
                                                 scope = AssistantAffectScope.ASSISTANT,
                                                 visual = true,

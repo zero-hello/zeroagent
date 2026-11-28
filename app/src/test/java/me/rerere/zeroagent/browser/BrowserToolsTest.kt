@@ -210,13 +210,12 @@ class BrowserToolsTest {
         assertNull(t)
     }
 
-    @Test fun `default enabled map covers all 18 tools`() {
-        // Token-cost optimisation pass added browser_click_and_read — count is now 18.
+    @Test fun `default enabled map covers all browser tools`() {
         // Every tool MUST have a default. A missing key would fall through to `false`,
         // which would silently disable a tool the user expected to be on. The reverse
         // (a default for a name not in ALL_TOOLS) wouldn't break anything but suggests
         // a typo, so we check both directions.
-        assertEquals(18, BrowserToolDefaults.ALL_TOOLS.size)
+        assertEquals(19, BrowserToolDefaults.ALL_TOOLS.size)
         assertEquals(8, BrowserToolDefaults.WRITE_TOOLS.size)
         assertEquals(BrowserToolDefaults.ALL_TOOLS.toSet(), BrowserToolDefaults.DEFAULT_ENABLED.keys)
         // Read tools default ON

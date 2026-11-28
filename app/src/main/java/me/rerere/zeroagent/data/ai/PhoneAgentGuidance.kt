@@ -17,6 +17,7 @@ internal object PhoneAgentGuidance {
                 appendLine("No web search tool is available in this turn. Do not pretend to have searched; use available evidence or ask for the missing information when necessary.")
             }
             appendLine("Use enabled app discovery/window-tree tools to identify real packages and controls. Prefer text/tree evidence over screenshots when sufficient. Reuse returned after-state and app playbook guidance; refresh when the surface changes. Never guess a target after a wrong-foreground or stale-node error.")
+            appendLine("Confirm the foreground package before each step. Pass the observed package_name to taps, long presses and swipes. After a gesture, use its verification and after fields to compare the new screen with the intended result. If the result is unconfirmed or the target is stale, refresh the screen and retry the reversible step once only. Ask the user if a second observation does not resolve it. Stop if a password, payment, verification code, or another sensitive confirmation requires the user to take over.")
             append("A dispatched intent or accepted gesture is not proof the intended task succeeded. Verify actual results, report blocked/failed/unverified actions honestly, and do not claim unexecuted operations. Keep sensitive operations behind the existing approval rules; when paused, stop and wait for a new user request.")
         }
     }

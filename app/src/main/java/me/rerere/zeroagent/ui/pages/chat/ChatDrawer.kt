@@ -137,6 +137,7 @@ fun ChatDrawerContent(
         navController.navigate(screen) { launchSingleTop = true }
     }
     val scope = rememberCoroutineScope()
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
     val context = LocalContext.current
     val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val toaster = LocalToaster.current
@@ -148,6 +149,7 @@ fun ChatDrawerContent(
     val updateChecker: UpdateChecker = koinInject()
 
     val conversations = drawerVm.conversations.collectAsLazyPagingItems()
+    val historyQuery by drawerVm.historyQuery.collectAsStateWithLifecycle()
     val unsentNewChats by drawerVm.unsentNewChats.collectAsStateWithLifecycle()
     val folders by drawerVm.folders.collectAsStateWithLifecycle()
     val selectedFolderId by drawerVm.selectedFolderId.collectAsStateWithLifecycle()
@@ -261,15 +263,29 @@ fun ChatDrawerContent(
         drawerTonalElevation = 0.dp,
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val headerLimit = maxHeight * 0.45f
+            val headerLimit = maxHeight * 0.50f
             val footerLimit = maxHeight * 0.35f
             Column(Modifier.fillMaxSize()) {
                 Column(
                     Modifier.fillMaxWidth().heightIn(max = headerLimit)
-                        .verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
+                        .verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     ZeroAgentWorkspaceHeader()
+                    OutlinedTextField(
+                        value = historyQuery,
+                        onValueChange = drawerVm::searchHistory,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = CircleShape,
+                        placeholder = { Text(stringResource(R.string.chat_page_search_chats), maxLines = 1) },
+                        leadingIcon = { Icon(HugeIcons.Search01, null, Modifier.size(18.dp)) },
+                        trailingIcon = {
+                            if (historyQuery.isNotEmpty()) IconButton(onClick = { focus.clearFocus(); drawerVm.searchHistory("") }) {
+                                Text("×", style = MaterialTheme.typography.titleLarge)
+                            }
+                        },
+                    )
                     FilledTonalButton(
                         onClick = {
                             onNavigateFromDrawer()
@@ -290,7 +306,11 @@ fun ChatDrawerContent(
                     FolderBar(
                         protectedFolderId = protectedFolderId, folders = folders,
                         selectedFolderId = selectedFolderId,
-                        onSelect = drawerVm::selectFolder,
+                        onSelect = {
+                            focus.clearFocus()
+                            drawerVm.searchHistory("")
+                            drawerVm.selectFolder(it)
+                        },
                         onCreate = { showCreateFolderDialog = true },
                         onRename = { folderToRename = it },
                         onDelete = { folderToDelete = it },
@@ -300,9 +320,10 @@ fun ChatDrawerContent(
                 }
                 ConversationList(
                     currentConversationId = currentConversationId,
+                    searching = historyQuery.isNotBlank(),
                     conversations = conversations,
                     conversationJobs = conversationJobs.keys,
-                    unsentNewChats = unsentNewChats,
+                    unsentNewChats = if (historyQuery.isBlank()) unsentNewChats else emptyList(),
                     onOpenUnsentChat = {
                         onNavigateFromDrawer()
                         navigateToChatPage(navController, it)
@@ -311,6 +332,7 @@ fun ChatDrawerContent(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     onClick = {
+                        drawerVm.searchHistory("")
                         onNavigateFromDrawer()
                         navigateToChatPage(navController, it.id)
                     },
@@ -326,7 +348,6 @@ fun ChatDrawerContent(
                     onMoveToAssistant = { conversationToMove = it; showMoveToAssistantSheet = true },
                     onMoveToFolder = { conversationToMoveFolder = it; showMoveToFolderSheet = true },
                 )
-                HorizontalDivider()
                 DrawerFooter(
                     modifier = Modifier.fillMaxWidth().heightIn(max = footerLimit),
                     settings = settings,
@@ -701,13 +722,22 @@ private fun DrawerActions(onNavigate: (Screen) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        TextButton(shapes = ButtonDefaults.shapes(), onClick = { onNavigate(Screen.MessageSearch) }, modifier = Modifier.heightIn(min = 48.dp)) {
+        me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(onClick = { onNavigate(Screen.MessageSearch) }) {
             Icon(HugeIcons.Search01, null, Modifier.padding(end = 8.dp).size(18.dp))
             Text(stringResource(R.string.chat_page_search_chats), style = MaterialTheme.typography.labelMedium)
         }
-        TextButton(shapes = ButtonDefaults.shapes(), onClick = { onNavigate(Screen.History) }, modifier = Modifier.heightIn(min = 48.dp)) {
+        me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(onClick = { onNavigate(Screen.History) }) {
             Icon(HugeIcons.TransactionHistory, null, Modifier.padding(end = 8.dp).size(18.dp))
             Text(stringResource(R.string.chat_page_history), style = MaterialTheme.typography.labelMedium)
+        }
+        me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(onClick = { onNavigate(Screen.NativeVoice) }) {
+            Text(stringResource(R.string.chat_page_voice_title), style = MaterialTheme.typography.labelMedium)
+        }
+        me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(onClick = { onNavigate(Screen.ZeroAgentLab) }) {
+            Text("ZeroAgent Lab", style = MaterialTheme.typography.labelMedium)
+        }
+        me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(onClick = { onNavigate(Screen.SettingBrowser) }) {
+            Text(stringResource(R.string.zeroflow_agent_browser), style = MaterialTheme.typography.labelMedium)
         }
     }
 }

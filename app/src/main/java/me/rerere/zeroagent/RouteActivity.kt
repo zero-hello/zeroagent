@@ -376,6 +376,11 @@ class RouteActivity : androidx.fragment.app.FragmentActivity() {
         } }
         val toastState = rememberToasterState()
         val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
+        val settingsReadFailed by settingsStore.settingsReadFailed.collectAsStateWithLifecycle()
+        val settingsReadMessage = stringResource(R.string.zeroflow_settings_load_failed)
+        LaunchedEffect(settingsReadFailed, settingsReadMessage) {
+            if (settingsReadFailed) toastState.show(settingsReadMessage, type = com.dokar.sonner.ToastType.Error)
+        }
         val tts = rememberCustomTtsState()
         val eventBus = koinInject<AppEventBus>()
         LaunchedEffect(tts) {

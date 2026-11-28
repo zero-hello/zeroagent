@@ -10,7 +10,6 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -169,7 +168,7 @@ private fun WebViewHost(
             // Pass 3's "Clear browsing data" has a stable target to wipe.
             File(ctx.filesDir, "browser-profile").apply { if (!exists()) mkdirs() }
 
-            webViewClient = object : WebViewClient() {
+            webViewClient = object : BrowserNavigationClient() {
                 override fun shouldOverrideUrlLoading(
                     view: WebView?,
                     request: WebResourceRequest?,
@@ -191,25 +190,6 @@ private fun WebViewHost(
                     if (url != null) onUrlChange(url)
                     onCanGoBackChange(view?.canGoBack() == true)
                     onCanGoForwardChange(view?.canGoForward() == true)
-                    // Adb-friendly white-page diagnostic. Tag = "RikkaWebView". Filter:
-                    //   adb logcat -s RikkaWebView
-                    // Dumps body innerText length + first 100 chars + meta viewport so
-                    // you can tell at a glance whether the DOM is populated (render bug)
-                    // or empty (load bug) without needing chrome://inspect.
-                    view?.evaluateJavascript(
-                        """
-                        JSON.stringify({
-                          rs: document.readyState,
-                          docLen: (document.documentElement ? document.documentElement.outerHTML.length : 0),
-                          bodyLen: (document.body ? document.body.innerText.length : 0),
-                          children: (document.body ? document.body.children.length : 0),
-                          firstText: (document.body ? document.body.innerText.slice(0, 100) : ''),
-                          viewport: (function(){var m=document.querySelector('meta[name=viewport]');return m?m.content:'';})()
-                        })
-                        """.trimIndent(),
-                    ) { json ->
-                        Log.d("RikkaWebView", "onPageFinished $url -> $json")
-                    }
                 }
 
                 override fun onReceivedError(
@@ -235,7 +215,7 @@ private fun WebViewHost(
                 override fun onConsoleMessage(message: ConsoleMessage?): Boolean {
                     // Surface page-side console.log / console.error to logcat so the user
                     // can debug white pages from a terminal without DevTools.
-                    if (message != null) {
+                    if (BuildConfig.DEBUG && message != null) {
                         val priority = when (message.messageLevel()) {
                             ConsoleMessage.MessageLevel.ERROR -> Log.ERROR
                             ConsoleMessage.MessageLevel.WARNING -> Log.WARN
@@ -252,7 +232,7 @@ private fun WebViewHost(
                 }
             }
 
-            loadUrl(localPage?.url ?: initialUrl.takeIf {
+            (webViewClient as BrowserNavigationClient).load(this, localPage?.url ?: initialUrl.takeIf {
                 android.net.Uri.parse(it).scheme in setOf("http", "https", "about")
             } ?: "about:blank")
             onWebViewReady(this)

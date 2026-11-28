@@ -1,5 +1,5 @@
 <resources>
-    <string name="zero_ui_version_name" translatable="false">ZeroAgent UI v2</string>
+    <string name="zero_ui_version_name" translatable="false">ZeroFlow UI V2</string>
     <string name="zero_v6_sound">Interaction sounds</string>
     <string name="zero_v6_font">Interface font</string>
     <string name="zero_v6_font_cache_info">Downloaded and imported fonts stay on this device.</string>

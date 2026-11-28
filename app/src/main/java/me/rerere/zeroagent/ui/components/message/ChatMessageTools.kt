@@ -164,6 +164,18 @@ fun ChainOfThoughtScope.ChatMessageToolStep(
     var showDenySheet by remember(tool.toolCallId, tool.toolName, tool.input) { mutableStateOf(false) }
     var showApproval by remember(tool.toolCallId, tool.toolName, tool.input) { mutableStateOf(false) }
     var expanded by remember(tool.toolCallId) { mutableStateOf(false) }
+    val feedback = me.rerere.zeroagent.ui.designsystem.rememberZeroFeedback()
+    var heardStart by remember(tool.toolCallId) { mutableStateOf(false) }
+    val executing = loading && tool.executionStartedAt != null && !tool.isExecuted
+    LaunchedEffect(executing, tool.isExecuted) {
+        if (executing && !heardStart) {
+            feedback(me.rerere.zeroagent.ui.designsystem.ZeroFeedbackEvent.ToolStart)
+            heardStart = true
+        } else if (heardStart && tool.isExecuted) {
+            feedback(me.rerere.zeroagent.ui.designsystem.ZeroFeedbackEvent.ToolComplete)
+            heardStart = false
+        }
+    }
     val isPending = tool.isPending
     LaunchedEffect(isPending) {
         if (!isPending) { showApproval = false; showDenySheet = false }
@@ -602,6 +614,18 @@ private fun ChainOfThoughtScope.AskUserToolStep(
     loading: Boolean,
     onToolAnswer: ((toolCallId: String, answer: String) -> Unit)?,
 ) {
+    val feedback = me.rerere.zeroagent.ui.designsystem.rememberZeroFeedback()
+    var heardStart by remember(tool.toolCallId) { mutableStateOf(false) }
+    val executing = loading && tool.executionStartedAt != null && !tool.isExecuted
+    LaunchedEffect(executing, tool.isExecuted) {
+        if (executing && !heardStart) {
+            feedback(me.rerere.zeroagent.ui.designsystem.ZeroFeedbackEvent.ToolStart)
+            heardStart = true
+        } else if (heardStart && tool.isExecuted) {
+            feedback(me.rerere.zeroagent.ui.designsystem.ZeroFeedbackEvent.ToolComplete)
+            heardStart = false
+        }
+    }
     val isPending = tool.isPending
     val isAnswered = tool.approvalState is ToolApprovalState.Answered
     val arguments = tool.inputAsJson()

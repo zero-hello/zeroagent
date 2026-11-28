@@ -63,92 +63,90 @@ internal fun TurnUsageLine(
     var expanded by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.padding(horizontal = 4.dp)) {
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.heightIn(min = 48.dp).clickable(enabled = usage != null) { expanded = !expanded },
-        ) {
-            if (usage == null) {
-                Text(text = stringResource(R.string.chat_message_turn_pending))
-            } else {
-                Text(text = stringResource(R.string.chat_message_turn_calls, usage.callCount))
-                StatsItem(
-                    icon = {
-                        Icon(
-                            imageVector = HugeIcons.Upload02,
-                            contentDescription = stringResource(R.string.accessibility_input_tokens),
-                            modifier = Modifier.size(12.dp),
-                        )
-                    },
-                    content = { Text(text = stringResource(R.string.zeroagent_language_usage_tokens, usage.inputTokens.tokensText())) },
-                )
-                // The split is only meaningful when at least one call reported cache fields; a
-                // provider that stays silent must not be rendered as a 0% hit rate.
-                if (usage.cacheReported && usage.cachePromptTokens > 0) {
-                    val hit = usage.cacheHitTokens.coerceAtMost(usage.cachePromptTokens)
-                    val miss = usage.cachePromptTokens - hit
-                    val rate = hit * 100 / usage.cachePromptTokens
-                    Text(text = stringResource(R.string.zeroagent_language_usage_cache, hit.tokensText(), miss.tokensText(), rate))
-                }
-                StatsItem(
-                    icon = {
-                        Icon(
-                            imageVector = HugeIcons.Download04,
-                            contentDescription = stringResource(R.string.accessibility_output_tokens),
-                            modifier = Modifier.size(12.dp),
-                        )
-                    },
-                    content = { Text(text = stringResource(R.string.zeroagent_language_usage_tokens, usage.outputTokens.tokensText())) },
-                )
-                usage.tokensPerSecond?.let { rate ->
-                    StatsItem(
-                        icon = {
-                            Icon(
-                                imageVector = HugeIcons.Cpu,
-                                contentDescription = stringResource(R.string.chat_message_turn_speed),
-                                modifier = Modifier.size(12.dp),
-                            )
-                        },
-                        content = { Text(text = "${rate.roundToInt()} tok/s") },
-                    )
-                }
-                turnCostText(usage.providerCostUsd, usage.costMicros)?.let { cost ->
-                    StatsItem(
-                        icon = {
-                            Icon(
-                                imageVector = HugeIcons.CoinsDollar,
-                                contentDescription = stringResource(R.string.accessibility_cost),
-                                modifier = Modifier.size(12.dp),
-                            )
-                        },
-                        content = { Text(text = cost) },
-                    )
-                }
+        if (usage == null) {
+            Text(stringResource(R.string.chat_message_turn_pending))
+        } else {
+            val summary = buildString {
+                append((usage.inputTokens + usage.outputTokens).tokensText())
+                usage.tokensPerSecond?.let { append(" · ${it.roundToInt()} tok/s") }
             }
-            TurnElapsedItem(footer)
-            if (usage != null) {
+            me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(onClick = { expanded = !expanded }) {
+                Text(summary, style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"))
                 Icon(
-                    imageVector = if (expanded) HugeIcons.ArrowUp01 else HugeIcons.ArrowDown01,
-                    contentDescription = stringResource(
-                        if (expanded) R.string.chat_message_turn_collapse
-                        else R.string.chat_message_turn_expand
-                    ),
-                    modifier = Modifier.size(12.dp),
+                    if (expanded) HugeIcons.ArrowUp01 else HugeIcons.ArrowDown01,
+                    stringResource(if (expanded) R.string.chat_message_turn_collapse else R.string.chat_message_turn_expand),
+                    Modifier.size(14.dp),
                 )
             }
         }
-        if (usage != null) {
-            AnimatedVisibility(visible = expanded) {
-                Column(
-                    modifier = Modifier.padding(top = 2.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
+        AnimatedVisibility(visible = expanded && usage != null) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    itemVerticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 4.dp),
                 ) {
-                    usage.calls.forEach { call -> UsageCallRow(call) }
-                    // The list can run longer than the screen, so the summary line's chevron —
-                    // the only way back — may be scrolled out of sight. Mirror it at the bottom
-                    // of the list so collapsing never means scrolling up first.
-                    CollapseUsageRow(onCollapse = { expanded = false })
+                    if (usage == null) {
+                        Text(text = stringResource(R.string.chat_message_turn_pending))
+                    } else {
+                        Text(text = stringResource(R.string.chat_message_turn_calls, usage.callCount))
+                        StatsItem(
+                            icon = {
+                                Icon(
+                                    imageVector = HugeIcons.Upload02,
+                                    contentDescription = stringResource(R.string.accessibility_input_tokens),
+                                    modifier = Modifier.size(12.dp),
+                                )
+                            },
+                            content = { Text(text = stringResource(R.string.zeroagent_language_usage_tokens, usage.inputTokens.tokensText())) },
+                        )
+                        // The split is only meaningful when at least one call reported cache fields; a
+                        // provider that stays silent must not be rendered as a 0% hit rate.
+                        if (usage.cacheReported && usage.cachePromptTokens > 0) {
+                            val hit = usage.cacheHitTokens.coerceAtMost(usage.cachePromptTokens)
+                            val miss = usage.cachePromptTokens - hit
+                            val rate = hit * 100 / usage.cachePromptTokens
+                            Text(text = stringResource(R.string.zeroagent_language_usage_cache, hit.tokensText(), miss.tokensText(), rate))
+                        }
+                        StatsItem(
+                            icon = {
+                                Icon(
+                                    imageVector = HugeIcons.Download04,
+                                    contentDescription = stringResource(R.string.accessibility_output_tokens),
+                                    modifier = Modifier.size(12.dp),
+                                )
+                            },
+                            content = { Text(text = stringResource(R.string.zeroagent_language_usage_tokens, usage.outputTokens.tokensText())) },
+                        )
+                        usage.tokensPerSecond?.let { rate ->
+                            StatsItem(
+                                icon = {
+                                    Icon(
+                                        imageVector = HugeIcons.Cpu,
+                                        contentDescription = stringResource(R.string.chat_message_turn_speed),
+                                        modifier = Modifier.size(12.dp),
+                                    )
+                                },
+                                content = { Text(text = "${rate.roundToInt()} tok/s") },
+                            )
+                        }
+                        turnCostText(usage.providerCostUsd, usage.costMicros)?.let { cost ->
+                            StatsItem(
+                                icon = {
+                                    Icon(
+                                        imageVector = HugeIcons.CoinsDollar,
+                                        contentDescription = stringResource(R.string.accessibility_cost),
+                                        modifier = Modifier.size(12.dp),
+                                    )
+                                },
+                                content = { Text(text = cost) },
+                            )
+                        }
+                    }
+                    TurnElapsedItem(footer)
                 }
+                usage?.calls?.forEach { call -> UsageCallRow(call) }
+                CollapseUsageRow(onCollapse = { expanded = false })
             }
         }
     }

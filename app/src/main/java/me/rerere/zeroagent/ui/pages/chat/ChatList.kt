@@ -126,6 +126,8 @@ fun ChatList(
     state: LazyListState,
     loading: Boolean,
     processingStatus: String? = null,
+    phoneOperationActive: Boolean = false,
+    onStopPhoneOperation: () -> Unit = {},
     previewMode: Boolean,
     settings: Settings,
 
@@ -177,6 +179,8 @@ fun ChatList(
                 state = state,
                 loading = loading,
                 processingStatus = processingStatus,
+                phoneOperationActive = phoneOperationActive,
+                onStopPhoneOperation = onStopPhoneOperation,
                 settings = settings,
 
                 errors = errors,
@@ -212,6 +216,8 @@ private fun ChatListNormal(
     state: LazyListState,
     loading: Boolean,
     processingStatus: String? = null,
+    phoneOperationActive: Boolean = false,
+    onStopPhoneOperation: () -> Unit = {},
     settings: Settings,
 
     errors: List<ChatError>,
@@ -458,6 +464,17 @@ private fun ChatListNormal(
                         }
                     }
                 }
+            }
+
+            if (phoneOperationActive) {
+                item(key = "agent-phone-operation") {
+                    me.rerere.zeroagent.ui.designsystem.ZeroCapsuleButton(
+                        onClick = onStopPhoneOperation, selected = true, pulse = true,
+                    ) { Text(stringResource(R.string.zeroflow_phone_stop)) }
+                }
+            }
+            item(key = "agent-browser-preview") {
+                AgentBrowserPreview(conversation.id.toString(), Modifier.widthIn(max = AppLayout.chatWidth))
             }
 
             // 为了能正确滚动到这

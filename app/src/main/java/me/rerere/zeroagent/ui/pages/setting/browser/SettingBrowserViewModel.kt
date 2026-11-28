@@ -1,18 +1,13 @@
 package me.rerere.zeroagent.ui.pages.setting.browser
 
-import android.content.Context
-import android.webkit.CookieManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import me.rerere.zeroagent.browser.BrowserPreferences
 import me.rerere.zeroagent.browser.BrowserToolDefaults
-import java.io.File
 
 class SettingBrowserViewModel(
     private val prefs: BrowserPreferences,
@@ -39,8 +34,24 @@ class SettingBrowserViewModel(
         initialValue = BrowserToolDefaults.DEFAULT_SINGLE_TASK_TIMEOUT_MS,
     )
 
+    val display = prefs.displayFlow().stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), me.rerere.zeroagent.browser.AgentBrowserDisplay(),
+    )
+
+    fun updateDisplay(transform: (me.rerere.zeroagent.browser.AgentBrowserDisplay) -> me.rerere.zeroagent.browser.AgentBrowserDisplay) {
+        viewModelScope.launch { prefs.updateDisplay(transform) }
+    }
+
     fun setToolEnabled(toolName: String, enabled: Boolean) {
         viewModelScope.launch { prefs.setToolEnabled(toolName, enabled) }
+    }
+
+    fun setToolsEnabled(tools: Collection<String>, enabled: Boolean) {
+        viewModelScope.launch { prefs.setToolsEnabled(tools, enabled) }
+    }
+
+    fun useToolPreset(interactive: Boolean) {
+        viewModelScope.launch { prefs.useToolPreset(interactive) }
     }
 
     /** Persist a per-tool timeout given in seconds. Clamping happens in [BrowserPreferences]. */
@@ -53,29 +64,12 @@ class SettingBrowserViewModel(
         viewModelScope.launch { prefs.setSingleTaskTimeoutMs(minutes * 60_000L) }
     }
 
-    /**
-     * Wipes the WebView profile dir + cookies. Tool-toggle state is intentionally NOT
-     * cleared — those are user config, not browsing data.
-     *
-     * Done on Dispatchers.IO; the cookie API on the main thread is safe but the dir
-     * recursion isn't. [onDone] fires on the main thread once both have completed.
-     */
-    fun clearBrowsingData(context: Context, onDone: () -> Unit) {
+    fun clearBrowsingData(onDone: (Boolean) -> Unit) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    val profileDir = File(context.filesDir, "browser-profile")
-                    if (profileDir.exists()) {
-                        profileDir.deleteRecursively()
-                    }
-                    profileDir.mkdirs()
-                }
-            }
-            // CookieManager removeAllCookies dispatches its callback on the main thread; we
-            // don't need the callback's value, just need to issue the call.
-            CookieManager.getInstance().removeAllCookies(null)
-            CookieManager.getInstance().flush()
-            onDone()
+            val cleared = runCatching {
+                me.rerere.zeroagent.browser.HeadlessBrowserSessionPool.eraseProfile()
+            }.getOrDefault(false)
+            onDone(cleared)
         }
     }
 }
